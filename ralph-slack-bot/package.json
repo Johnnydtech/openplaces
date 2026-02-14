@@ -1,0 +1,23 @@
+{
+  "name": "ralph-slack-bot",
+  "version": "1.0.0",
+  "description": "Slack bot for monitoring Ralph autonomous loop and responding to status queries",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest"
+  },
+  "keywords": ["ralph", "slack", "bot", "monitoring", "claude-code"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@slack/bolt": "^3.17.1",
+    "chokidar": "^3.6.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3",
+    "jest": "^29.7.0"
+  }
+}
