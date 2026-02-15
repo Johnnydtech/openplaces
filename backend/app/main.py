@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
 from dotenv import load_dotenv
-from app.routes import webhooks, saved_recommendations, flyer_uploads
+from app.routes import webhooks, saved_recommendations, flyer_uploads, recommendations_cache
 
 # Load environment variables
 load_dotenv()
@@ -39,6 +39,8 @@ app.include_router(webhooks.router)
 app.include_router(saved_recommendations.router)
 # Story 2.10: Flyer upload persistence
 app.include_router(flyer_uploads.router)
+# Story 2.11: Recommendation caching
+app.include_router(recommendations_cache.router)
 
 
 @app.get("/")
