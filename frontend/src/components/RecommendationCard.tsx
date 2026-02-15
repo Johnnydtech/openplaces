@@ -20,6 +20,7 @@ interface RecommendationCardProps {
   recommendation: ZoneRecommendation
   rank: number
   onClick?: () => void
+  onHover?: (isHovering: boolean) => void  // Story 5.7: Hover to highlight map
   isHighlighted?: boolean
 }
 
@@ -27,6 +28,7 @@ export default function RecommendationCard({
   recommendation,
   rank,
   onClick,
+  onHover,
   isHighlighted = false
 }: RecommendationCardProps) {
   // Story 2.6: Save functionality state
@@ -146,6 +148,8 @@ export default function RecommendationCard({
     <div
       className={`recommendation-card ${isHighlighted ? 'highlighted' : ''}`}
       onClick={onClick}
+      onMouseEnter={() => onHover?.(true)}  // Story 5.7: Hover to highlight map zone
+      onMouseLeave={() => onHover?.(false)}
       role="button"
       tabIndex={0}
       onKeyPress={(e) => {

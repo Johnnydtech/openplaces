@@ -13,6 +13,7 @@ import { geocodeVenue, GeocodingError } from '../api/geocoding'
 import EventConfirmation from '../components/EventConfirmation'
 import RecommendationsList from '../components/RecommendationsList'
 import ManualEventForm, { EventData as ManualEventData } from '../components/ManualEventForm'
+import MapView from '../components/MapView'
 import './Upload.css'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
@@ -41,6 +42,7 @@ export default function Upload() {
   const [eventType] = useState<string>('community-event')
   const [isAuthenticated] = useState(false)  // TODO: integrate with Clerk auth (Story 2.x)
   const [showManualForm, setShowManualForm] = useState(false)  // Story 3.4, 3.10
+  const [highlightedZoneId, setHighlightedZoneId] = useState<string | null>(null)  // Story 5.7, 5.8
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const validateFile = (file: File): UploadError | null => {
@@ -274,22 +276,50 @@ export default function Upload() {
     }
   }
 
-  // Story 4.3: Show RecommendationsList after successful generation
+  // Story 4.3 + Epic 5: Show RecommendationsList with Map after successful generation
   if (showRecommendations) {
     return (
       <div className="upload-page">
-        <RecommendationsList
-          recommendations={recommendations}
-          isAuthenticated={isAuthenticated}
-          isLoading={isLoadingRecommendations}
-          error={recommendationsError}
-          onRetry={handleRetryRecommendations}
-          onEditDetails={() => {
-            // Story 4.8: Go back to EventConfirmation to edit details
-            setShowRecommendations(false)
-            setShowConfirmation(true)
-          }}
-        />
+        <div className="recommendations-view">
+          {/* Story 5.1-5.10: Interactive Map View */}
+          <div className="map-section">
+            <MapView
+              recommendations={recommendations}
+              venueCoordinates={venueCoordinates}
+              highlightedZoneId={highlightedZoneId}
+              onZoneClick={(zoneId) => {
+                // Story 5.5: Click zone marker to highlight in list
+                setHighlightedZoneId(zoneId)
+              }}
+              onZoneHover={(zoneId) => {
+                // Story 5.8: Hover zone marker to highlight in list
+                setHighlightedZoneId(zoneId)
+              }}
+              isAuthenticated={isAuthenticated}
+            />
+          </div>
+
+          {/* Story 4.3: Recommendations List */}
+          <div className="list-section">
+            <RecommendationsList
+              recommendations={recommendations}
+              isAuthenticated={isAuthenticated}
+              isLoading={isLoadingRecommendations}
+              error={recommendationsError}
+              onRetry={handleRetryRecommendations}
+              onEditDetails={() => {
+                // Story 4.8: Go back to EventConfirmation to edit details
+                setShowRecommendations(false)
+                setShowConfirmation(true)
+              }}
+              onHighlightZone={(zoneId) => {
+                // Story 5.7: Hover list item to highlight zone on map
+                setHighlightedZoneId(zoneId)
+              }}
+              highlightedZoneId={highlightedZoneId}
+            />
+          </div>
+        </div>
       </div>
     )
   }

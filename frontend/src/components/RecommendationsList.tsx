@@ -173,6 +173,10 @@ export default function RecommendationsList({
             recommendation={recommendation}
             rank={index + 1}
             onClick={() => onHighlightZone?.(recommendation.zone_id)}
+            onHover={(isHovering) => {
+              // Story 5.7: Hover list item to highlight map zone
+              onHighlightZone?.(isHovering ? recommendation.zone_id : null)
+            }}
             isHighlighted={highlightedZoneId === recommendation.zone_id}
           />
         ))}
