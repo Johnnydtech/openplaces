@@ -11,6 +11,8 @@ from typing import Dict, Any, Optional
 from openai import AsyncOpenAI
 import httpx
 from dotenv import load_dotenv
+from google.cloud import vision
+import io
 
 # Load environment variables
 load_dotenv()
@@ -27,6 +29,12 @@ def get_openai_client() -> AsyncOpenAI:
         raise ValueError("OPENAI_API_KEY environment variable is not set")
     return AsyncOpenAI(api_key=api_key)
 
+# Initialize Google Cloud Vision client
+def get_vision_client() -> vision.ImageAnnotatorClient:
+    """Get or create Google Cloud Vision client"""
+    # Google Cloud SDK will automatically use GOOGLE_APPLICATION_CREDENTIALS env var
+    return vision.ImageAnnotatorClient()
+
 
 class VisionAnalysisError(Exception):
     """Custom exception for vision analysis failures"""
@@ -38,11 +46,11 @@ async def analyze_flyer(
     file_content: bytes, file_type: str, timeout: float = 45.0
 ) -> Dict[str, Any]:
     """
-    Analyze uploaded flyer with OpenAI Vision API to extract event details
+    Analyze uploaded flyer using Google Cloud Vision OCR + OpenAI GPT-4
 
     Story 3.2 Acceptance Criteria:
-    - Backend /api/analyze endpoint calls OpenAI Vision API
-    - GPT-4 Vision extracts: name, date, time, venue, audience
+    - Backend /api/analyze endpoint extracts text via Google Cloud Vision OCR
+    - GPT-4 parses text to extract: name, date, time, venue, audience
     - Response within 45 seconds (timeout)
     - Returns JSON
     - Errors logged with fallback message
@@ -67,32 +75,51 @@ async def analyze_flyer(
         VisionAnalysisError: If API call fails or times out
     """
     try:
-        # Story 3.2 AC: Log API costs
         start_time = datetime.now()
         logger.info(f"Starting flyer analysis at {start_time.isoformat()}")
 
-        # Convert file to base64 for OpenAI API
-        base64_image = base64.b64encode(file_content).decode("utf-8")
-
-        # Determine image format from MIME type
-        if file_type == "image/jpeg":
-            image_format = "jpeg"
-        elif file_type == "image/png":
-            image_format = "png"
-        elif file_type == "application/pdf":
-            # Note: OpenAI Vision doesn't directly support PDFs
-            # For MVP, we'll return an error message
-            logger.warning("PDF upload detected - not supported by Vision API")
+        # Check file type
+        if file_type == "application/pdf":
+            logger.warning("PDF upload detected - not supported")
             raise VisionAnalysisError(
                 "PDF files are not supported. Please convert to JPG or PNG and try again."
             )
-        else:
+        elif file_type not in ["image/jpeg", "image/png"]:
             raise VisionAnalysisError(f"Unsupported file type: {file_type}")
 
-        # Story 3.2 AC: GPT-4 Vision extracts event details
-        prompt = """Analyze this event flyer and extract the following information in JSON format:
+        # Step 1: Use Google Cloud Vision API to extract text (OCR)
+        logger.info("Extracting text using Google Cloud Vision API...")
+        try:
+            vision_client = get_vision_client()
+            image = vision.Image(content=file_content)
+            response = vision_client.text_detection(image=image)
 
-{
+            if response.error.message:
+                raise VisionAnalysisError(f"Google Vision API error: {response.error.message}")
+
+            texts = response.text_annotations
+            if not texts:
+                raise VisionAnalysisError("No text detected in the image. Please upload a clearer flyer.")
+
+            # The first annotation contains all detected text
+            extracted_text = texts[0].description
+            logger.info(f"Extracted {len(extracted_text)} characters from image")
+
+        except Exception as e:
+            logger.error(f"Google Cloud Vision API error: {str(e)}")
+            raise VisionAnalysisError(
+                "Text extraction failed. Please ensure GOOGLE_APPLICATION_CREDENTIALS is set."
+            )
+
+        # Step 2: Use OpenAI GPT-4 to parse the extracted text
+        logger.info("Parsing extracted text with GPT-4...")
+        prompt = f"""You are analyzing text extracted from an event flyer. Parse the following text and extract event information in JSON format:
+
+EXTRACTED TEXT:
+{extracted_text}
+
+Return ONLY a JSON object (no markdown, no explanation) with this structure:
+{{
   "event_name": "Name of the event",
   "event_date": "Date of the event (convert to ISO format YYYY-MM-DD if possible, otherwise return as text)",
   "event_time": "Time of the event (e.g., '7:00 PM', '2-5 PM')",
@@ -100,34 +127,25 @@ async def analyze_flyer(
   "target_audience": ["List", "of", "audience", "types"],
   "confidence": "High|Medium|Low",
   "extraction_notes": "Any warnings or missing information"
-}
+}}
 
 Target audience should describe who would be interested in this event (e.g., "young professionals", "families", "students", "fitness enthusiasts", "foodies", "coffee enthusiasts").
 
 If any information is unclear or missing, note it in extraction_notes and mark confidence as Medium or Low."""
 
-        # Story 3.2 AC: Response within 45 seconds (timeout)
         try:
             client = get_openai_client()
             response = await asyncio.wait_for(
                 client.chat.completions.create(
-                    model=os.getenv("OPENAI_MODEL", "gpt-4o"),
+                    model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
                     messages=[
                         {
                             "role": "user",
-                            "content": [
-                                {"type": "text", "text": prompt},
-                                {
-                                    "type": "image_url",
-                                    "image_url": {
-                                        "url": f"data:image/{image_format};base64,{base64_image}"
-                                    },
-                                },
-                            ],
+                            "content": prompt,
                         }
                     ],
                     max_tokens=500,
-                    temperature=0.2,  # Lower temperature for more consistent extraction
+                    temperature=0.2,
                 ),
                 timeout=timeout,
             )
