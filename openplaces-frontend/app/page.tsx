@@ -15,6 +15,12 @@ export default function Home() {
             {/* Show when user is NOT logged in */}
             <SignedOut>
               <Link
+                href="/sign-in"
+                className="text-sm font-semibold text-gray-600 hover:text-gray-900"
+              >
+                Sign In
+              </Link>
+              <Link
                 href="/sign-up"
                 className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
               >
