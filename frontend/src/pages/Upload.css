@@ -402,11 +402,11 @@
 }
 
 .list-section {
-  background: #1a202c;
+  background: linear-gradient(180deg, #0d3d3d 0%, #1a4d4d 100%);
   padding: 24px;
   overflow-y: auto;
   height: 100%;
-  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.3);
   z-index: 10;
 }
 
