@@ -233,14 +233,65 @@
   margin-left: auto;
 }
 
-/* Score Breakdown */
+/* Story 4.11 AC: Score Breakdown */
 .score-breakdown {
-  display: flex;
-  gap: 16px;
   padding-top: 16px;
   border-top: 1px solid #e5e7eb;
 }
 
+.score-components {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.score-component {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.component-label {
+  font-weight: 600;
+  color: #374151;
+  min-width: 140px;
+}
+
+.component-value {
+  font-weight: 700;
+  color: #3b82f6;
+  min-width: 90px;
+}
+
+.component-percentage {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.score-total {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  margin-top: 8px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 16px;
+}
+
+.total-label {
+  font-weight: 700;
+  color: #111827;
+}
+
+.total-value {
+  font-weight: 700;
+  color: #10b981;
+  font-size: 18px;
+}
+
+/* Legacy score styles (for backwards compatibility) */
 .score-item {
   display: flex;
   align-items: center;

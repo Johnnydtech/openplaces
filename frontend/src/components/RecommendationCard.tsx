@@ -157,11 +157,59 @@ export default function RecommendationCard({
         </div>
       )}
 
-      {/* Score Breakdown */}
+      {/* Story 4.11 AC: Score Breakdown with Percentages */}
       <div className="score-breakdown">
-        <div className="score-item">
-          <span className="score-label">Total Score:</span>
-          <span className="score-value">{Math.round(recommendation.total_score)}</span>
+        <h4 className="section-title">Scoring Breakdown</h4>
+        <div className="score-components">
+          {/* Audience Match: X/40 pts (Y%) */}
+          <div className="score-component">
+            <span className="component-label">Audience Match:</span>
+            <span className="component-value">
+              {recommendation.audience_match_score.toFixed(1)}/40 pts
+            </span>
+            <span className="component-percentage">
+              ({Math.round((recommendation.audience_match_score / 40) * 100)}%)
+            </span>
+          </div>
+
+          {/* Timing: X/30 pts (Y%) */}
+          <div className="score-component">
+            <span className="component-label">Timing:</span>
+            <span className="component-value">
+              {recommendation.temporal_score.toFixed(1)}/30 pts
+            </span>
+            <span className="component-percentage">
+              ({Math.round((recommendation.temporal_score / 30) * 100)}%)
+            </span>
+          </div>
+
+          {/* Distance: X/20 pts (Y mi) */}
+          <div className="score-component">
+            <span className="component-label">Distance:</span>
+            <span className="component-value">
+              {recommendation.distance_score.toFixed(1)}/20 pts
+            </span>
+            <span className="component-percentage">
+              ({formatDistance(recommendation.distance_miles)})
+            </span>
+          </div>
+
+          {/* Dwell Time: X/10 pts (Y seconds) */}
+          <div className="score-component">
+            <span className="component-label">Dwell Time:</span>
+            <span className="component-value">
+              {recommendation.dwell_time_score.toFixed(1)}/10 pts
+            </span>
+            <span className="component-percentage">
+              ({recommendation.dwell_time_seconds}s)
+            </span>
+          </div>
+
+          {/* Total Score */}
+          <div className="score-total">
+            <span className="total-label">Total Score:</span>
+            <span className="total-value">{recommendation.total_score.toFixed(1)}/100</span>
+          </div>
         </div>
       </div>
 
