@@ -284,16 +284,12 @@ export default function Upload() {
           isLoading={isLoadingRecommendations}
           error={recommendationsError}
           onRetry={handleRetryRecommendations}
-        />
-        <button
-          className="back-button"
-          onClick={() => {
+          onEditDetails={() => {
+            // Story 4.8: Go back to EventConfirmation to edit details
             setShowRecommendations(false)
             setShowConfirmation(true)
           }}
-        >
-          ← Back to Event Details
-        </button>
+        />
       </div>
     )
   }

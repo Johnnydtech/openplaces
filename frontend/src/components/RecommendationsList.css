@@ -12,7 +12,17 @@
 /* Header */
 .list-header {
   margin-bottom: 32px;
-  text-align: center;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.header-text {
+  flex: 1;
 }
 
 .list-header h2 {
@@ -26,6 +36,40 @@
   font-size: 16px;
   color: #6b7280;
   margin: 0;
+}
+
+/* Story 4.8: Edit Event Details button */
+.edit-details-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  color: #3b82f6;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.edit-details-button:hover {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.edit-details-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.15);
+}
+
+.edit-details-button svg {
+  flex-shrink: 0;
 }
 
 /* Loading State */
@@ -221,10 +265,27 @@
   margin-top: 24px;
 }
 
+.data-freshness-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .data-freshness {
   font-size: 13px;
   color: #9ca3af;
   margin: 0;
+}
+
+/* Story 4.12: Data freshness warning for stale data (>30 days) */
+.data-freshness-warning {
+  font-size: 13px;
+  color: #f59e0b;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .how-it-works-button {
@@ -249,6 +310,15 @@
 @media (max-width: 768px) {
   .recommendations-list {
     padding: 16px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .edit-details-button {
+    justify-content: center;
   }
 
   .list-header h2 {

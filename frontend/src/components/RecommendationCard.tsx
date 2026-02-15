@@ -212,10 +212,10 @@ export default function RecommendationCard({
         </div>
       </div>
 
-      {/* Story 4.6 AC: Timing Windows - "Best Times" section */}
+      {/* Story 4.6 AC: Timing Windows - "Optimal Times" section */}
       {recommendation.timing_windows && recommendation.timing_windows.length > 0 && (
         <div className="timing-section">
-          <h4 className="section-title">Best Times</h4>
+          <h4 className="section-title">Optimal Times</h4>
           <div className="timing-windows">
             {recommendation.timing_windows.map((window, idx) => (
               <div key={idx} className="timing-window">
@@ -230,10 +230,10 @@ export default function RecommendationCard({
         </div>
       )}
 
-      {/* Story 4.9 AC: Transparent Reasoning - "Why this works" */}
+      {/* Story 4.9 AC: Transparent Reasoning - "What the data shows" (Story 4.14: signal-based language) */}
       {recommendation.reasoning && (
         <div className="reasoning-section">
-          <h4 className="section-title">Why this works</h4>
+          <h4 className="section-title">What the data shows</h4>
           <p className="reasoning-text">{recommendation.reasoning}</p>
         </div>
       )}
