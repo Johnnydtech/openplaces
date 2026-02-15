@@ -10,6 +10,9 @@ import os
 import logging
 from dotenv import load_dotenv
 from app.routes.analyze import router as analyze_router
+from app.routes.geocoding import router as geocoding_router
+from app.routes.zones import router as zones_router
+from app.routes.recommendations import router as recommendations_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -38,6 +41,9 @@ app.add_middleware(
 
 # Include routers
 app.include_router(analyze_router)  # Story 3.2: /api/analyze endpoint
+app.include_router(geocoding_router)  # Story 3.6: /api/geocoding endpoint
+app.include_router(zones_router)  # Story 4.1: /api/zones endpoint
+app.include_router(recommendations_router)  # Story 4.2 & 4.3: /api/recommendations endpoint
 
 
 @app.get("/")

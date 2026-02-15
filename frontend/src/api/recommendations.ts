@@ -23,9 +23,19 @@ export interface EventData {
  * Timing window for a zone
  */
 export interface TimingWindow {
-  day_range: string // e.g., "Mon-Thu"
-  time_range: string // e.g., "5-7pm"
+  days: string // e.g., "Mon-Thu"
+  hours: string // e.g., "5-7pm"
   reasoning: string // e.g., "commuters planning weekends"
+}
+
+/**
+ * Data source information for transparency (Story 4.10)
+ */
+export interface DataSource {
+  name: string // e.g., "Metro transit schedules"
+  status: 'detected' | 'not_detected'
+  details: string | null // e.g., "Orange Line, high confidence"
+  last_updated: string // ISO date
 }
 
 /**
@@ -46,14 +56,14 @@ export interface ZoneRecommendation {
 
   // Zone details
   distance_miles: number
-  audience_match_percentage: number // 0-100
   timing_windows: TimingWindow[]
   dwell_time_seconds: number
-  cost_tier: 'Free' | '$' | '$$' | '$$$'
+  cost_tier: string
 
   // Transparency features
   reasoning: string // Plain language explanation
-  data_sources: string[] // e.g., ["Arlington Open Data", "Metro schedules"]
+  matched_signals: string[] // Matched audience signals
+  data_sources: DataSource[] // Story 4.10: Data sources used
 
   // Geographic data
   latitude: number

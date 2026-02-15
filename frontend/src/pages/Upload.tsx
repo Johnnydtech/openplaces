@@ -1,9 +1,15 @@
 /**
  * Story 3.1: Flyer Image Upload Interface
+ * Story 3.3: Display Extracted Event Details for Confirmation
  * Upload page with drag-and-drop for event flyer analysis
  */
 
 import { useState, useRef, DragEvent, ChangeEvent } from 'react'
+import { analyzeFlyer, EventExtraction } from '../api/analyze'
+import { getTopRecommendations, EventData, ZoneRecommendation } from '../api/recommendations'
+import { geocodeVenue, GeocodingError } from '../api/geocoding'
+import EventConfirmation from '../components/EventConfirmation'
+import RecommendationsList from '../components/RecommendationsList'
 import './Upload.css'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
@@ -22,6 +28,15 @@ export default function Upload() {
   const [error, setError] = useState<UploadError | null>(null)
   const [uploadProgress, setUploadProgress] = useState<number>(0)
   const [isUploading, setIsUploading] = useState(false)
+  const [extractedData, setExtractedData] = useState<EventExtraction | null>(null)
+  const [showConfirmation, setShowConfirmation] = useState(false)
+  const [recommendations, setRecommendations] = useState<ZoneRecommendation[]>([])
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false)
+  const [recommendationsError, setRecommendationsError] = useState<string | null>(null)
+  const [showRecommendations, setShowRecommendations] = useState(false)
+  const [venueCoordinates, setVenueCoordinates] = useState<{lat: number, lon: number} | null>(null)
+  const [eventType] = useState<string>('community-event')
+  const [isAuthenticated] = useState(false)  // TODO: integrate with Clerk auth (Story 2.x)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const validateFile = (file: File): UploadError | null => {
@@ -103,10 +118,10 @@ export default function Upload() {
 
     setIsUploading(true)
     setUploadProgress(0)
+    setError(null)
 
     try {
       // Story 3.1 AC: Upload progress indicator
-      // Simulate upload progress (will be replaced with actual API call in Story 3.2)
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
           if (prev >= 90) {
@@ -117,17 +132,23 @@ export default function Upload() {
         })
       }, 200)
 
-      // TODO: Replace with actual API call to /api/analyze endpoint (Story 3.2)
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Story 3.2 AC: Call backend /api/analyze endpoint
+      const data = await analyzeFlyer(selectedFile)
 
       clearInterval(progressInterval)
       setUploadProgress(100)
 
-      // TODO: Navigate to results page with extracted event details (Story 3.3)
-      console.log('Upload complete:', selectedFile.name)
+      // Story 3.3 AC: Show extracted event details for confirmation
+      setExtractedData(data)
+      setShowConfirmation(true)
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Upload failed. Please try again.'
+
+      // Story 3.10 AC: User-friendly error messages
       setError({
-        message: 'Upload failed. Please try again.',
+        message: errorMessage.includes('unavailable')
+          ? 'AI extraction unavailable. Please enter event details manually.'
+          : errorMessage,
         type: 'upload'
       })
     } finally {
@@ -141,9 +162,108 @@ export default function Upload() {
     setError(null)
     setUploadProgress(0)
     setIsUploading(false)
+    setExtractedData(null)
+    setShowConfirmation(false)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
+  }
+
+  const handleConfirm = async (data: EventExtraction) => {
+    // Story 4.3: After event confirmation, fetch recommendations
+    setIsLoadingRecommendations(true)
+    setRecommendationsError(null)
+
+    try {
+      // Story 3.6: Geocode venue address
+      let coordinates = venueCoordinates
+      if (!coordinates) {
+        console.log('Geocoding venue:', data.venue)
+        const geocodeResult = await geocodeVenue(data.venue)
+        coordinates = { lat: geocodeResult.latitude, lon: geocodeResult.longitude }
+        setVenueCoordinates(coordinates)
+      }
+
+      // Story 4.3: Build EventData for recommendations API
+      const eventData: EventData = {
+        name: data.event_name,
+        date: data.event_date,
+        time: data.event_time,
+        venue_lat: coordinates.lat,
+        venue_lon: coordinates.lon,
+        target_audience: data.target_audience,
+        event_type: eventType, // From event type dropdown (Story 3.8)
+      }
+
+      // Story 4.3 AC: Fetch top recommendations (10 for auth, 3 for anonymous)
+      const limit = isAuthenticated ? 10 : 3
+      console.log(`Fetching top ${limit} recommendations...`)
+      const zones = await getTopRecommendations(eventData, limit)
+
+      console.log(`Got ${zones.length} recommendations`)
+      setRecommendations(zones)
+      setShowRecommendations(true)
+      setShowConfirmation(false)
+    } catch (error) {
+      console.error('Error generating recommendations:', error)
+
+      if (error instanceof GeocodingError) {
+        setRecommendationsError(`Venue location error: ${error.message}`)
+      } else if (error instanceof Error) {
+        setRecommendationsError(error.message)
+      } else {
+        setRecommendationsError('Unable to generate recommendations. Please try again.')
+      }
+    } finally {
+      setIsLoadingRecommendations(false)
+    }
+  }
+
+  const handleCancel = () => {
+    // Return to upload screen
+    setShowConfirmation(false)
+    setExtractedData(null)
+  }
+
+  const handleRetryRecommendations = () => {
+    if (extractedData) {
+      handleConfirm(extractedData)
+    }
+  }
+
+  // Story 4.3: Show RecommendationsList after successful generation
+  if (showRecommendations) {
+    return (
+      <div className="upload-page">
+        <RecommendationsList
+          recommendations={recommendations}
+          isAuthenticated={isAuthenticated}
+          isLoading={isLoadingRecommendations}
+          error={recommendationsError}
+          onRetry={handleRetryRecommendations}
+        />
+        <button
+          className="back-button"
+          onClick={() => {
+            setShowRecommendations(false)
+            setShowConfirmation(true)
+          }}
+        >
+          ← Back to Event Details
+        </button>
+      </div>
+    )
+  }
+
+  // Story 3.3: Show EventConfirmation component after extraction
+  if (showConfirmation && extractedData) {
+    return (
+      <EventConfirmation
+        data={extractedData}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
+    )
   }
 
   return (

@@ -1,0 +1,862 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "ballston-metro",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.1116, 38.8821]
+      },
+      "properties": {
+        "name": "Ballston Metro - Orange Line",
+        "audience_signals": {
+          "demographics": ["young-professionals", "commuters", "25-34", "35-44"],
+          "interests": ["transit", "convenience", "weekend-planning"],
+          "behaviors": ["weekday-commuters", "high-dwell-time"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "times": ["17:00-19:00"],
+              "reasoning": "Commuters heading home, weekend planning mode, high attention"
+            },
+            {
+              "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "times": ["06:00-09:00"],
+              "reasoning": "Morning commuters, routine browsing, event discovery"
+            }
+          ]
+        },
+        "dwell_time_seconds": 45,
+        "cost_tier": "$$",
+        "foot_traffic_daily": 8500
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "clarendon-metro",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0947, 38.8867]
+      },
+      "properties": {
+        "name": "Clarendon Metro - Orange Line",
+        "audience_signals": {
+          "demographics": ["young-professionals", "students", "25-34", "18-24"],
+          "interests": ["nightlife", "dining", "entertainment"],
+          "behaviors": ["evening-goers", "weekend-crowds"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Friday", "Saturday"],
+              "times": ["18:00-22:00"],
+              "reasoning": "Evening crowd, entertainment seekers, high attention"
+            }
+          ],
+          "warning": {
+            "days": ["Monday", "Tuesday", "Wednesday", "Thursday"],
+            "times": ["17:00-19:00"],
+            "reasoning": "High traffic but people rushing through, low dwell time (15 seconds), visual noise saturation"
+          }
+        },
+        "dwell_time_seconds": 15,
+        "cost_tier": "$$$",
+        "foot_traffic_daily": 12000
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "courthouse-gyms",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0864, 38.8903]
+      },
+      "properties": {
+        "name": "Courthouse Fitness District",
+        "audience_signals": {
+          "demographics": ["fitness-enthusiasts", "health-conscious", "25-44"],
+          "interests": ["fitness", "wellness", "health"],
+          "behaviors": ["morning-exercisers", "routine-driven"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "times": ["06:00-09:00"],
+              "reasoning": "Morning workout crowd, high attention, routine browsing"
+            },
+            {
+              "days": ["Tuesday", "Wednesday", "Thursday"],
+              "times": ["17:30-19:30"],
+              "reasoning": "After-work fitness crowd, focused audience"
+            }
+          ]
+        },
+        "dwell_time_seconds": 40,
+        "cost_tier": "$",
+        "foot_traffic_daily": 2800
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "whole-foods-clarendon",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0959, 38.8871]
+      },
+      "properties": {
+        "name": "Whole Foods Market Clarendon",
+        "audience_signals": {
+          "demographics": ["young-professionals", "families", "foodies", "25-44"],
+          "interests": ["food", "health", "local-events", "community"],
+          "behaviors": ["lunch-shoppers", "afternoon-browsers"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Tuesday", "Wednesday", "Thursday", "Friday"],
+              "times": ["12:00-14:00"],
+              "reasoning": "Lunch break shoppers, browsing mindset, walkable to venue"
+            },
+            {
+              "days": ["Saturday", "Sunday"],
+              "times": ["10:00-13:00"],
+              "reasoning": "Weekend grocery shoppers, relaxed pace, high engagement"
+            }
+          ]
+        },
+        "dwell_time_seconds": 55,
+        "cost_tier": "$$",
+        "foot_traffic_daily": 4500
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "rosslyn-metro",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0712, 38.8964]
+      },
+      "properties": {
+        "name": "Rosslyn Metro - Blue/Orange/Silver Lines",
+        "audience_signals": {
+          "demographics": ["commuters", "professionals", "25-54"],
+          "interests": ["transit", "convenience"],
+          "behaviors": ["weekday-commuters", "transfer-hub"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "times": ["17:00-19:00"],
+              "reasoning": "Major transfer hub, commuters heading home, weekend planning"
+            }
+          ]
+        },
+        "dwell_time_seconds": 38,
+        "cost_tier": "$$$",
+        "foot_traffic_daily": 15000
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "virginia-square-metro",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.1039, 38.8833]
+      },
+      "properties": {
+        "name": "Virginia Square Metro",
+        "audience_signals": {
+          "demographics": ["students", "young-professionals", "18-34"],
+          "interests": ["coffee", "study", "casual-dining"],
+          "behaviors": ["students", "coffee-shop-goers"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "times": ["08:00-11:00"],
+              "reasoning": "Student commuters, coffee shop traffic, morning routine"
+            }
+          ]
+        },
+        "dwell_time_seconds": 35,
+        "cost_tier": "$",
+        "foot_traffic_daily": 3200
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "pentagon-city-mall",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0595, 38.8626]
+      },
+      "properties": {
+        "name": "Pentagon City Mall",
+        "audience_signals": {
+          "demographics": ["shoppers", "families", "all-ages"],
+          "interests": ["shopping", "dining", "entertainment"],
+          "behaviors": ["weekend-shoppers", "leisure-browsers"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Saturday", "Sunday"],
+              "times": ["12:00-18:00"],
+              "reasoning": "Weekend shoppers, high dwell time, leisure mindset"
+            }
+          ]
+        },
+        "dwell_time_seconds": 65,
+        "cost_tier": "$$$",
+        "foot_traffic_daily": 18000
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "crystal-city-metro",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0503, 38.8574]
+      },
+      "properties": {
+        "name": "Crystal City Metro - Blue/Yellow Lines",
+        "audience_signals": {
+          "demographics": ["professionals", "commuters", "25-54"],
+          "interests": ["business", "dining", "convenience"],
+          "behaviors": ["lunch-crowd", "commuters"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "times": ["12:00-13:30"],
+              "reasoning": "Lunch break crowd from offices, high attention"
+            }
+          ]
+        },
+        "dwell_time_seconds": 30,
+        "cost_tier": "$$",
+        "foot_traffic_daily": 9500
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "arlington-central-library",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.1008, 38.8866]
+      },
+      "properties": {
+        "name": "Arlington Central Library",
+        "audience_signals": {
+          "demographics": ["students", "families", "book-lovers", "all-ages"],
+          "interests": ["education", "community-events", "culture"],
+          "behaviors": ["learners", "event-seekers"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Saturday", "Sunday"],
+              "times": ["10:00-17:00"],
+              "reasoning": "Weekend library visitors, community-focused, high engagement with local events"
+            },
+            {
+              "days": ["Wednesday", "Thursday"],
+              "times": ["16:00-19:00"],
+              "reasoning": "After-school crowd, families, event boards highly visible"
+            }
+          ]
+        },
+        "dwell_time_seconds": 50,
+        "cost_tier": "free",
+        "foot_traffic_daily": 1500
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "lee-highway-corridor",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.1275, 38.8945]
+      },
+      "properties": {
+        "name": "Lee Highway Retail Corridor",
+        "audience_signals": {
+          "demographics": ["residents", "families", "25-54"],
+          "interests": ["shopping", "dining", "services"],
+          "behaviors": ["car-commuters", "weekend-errands"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Saturday", "Sunday"],
+              "times": ["10:00-16:00"],
+              "reasoning": "Weekend errand runners, family shopping, high visibility"
+            }
+          ]
+        },
+        "dwell_time_seconds": 25,
+        "cost_tier": "$",
+        "foot_traffic_daily": 6000
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "washington-blvd-corridor",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0825, 38.8685]
+      },
+      "properties": {
+        "name": "Washington Boulevard Corridor",
+        "audience_signals": {
+          "demographics": ["commuters", "professionals", "25-54"],
+          "interests": ["convenience", "dining"],
+          "behaviors": ["car-commuters", "drive-through"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "times": ["07:00-09:00", "17:00-19:00"],
+              "reasoning": "High traffic corridor, commuter route, billboards effective"
+            }
+          ]
+        },
+        "dwell_time_seconds": 20,
+        "cost_tier": "$$",
+        "foot_traffic_daily": 12000
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "clarendon-farmers-market",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0963, 38.8871]
+      },
+      "properties": {
+        "name": "Clarendon Farmers Market",
+        "audience_signals": {
+          "demographics": ["families", "foodies", "health-conscious", "25-54"],
+          "interests": ["local-food", "community", "sustainability"],
+          "behaviors": ["weekend-market-goers", "community-engaged"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Wednesday"],
+              "times": ["15:00-19:00"],
+              "reasoning": "Weekly farmers market, highly engaged community audience, perfect for local events"
+            }
+          ]
+        },
+        "dwell_time_seconds": 70,
+        "cost_tier": "free",
+        "foot_traffic_daily": 800
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "arlington-mill-community-center",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0956, 38.8467]
+      },
+      "properties": {
+        "name": "Arlington Mill Community Center",
+        "audience_signals": {
+          "demographics": ["families", "seniors", "community-members", "all-ages"],
+          "interests": ["community-events", "recreation", "culture"],
+          "behaviors": ["class-attendees", "event-participants"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "times": ["18:00-21:00"],
+              "reasoning": "Evening classes and programs, engaged community members"
+            },
+            {
+              "days": ["Saturday"],
+              "times": ["09:00-17:00"],
+              "reasoning": "Weekend events and activities, family-friendly audience"
+            }
+          ]
+        },
+        "dwell_time_seconds": 60,
+        "cost_tier": "free",
+        "foot_traffic_daily": 900
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "trades-center-athletic-field",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0981, 38.8623]
+      },
+      "properties": {
+        "name": "Trades Center Athletic Field",
+        "audience_signals": {
+          "demographics": ["sports-enthusiasts", "families", "youth", "18-44"],
+          "interests": ["sports", "fitness", "recreation"],
+          "behaviors": ["weekend-athletes", "spectators"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Saturday", "Sunday"],
+              "times": ["09:00-17:00"],
+              "reasoning": "Weekend sports leagues, spectators, family-friendly"
+            }
+          ]
+        },
+        "dwell_time_seconds": 55,
+        "cost_tier": "free",
+        "foot_traffic_daily": 1200
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "shirlington-village",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0851, 38.8395]
+      },
+      "properties": {
+        "name": "Shirlington Village",
+        "audience_signals": {
+          "demographics": ["young-professionals", "families", "foodies", "25-44"],
+          "interests": ["dining", "entertainment", "shopping"],
+          "behaviors": ["evening-diners", "weekend-shoppers"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Friday", "Saturday"],
+              "times": ["18:00-22:00"],
+              "reasoning": "Dinner crowd, entertainment seekers, high engagement"
+            },
+            {
+              "days": ["Sunday"],
+              "times": ["11:00-15:00"],
+              "reasoning": "Brunch crowd, leisurely pace, walkable area"
+            }
+          ]
+        },
+        "dwell_time_seconds": 48,
+        "cost_tier": "$$",
+        "foot_traffic_daily": 3500
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "courthouse-plaza",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0861, 38.8911]
+      },
+      "properties": {
+        "name": "Courthouse Plaza",
+        "audience_signals": {
+          "demographics": ["professionals", "commuters", "25-54"],
+          "interests": ["business", "dining", "convenience"],
+          "behaviors": ["lunch-crowd", "coffee-break"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "times": ["12:00-14:00"],
+              "reasoning": "Office workers on lunch break, captive audience, high foot traffic"
+            }
+          ]
+        },
+        "dwell_time_seconds": 32,
+        "cost_tier": "$",
+        "foot_traffic_daily": 5500
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ballston-quarter",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.1114, 38.8816]
+      },
+      "properties": {
+        "name": "Ballston Quarter Shopping Center",
+        "audience_signals": {
+          "demographics": ["young-professionals", "families", "shoppers", "18-44"],
+          "interests": ["shopping", "dining", "entertainment"],
+          "behaviors": ["weekend-shoppers", "diners"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Saturday", "Sunday"],
+              "times": ["12:00-19:00"],
+              "reasoning": "Weekend shopping and dining, leisure mindset, high dwell time"
+            },
+            {
+              "days": ["Friday"],
+              "times": ["18:00-21:00"],
+              "reasoning": "Friday night dining and entertainment crowd"
+            }
+          ]
+        },
+        "dwell_time_seconds": 52,
+        "cost_tier": "$$",
+        "foot_traffic_daily": 7000
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "wilson-blvd-corridor",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.1068, 38.8875]
+      },
+      "properties": {
+        "name": "Wilson Boulevard Corridor",
+        "audience_signals": {
+          "demographics": ["residents", "commuters", "all-ages"],
+          "interests": ["dining", "shopping", "services"],
+          "behaviors": ["pedestrians", "cyclists"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "times": ["17:00-20:00"],
+              "reasoning": "Evening foot traffic, restaurant-goers, high visibility"
+            }
+          ]
+        },
+        "dwell_time_seconds": 28,
+        "cost_tier": "$",
+        "foot_traffic_daily": 4200
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "arlington-cinema-drafthouse",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0791, 38.8643]
+      },
+      "properties": {
+        "name": "Arlington Cinema Drafthouse",
+        "audience_signals": {
+          "demographics": ["young-professionals", "couples", "film-enthusiasts", "21-44"],
+          "interests": ["film", "entertainment", "dining"],
+          "behaviors": ["weekend-moviegoers", "date-night"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Friday", "Saturday"],
+              "times": ["18:00-22:00"],
+              "reasoning": "Weekend moviegoers, entertainment-focused audience, captive for 2+ hours"
+            }
+          ]
+        },
+        "dwell_time_seconds": 45,
+        "cost_tier": "$",
+        "foot_traffic_daily": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "columbia-pike-corridor",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0956, 38.8541]
+      },
+      "properties": {
+        "name": "Columbia Pike Corridor",
+        "audience_signals": {
+          "demographics": ["diverse-community", "families", "all-ages"],
+          "interests": ["multicultural", "dining", "community"],
+          "behaviors": ["residents", "shoppers"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Saturday", "Sunday"],
+              "times": ["11:00-18:00"],
+              "reasoning": "Weekend shopping and dining, diverse community, family-friendly"
+            }
+          ]
+        },
+        "dwell_time_seconds": 35,
+        "cost_tier": "$",
+        "foot_traffic_daily": 8500
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gateway-park",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0697, 38.8971]
+      },
+      "properties": {
+        "name": "Gateway Park",
+        "audience_signals": {
+          "demographics": ["professionals", "fitness-enthusiasts", "25-44"],
+          "interests": ["fitness", "outdoor-recreation", "views"],
+          "behaviors": ["morning-runners", "lunch-walkers"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "times": ["06:00-09:00", "12:00-13:00"],
+              "reasoning": "Morning runners and lunch break walkers, fitness-minded audience"
+            }
+          ]
+        },
+        "dwell_time_seconds": 42,
+        "cost_tier": "free",
+        "foot_traffic_daily": 2100
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "arlington-forest",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.1287, 38.8756]
+      },
+      "properties": {
+        "name": "Arlington Forest Neighborhood",
+        "audience_signals": {
+          "demographics": ["families", "residents", "35-54"],
+          "interests": ["community", "schools", "local-events"],
+          "behaviors": ["residents", "school-families"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "times": ["15:00-18:00"],
+              "reasoning": "School pickup time, parents and families, community bulletin boards"
+            }
+          ]
+        },
+        "dwell_time_seconds": 30,
+        "cost_tier": "free",
+        "foot_traffic_daily": 1800
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "clarendon-beer-garden",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0953, 38.8863]
+      },
+      "properties": {
+        "name": "Clarendon Beer Garden District",
+        "audience_signals": {
+          "demographics": ["young-professionals", "students", "21-34"],
+          "interests": ["nightlife", "socializing", "beer"],
+          "behaviors": ["weekend-nightlife", "happy-hour"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Friday"],
+              "times": ["17:00-20:00"],
+              "reasoning": "Happy hour crowd, socializing, high engagement"
+            },
+            {
+              "days": ["Saturday"],
+              "times": ["19:00-23:00"],
+              "reasoning": "Weekend nightlife, entertainment-focused, captive audience"
+            }
+          ]
+        },
+        "dwell_time_seconds": 50,
+        "cost_tier": "$$",
+        "foot_traffic_daily": 2500
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "arlington-farmers-market",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0869, 38.8903]
+      },
+      "properties": {
+        "name": "Arlington Farmers Market (Courthouse)",
+        "audience_signals": {
+          "demographics": ["families", "foodies", "health-conscious", "25-54"],
+          "interests": ["local-food", "community", "sustainability"],
+          "behaviors": ["saturday-morning-market-goers", "community-engaged"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Saturday"],
+              "times": ["08:00-12:00"],
+              "reasoning": "Weekly farmers market, highly engaged community, perfect for local event promotion"
+            }
+          ]
+        },
+        "dwell_time_seconds": 75,
+        "cost_tier": "free",
+        "foot_traffic_daily": 600
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "marymount-university",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0731, 38.8942]
+      },
+      "properties": {
+        "name": "Marymount University Campus",
+        "audience_signals": {
+          "demographics": ["students", "young-adults", "18-24"],
+          "interests": ["education", "campus-events", "socializing"],
+          "behaviors": ["students", "campus-life"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Monday", "Tuesday", "Wednesday", "Thursday"],
+              "times": ["11:00-14:00"],
+              "reasoning": "Student lunch breaks, campus bulletin boards, high visibility"
+            }
+          ]
+        },
+        "dwell_time_seconds": 40,
+        "cost_tier": "free",
+        "foot_traffic_daily": 3500
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "potomac-yard",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0520, 38.8390]
+      },
+      "properties": {
+        "name": "Potomac Yard Shopping Center",
+        "audience_signals": {
+          "demographics": ["families", "shoppers", "all-ages"],
+          "interests": ["shopping", "dining", "big-box-retail"],
+          "behaviors": ["weekend-shoppers", "errand-runners"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Saturday", "Sunday"],
+              "times": ["11:00-18:00"],
+              "reasoning": "Weekend shoppers, family outings, high foot traffic"
+            }
+          ]
+        },
+        "dwell_time_seconds": 58,
+        "cost_tier": "$$",
+        "foot_traffic_daily": 11000
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "lyon-village",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.0767, 38.8942]
+      },
+      "properties": {
+        "name": "Lyon Village Neighborhood",
+        "audience_signals": {
+          "demographics": ["families", "professionals", "35-54"],
+          "interests": ["community", "schools", "local-businesses"],
+          "behaviors": ["residents", "neighborhood-focused"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Sunday"],
+              "times": ["10:00-14:00"],
+              "reasoning": "Weekend neighborhood activity, local events, community boards"
+            }
+          ]
+        },
+        "dwell_time_seconds": 35,
+        "cost_tier": "free",
+        "foot_traffic_daily": 1100
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "westover-village",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.1185, 38.8828]
+      },
+      "properties": {
+        "name": "Westover Village",
+        "audience_signals": {
+          "demographics": ["families", "residents", "professionals", "35-54"],
+          "interests": ["local-businesses", "community", "dining"],
+          "behaviors": ["neighborhood-shoppers", "local-patrons"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Saturday", "Sunday"],
+              "times": ["10:00-15:00"],
+              "reasoning": "Weekend neighborhood foot traffic, local businesses, community-focused"
+            }
+          ]
+        },
+        "dwell_time_seconds": 38,
+        "cost_tier": "$",
+        "foot_traffic_daily": 2200
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "cherrydale",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-77.1211, 38.8967]
+      },
+      "properties": {
+        "name": "Cherrydale Neighborhood",
+        "audience_signals": {
+          "demographics": ["families", "residents", "35-54"],
+          "interests": ["community", "schools", "local-events"],
+          "behaviors": ["residents", "family-oriented"]
+        },
+        "timing_windows": {
+          "optimal": [
+            {
+              "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "times": ["15:00-18:00"],
+              "reasoning": "School pickup, community boards, local businesses"
+            }
+          ]
+        },
+        "dwell_time_seconds": 30,
+        "cost_tier": "free",
+        "foot_traffic_daily": 1400
+      }
+    }
+  ]
+}

@@ -1,0 +1,300 @@
+/**
+ * Story 4.3: RecommendationsList Styling
+ * Loading states, error states, empty states, auth prompts
+ */
+
+.recommendations-list {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Header */
+.list-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.list-header h2 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.list-subtitle {
+  font-size: 16px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 64px;
+  height: 64px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 24px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.loading-hint {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Error State */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.error-state svg {
+  color: #ef4444;
+  margin-bottom: 24px;
+}
+
+.error-state h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 12px 0;
+}
+
+.error-message {
+  font-size: 16px;
+  color: #6b7280;
+  margin: 0 0 24px 0;
+  max-width: 400px;
+}
+
+.retry-button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.retry-button:hover {
+  background: #2563eb;
+}
+
+.retry-button:active {
+  background: #1d4ed8;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.empty-state svg {
+  color: #9ca3af;
+  margin-bottom: 24px;
+}
+
+.empty-state h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 12px 0;
+}
+
+.empty-state p {
+  font-size: 16px;
+  color: #6b7280;
+  margin: 0 0 8px 0;
+  max-width: 400px;
+}
+
+/* Recommendations Cards Container */
+.recommendations-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+/* Auth Prompt for Anonymous Users */
+.auth-prompt {
+  margin: 32px 0;
+  padding: 32px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 2px solid #3b82f6;
+  border-radius: 16px;
+}
+
+.auth-prompt-content {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.auth-prompt-content svg {
+  flex-shrink: 0;
+  color: #3b82f6;
+}
+
+.auth-prompt-text {
+  flex: 1;
+}
+
+.auth-prompt-text h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.auth-prompt-text p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.auth-prompt-button {
+  flex-shrink: 0;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.auth-prompt-button:hover {
+  background: #2563eb;
+}
+
+.auth-prompt-button:active {
+  background: #1d4ed8;
+}
+
+/* List Footer */
+.list-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 24px;
+}
+
+.data-freshness {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.how-it-works-button {
+  background: transparent;
+  color: #3b82f6;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.how-it-works-button:hover {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .recommendations-list {
+    padding: 16px;
+  }
+
+  .list-header h2 {
+    font-size: 24px;
+  }
+
+  .list-subtitle {
+    font-size: 14px;
+  }
+
+  .auth-prompt {
+    padding: 24px;
+  }
+
+  .auth-prompt-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .auth-prompt-text h3 {
+    font-size: 18px;
+  }
+
+  .list-footer {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .list-header h2 {
+    font-size: 20px;
+  }
+
+  .loading-state,
+  .error-state,
+  .empty-state {
+    padding: 60px 16px;
+  }
+
+  .auth-prompt {
+    padding: 20px;
+  }
+
+  .auth-prompt-button {
+    width: 100%;
+  }
+}

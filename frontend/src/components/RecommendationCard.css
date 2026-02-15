@@ -1,0 +1,324 @@
+/**
+ * Story 4.3: RecommendationCard Styling
+ * Rank badges, metrics display, timing windows, transparent reasoning
+ */
+
+.recommendation-card {
+  position: relative;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.recommendation-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
+}
+
+.recommendation-card.highlighted {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.recommendation-card:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Story 4.3 AC: Rank badge (circular, colored) */
+.rank-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  color: white;
+}
+
+.rank-badge-green {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.rank-badge-yellow {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.rank-badge-orange {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+/* Zone Name */
+.zone-name {
+  font-size: 22px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 16px 0;
+  padding-right: 60px; /* Space for rank badge */
+}
+
+/* Metrics Row */
+.metrics-row {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metric-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Story 4.4 AC: Audience match color coding */
+.audience-match-green {
+  color: #10b981;
+}
+
+.audience-match-yellow {
+  color: #f59e0b;
+}
+
+.audience-match-orange {
+  color: #f97316;
+}
+
+/* Cost tier styling */
+.cost-tier {
+  color: #6366f1;
+}
+
+/* Sections */
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Story 4.6 AC: Timing Windows */
+.timing-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.timing-windows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.timing-window {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timing-days {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.timing-hours {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.timing-reasoning {
+  font-size: 13px;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* Story 4.9 AC: Transparent Reasoning */
+.reasoning-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background-color: #eff6ff;
+  border-left: 4px solid #3b82f6;
+  border-radius: 4px;
+}
+
+.reasoning-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #374151;
+  margin: 0;
+}
+
+/* Story 4.10 AC: Data Sources Section */
+.data-sources-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.data-sources-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.data-source-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.data-source-status {
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.data-source-status:first-child {
+  color: #10b981; /* Green for detected ✓ */
+}
+
+.data-source-item:has(.data-source-status:contains('○')) .data-source-status {
+  color: #9ca3af; /* Gray for not detected ○ */
+}
+
+.data-source-name {
+  font-weight: 600;
+  color: #374151;
+}
+
+.data-source-details {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.data-source-date {
+  color: #9ca3af;
+  font-size: 11px;
+  margin-left: auto;
+}
+
+/* Score Breakdown */
+.score-breakdown {
+  display: flex;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.score-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.score-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.score-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+/* Match Details Tooltip (shown on hover) */
+.match-details-tooltip {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 8px;
+  padding: 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  font-size: 13px;
+  color: #374151;
+}
+
+.recommendation-card:hover .match-details-tooltip {
+  display: block;
+}
+
+.match-details-tooltip strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #111827;
+}
+
+.match-details-tooltip ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.match-details-tooltip li {
+  margin-bottom: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .recommendation-card {
+    padding: 16px;
+  }
+
+  .rank-badge {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    top: 12px;
+    right: 12px;
+  }
+
+  .zone-name {
+    font-size: 18px;
+    padding-right: 50px;
+  }
+
+  .metrics-row {
+    gap: 16px;
+  }
+
+  .metric-value {
+    font-size: 18px;
+  }
+}
