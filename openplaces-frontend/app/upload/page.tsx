@@ -87,9 +87,34 @@ export default function UploadPage() {
   }
 
   const handleGetRecommendations = () => {
-    // TODO: Story 4.x - Navigate to recommendations page
-    toast.success('Redirecting to recommendations... (Story 4.x)')
-    // router.push('/recommendations')
+    // Story 4.4: Navigate to recommendations page with event data
+    if (!extractedData) {
+      toast.error('No event data available')
+      return
+    }
+
+    // Validate required fields (geocoded coordinates)
+    if (!extractedData.latitude || !extractedData.longitude) {
+      toast.error('Venue must be geocoded first')
+      return
+    }
+
+    // Build event data for recommendations API
+    const eventData = {
+      name: extractedData.event_name,
+      date: extractedData.event_date,
+      time: extractedData.event_time,
+      venue_lat: extractedData.latitude,
+      venue_lon: extractedData.longitude,
+      target_audience: extractedData.target_audience,
+      event_type: extractedData.event_type || 'Community event'
+    }
+
+    // Navigate to recommendations page with event data
+    const params = new URLSearchParams({
+      eventData: JSON.stringify(eventData)
+    })
+    router.push(`/recommendations?${params.toString()}`)
   }
 
   const handleManualSubmit = (data: any) => {
