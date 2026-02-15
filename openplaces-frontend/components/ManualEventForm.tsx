@@ -10,6 +10,7 @@ const eventSchema = z.object({
   event_time: z.string().min(1, 'Time is required'),
   venue: z.string().min(3, 'Venue is required'),
   target_audience: z.array(z.string()).min(1, 'Select at least one audience'),
+  event_type: z.string().min(1, 'Event type is required'), // Story 3.8
 })
 
 type EventFormData = z.infer<typeof eventSchema>
@@ -29,6 +30,7 @@ export default function ManualEventForm({ onSubmit, onCancel }: ManualEventFormP
     resolver: zodResolver(eventSchema),
     defaultValues: {
       target_audience: [],
+      event_type: 'Community event', // Story 3.8: Default event type
     },
   })
 
@@ -42,6 +44,7 @@ export default function ManualEventForm({ onSubmit, onCancel }: ManualEventFormP
       event_time: data.event_time,
       venue: data.venue,
       target_audience: data.target_audience,
+      event_type: data.event_type, // Story 3.8
       confidence: 'high', // Manual entry is always high confidence
       extraction_notes: 'Manually entered by user',
     })
@@ -125,6 +128,28 @@ export default function ManualEventForm({ onSubmit, onCancel }: ManualEventFormP
           />
           {errors.venue && (
             <p className="mt-1 text-sm text-red-600">{errors.venue.message}</p>
+          )}
+        </div>
+
+        {/* Event Type */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Event Type <span className="text-red-500">*</span>
+          </label>
+          <select
+            {...register('event_type')}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="Workshop">Workshop</option>
+            <option value="Concert">Concert</option>
+            <option value="Sale">Sale</option>
+            <option value="Community event">Community event</option>
+            <option value="Nightlife">Nightlife</option>
+            <option value="Sports">Sports</option>
+            <option value="Cultural">Cultural</option>
+          </select>
+          {errors.event_type && (
+            <p className="mt-1 text-sm text-red-600">{errors.event_type.message}</p>
           )}
         </div>
 
