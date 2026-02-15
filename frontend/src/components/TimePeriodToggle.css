@@ -1,0 +1,187 @@
+/**
+ * Story 6.1: Time Period Toggle Styling
+ * Story 6.6: Smooth Visual Transitions
+ */
+
+/* Story 6.1 AC: Sticky container */
+.time-period-toggle-container {
+  position: sticky;
+  top: 80px;
+  z-index: 50;
+  margin-bottom: 32px;
+}
+
+.time-period-toggle {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Header */
+.toggle-header {
+  margin-bottom: 16px;
+}
+
+.toggle-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.toggle-hint {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Story 6.1 AC: Three toggle buttons */
+.toggle-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.toggle-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 16px;
+  background: white;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.toggle-button:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+/* Story 6.1 AC: Active button (highlighted) */
+.toggle-button.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+  font-weight: 600;
+}
+
+.toggle-button.active .period-time {
+  color: #dbeafe;
+}
+
+/* Story 6.1 AC: Keyboard focus */
+.toggle-button:focus {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.period-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: inherit;
+}
+
+.period-time {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Story 6.2 AC: Description of time period behavior */
+.toggle-description {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+  margin: 0;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  /* Story 6.6: Smooth transition when description changes */
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .time-period-toggle-container {
+    top: 60px;
+  }
+
+  .time-period-toggle {
+    padding: 20px;
+  }
+
+  .toggle-header h3 {
+    font-size: 16px;
+  }
+
+  .toggle-buttons {
+    gap: 6px;
+  }
+
+  .toggle-button {
+    padding: 10px 12px;
+  }
+
+  .period-label {
+    font-size: 14px;
+  }
+
+  .period-time {
+    font-size: 11px;
+  }
+
+  .toggle-description {
+    font-size: 12px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .time-period-toggle-container {
+    top: 0;
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  .time-period-toggle {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .toggle-buttons {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .toggle-button {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 12px 16px;
+  }
+}
+
+/* Accessibility - Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .toggle-button,
+  .toggle-description {
+    transition: none;
+    animation: none;
+  }
+}

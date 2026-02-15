@@ -14,6 +14,7 @@ import EventConfirmation from '../components/EventConfirmation'
 import RecommendationsList from '../components/RecommendationsList'
 import ManualEventForm, { EventData as ManualEventData } from '../components/ManualEventForm'
 import MapView from '../components/MapView'
+import TimePeriodToggle, { TimePeriod } from '../components/TimePeriodToggle'
 import './Upload.css'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
@@ -43,6 +44,9 @@ export default function Upload() {
   const [isAuthenticated] = useState(false)  // TODO: integrate with Clerk auth (Story 2.x)
   const [showManualForm, setShowManualForm] = useState(false)  // Story 3.4, 3.10
   const [highlightedZoneId, setHighlightedZoneId] = useState<string | null>(null)  // Story 5.7, 5.8
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState<TimePeriod>('evening')  // Story 6.1
+  const [eventTime, setEventTime] = useState<string | null>(null)  // Story 6.5
+  const [isReranking, setIsReranking] = useState(false)  // Story 6.3, 6.6
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const validateFile = (file: File): UploadError | null => {
@@ -175,6 +179,44 @@ export default function Upload() {
     }
   }
 
+  // Story 6.2, 6.3: Adjust scores based on time period and re-rank
+  const handleTimePeriodChange = (period: TimePeriod) => {
+    setIsReranking(true)  // Story 6.6: Trigger transition
+    setSelectedTimePeriod(period)
+
+    // Story 6.2 AC: Simulate brief recalculation (completes within 200ms)
+    setTimeout(() => {
+      // Adjust temporal scores based on time period
+      const adjustedRecs = recommendations.map(rec => {
+        let temporalBoost = 0
+
+        // Story 6.2 AC: Boost zones that match the selected time period
+        rec.timing_windows?.forEach(window => {
+          const hours = window.hours.toLowerCase()
+
+          if (period === 'morning' && (hours.includes('6') || hours.includes('7') || hours.includes('8') || hours.includes('9') || hours.includes('10'))) {
+            temporalBoost = 5
+          } else if (period === 'lunch' && (hours.includes('11') || hours.includes('12') || hours.includes('1') || hours.includes('2'))) {
+            temporalBoost = 5
+          } else if (period === 'evening' && (hours.includes('5') || hours.includes('6') || hours.includes('7') || hours.includes('8') || hours.includes('9'))) {
+            temporalBoost = 5
+          }
+        })
+
+        return {
+          ...rec,
+          temporal_score: Math.min(30, rec.temporal_score + temporalBoost),
+          total_score: Math.min(100, rec.total_score + temporalBoost)
+        }
+      })
+
+      // Story 6.3 AC: Re-rank based on new scores
+      const reranked = [...adjustedRecs].sort((a, b) => b.total_score - a.total_score)
+      setRecommendations(reranked)
+      setIsReranking(false)  // Story 6.6: End transition
+    }, 200)
+  }
+
   const handleConfirm = async (data: EventExtraction) => {
     // Story 4.3: After event confirmation, fetch recommendations
     setIsLoadingRecommendations(true)
@@ -208,6 +250,7 @@ export default function Upload() {
 
       console.log(`Got ${zones.length} recommendations`)
       setRecommendations(zones)
+      setEventTime(data.event_time)  // Story 6.5: Store event time for smart default
       setShowRecommendations(true)
       setShowConfirmation(false)
     } catch (error) {
@@ -276,7 +319,7 @@ export default function Upload() {
     }
   }
 
-  // Story 4.3 + Epic 5: Show RecommendationsList with Map after successful generation
+  // Story 4.3 + Epic 5 + Epic 6: Show RecommendationsList with Map and Time Toggle
   if (showRecommendations) {
     return (
       <div className="upload-page">
@@ -299,25 +342,34 @@ export default function Upload() {
             />
           </div>
 
-          {/* Story 4.3: Recommendations List */}
+          {/* Story 4.3 + Epic 6: Recommendations List with Time Toggle */}
           <div className="list-section">
-            <RecommendationsList
-              recommendations={recommendations}
-              isAuthenticated={isAuthenticated}
-              isLoading={isLoadingRecommendations}
-              error={recommendationsError}
-              onRetry={handleRetryRecommendations}
-              onEditDetails={() => {
-                // Story 4.8: Go back to EventConfirmation to edit details
-                setShowRecommendations(false)
-                setShowConfirmation(true)
-              }}
-              onHighlightZone={(zoneId) => {
-                // Story 5.7: Hover list item to highlight zone on map
-                setHighlightedZoneId(zoneId)
-              }}
-              highlightedZoneId={highlightedZoneId}
+            {/* Story 6.1: Time Period Toggle */}
+            <TimePeriodToggle
+              eventTime={eventTime || undefined}
+              onChange={handleTimePeriodChange}
             />
+
+            {/* Story 6.6: Fade transition during re-ranking */}
+            <div className={`recommendations-list-wrapper ${isReranking ? 'reranking' : ''}`}>
+              <RecommendationsList
+                recommendations={recommendations}
+                isAuthenticated={isAuthenticated}
+                isLoading={isLoadingRecommendations}
+                error={recommendationsError}
+                onRetry={handleRetryRecommendations}
+                onEditDetails={() => {
+                  // Story 4.8: Go back to EventConfirmation to edit details
+                  setShowRecommendations(false)
+                  setShowConfirmation(true)
+                }}
+                onHighlightZone={(zoneId) => {
+                  // Story 5.7: Hover list item to highlight zone on map
+                  setHighlightedZoneId(zoneId)
+                }}
+                highlightedZoneId={highlightedZoneId}
+              />
+            </div>
           </div>
         </div>
       </div>

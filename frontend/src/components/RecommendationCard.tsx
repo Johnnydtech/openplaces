@@ -235,10 +235,23 @@ export default function RecommendationCard({
       )}
 
       {/* Story 4.9 AC: Transparent Reasoning - "What the data shows" (Story 4.14: signal-based language) */}
+      {/* Story 6.4: Temporal reasoning included in timing windows */}
       {recommendation.reasoning && (
         <div className="reasoning-section">
           <h4 className="section-title">What the data shows</h4>
           <p className="reasoning-text">{recommendation.reasoning}</p>
+          {/* Story 6.4: Display timing-specific behavior patterns */}
+          {recommendation.timing_windows && recommendation.timing_windows.length > 0 && (
+            <div className="temporal-insights">
+              {recommendation.timing_windows.map((window, idx) => (
+                window.reasoning && (
+                  <p key={idx} className="timing-reasoning">
+                    <strong>{window.days} {window.hours}:</strong> {window.reasoning}
+                  </p>
+                )
+              ))}
+            </div>
+          )}
         </div>
       )}
 

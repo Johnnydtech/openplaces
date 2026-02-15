@@ -446,3 +446,24 @@
     margin-bottom: 16px;
   }
 }
+
+/* Story 6.6: Smooth Visual Transition When Toggling Time Period */
+.recommendations-list-wrapper {
+  transition: opacity 0.2s ease;
+}
+
+.recommendations-list-wrapper.reranking {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Accessibility - Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .recommendations-list-wrapper {
+    transition: none;
+  }
+
+  .recommendations-list-wrapper.reranking {
+    opacity: 1;
+  }
+}

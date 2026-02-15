@@ -233,6 +233,25 @@
   margin: 0;
 }
 
+/* Story 6.4: Temporal Insights - time-specific behavior patterns */
+.temporal-insights {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #dbeafe;
+}
+
+.temporal-insights .timing-reasoning {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #374151;
+  margin: 8px 0 0 0;
+}
+
+.temporal-insights .timing-reasoning strong {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
 /* Story 4.10 AC: Data Sources Section */
 .data-sources-section {
   margin-bottom: 20px;
