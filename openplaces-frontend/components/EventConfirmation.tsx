@@ -1,5 +1,7 @@
 'use client'
 
+import toast from 'react-hot-toast'
+
 interface EventData {
   event_name: string
   event_date: string
@@ -13,6 +15,20 @@ interface EventData {
 interface EventConfirmationProps {
   data: EventData
   onGetRecommendations: () => void
+}
+
+function EditButton({ fieldName }: { fieldName: string }) {
+  return (
+    <button
+      onClick={() => toast('Edit functionality coming in Story 3.5!', { icon: '✏️' })}
+      className="ml-2 text-blue-600 hover:text-blue-700"
+      aria-label={`Edit ${fieldName}`}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+      </svg>
+    </button>
+  )
 }
 
 export default function EventConfirmation({ data, onGetRecommendations }: EventConfirmationProps) {
@@ -39,28 +55,43 @@ export default function EventConfirmation({ data, onGetRecommendations }: EventC
 
       <div className="space-y-3">
         <div>
-          <label className="text-xs font-medium text-gray-500">Event Name</label>
+          <label className="text-xs font-medium text-gray-500 flex items-center">
+            Event Name
+            <EditButton fieldName="Event Name" />
+          </label>
           <p className="text-sm font-medium text-gray-900">{data.event_name}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-medium text-gray-500">Date</label>
+            <label className="text-xs font-medium text-gray-500 flex items-center">
+              Date
+              <EditButton fieldName="Date" />
+            </label>
             <p className="text-sm text-gray-900">{data.event_date}</p>
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-500">Time</label>
+            <label className="text-xs font-medium text-gray-500 flex items-center">
+              Time
+              <EditButton fieldName="Time" />
+            </label>
             <p className="text-sm text-gray-900">{data.event_time}</p>
           </div>
         </div>
 
         <div>
-          <label className="text-xs font-medium text-gray-500">Venue</label>
+          <label className="text-xs font-medium text-gray-500 flex items-center">
+            Venue
+            <EditButton fieldName="Venue" />
+          </label>
           <p className="text-sm text-gray-900">{data.venue}</p>
         </div>
 
         <div>
-          <label className="text-xs font-medium text-gray-500">Target Audience</label>
+          <label className="text-xs font-medium text-gray-500 flex items-center">
+            Target Audience
+            <EditButton fieldName="Target Audience" />
+          </label>
           <div className="mt-1 flex flex-wrap gap-2">
             {data.target_audience.map((audience, index) => (
               <span
