@@ -39,6 +39,18 @@ export interface DataSource {
 }
 
 /**
+ * Risk warning for deceptive hotspots (Story 7.1-7.7)
+ */
+export interface RiskWarning {
+  type: 'low_dwell_time' | 'poor_audience_match' | 'visual_noise' | 'timing_misalignment'
+  severity: 'warning' | 'caution'
+  title: string
+  explanation: string
+  data_citation: string
+  alternatives?: number[] // Ranks of better alternative zones
+}
+
+/**
  * Scored zone recommendation
  * Matches backend ZoneScore model
  */
@@ -64,6 +76,9 @@ export interface ZoneRecommendation {
   reasoning: string // Plain language explanation
   matched_signals: string[] // Matched audience signals
   data_sources: DataSource[] // Story 4.10: Data sources used
+
+  // Story 7.1-7.7: Risk warnings for deceptive hotspots
+  risk_warning?: RiskWarning
 
   // Geographic data
   latitude: number

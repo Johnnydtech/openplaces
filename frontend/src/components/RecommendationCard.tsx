@@ -144,9 +144,12 @@ export default function RecommendationCard({
   // Format audience match percentage
   const audienceMatchPercentage = Math.round(recommendation.audience_match_score * 100)
 
+  // Story 7.3: Warning panel expand/collapse state
+  const [isWarningExpanded, setIsWarningExpanded] = useState(false)
+
   return (
     <div
-      className={`recommendation-card ${isHighlighted ? 'highlighted' : ''}`}
+      className={`recommendation-card ${isHighlighted ? 'highlighted' : ''} ${recommendation.risk_warning ? 'has-warning' : ''}`}
       onClick={onClick}
       onMouseEnter={() => onHover?.(true)}  // Story 5.7: Hover to highlight map zone
       onMouseLeave={() => onHover?.(false)}
@@ -160,6 +163,21 @@ export default function RecommendationCard({
       <div className={`rank-badge ${getRankBadgeColor(rank)}`}>
         #{rank}
       </div>
+
+      {/* Story 7.2: Risk Warning Badge (top-right corner) */}
+      {recommendation.risk_warning && (
+        <button
+          className={`risk-warning-badge ${recommendation.risk_warning.severity}`}
+          onClick={(e) => {
+            e.stopPropagation()
+            setIsWarningExpanded(!isWarningExpanded)
+          }}
+          title="Risk Warning - Click for details"
+          aria-label="Risk warning - click for details"
+        >
+          ⚠️
+        </button>
+      )}
 
       {/* Header with Zone Name and Save Button */}
       <div className="card-header">
@@ -341,6 +359,62 @@ export default function RecommendationCard({
               <li key={idx}>{signal}</li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* Story 7.3, 7.4, 7.5, 7.6, 7.7: Risk Warning Explanation Panel */}
+      {recommendation.risk_warning && isWarningExpanded && (
+        <div className="risk-warning-panel">
+          {/* Story 7.5: Warning category with icon */}
+          <div className="warning-header">
+            <span className="warning-icon">
+              {recommendation.risk_warning.type === 'low_dwell_time' && '⏱️'}
+              {recommendation.risk_warning.type === 'poor_audience_match' && '👥'}
+              {recommendation.risk_warning.type === 'visual_noise' && '👁️'}
+              {recommendation.risk_warning.type === 'timing_misalignment' && '🕐'}
+            </span>
+            <div className="warning-title-group">
+              {/* Story 7.7: Protective language */}
+              <h4 className="warning-title">{recommendation.risk_warning.title}</h4>
+              <span className="warning-category">
+                {recommendation.risk_warning.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              </span>
+            </div>
+          </div>
+
+          {/* Story 7.3: Detailed explanation with data citation */}
+          <div className="warning-body">
+            <p className="warning-explanation">{recommendation.risk_warning.explanation}</p>
+            <p className="warning-citation">
+              <em>{recommendation.risk_warning.data_citation}</em>
+            </p>
+
+            {/* Story 7.4: Better alternatives */}
+            {recommendation.risk_warning.alternatives && recommendation.risk_warning.alternatives.length > 0 && (
+              <div className="warning-alternatives">
+                <strong>Better alternatives:</strong>
+                <ul className="alternatives-list">
+                  {recommendation.risk_warning.alternatives.map((altRank) => (
+                    <li key={altRank} className="alternative-item">
+                      <span className="alternative-rank">#{altRank}</span>
+                      <span className="alternative-hint">Click to view</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Story 7.6: Close button */}
+          <button
+            className="warning-close-button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsWarningExpanded(false)
+            }}
+          >
+            Got it
+          </button>
         </div>
       )}
     </div>

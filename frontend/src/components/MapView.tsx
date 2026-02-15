@@ -152,10 +152,13 @@ export default function MapView({
     displayedZones.forEach((zone) => {
       // Story 5.3 AC: Create marker element with rank badge
       const markerEl = document.createElement('div')
-      markerEl.className = `zone-marker ${getRankClass(zone.rank)}`
-      markerEl.innerHTML = `<span class="rank-number">#${zone.rank}</span>`
+      markerEl.className = `zone-marker ${getRankClass(zone.rank)} ${zone.risk_warning ? 'has-warning' : ''}`
+      markerEl.innerHTML = `
+        <span class="rank-number">#${zone.rank}</span>
+        ${zone.risk_warning ? '<span class="marker-warning-badge">⚠️</span>' : ''}
+      `
       markerEl.setAttribute('role', 'button')
-      markerEl.setAttribute('aria-label', `Zone ${zone.zone_name}, rank ${zone.rank}`)
+      markerEl.setAttribute('aria-label', `Zone ${zone.zone_name}, rank ${zone.rank}${zone.risk_warning ? ' - has risk warning' : ''}`)
       markerEl.setAttribute('tabindex', '0')
 
       // Story 5.5 AC: Click marker to view details

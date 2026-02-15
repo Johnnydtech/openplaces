@@ -144,6 +144,39 @@
   pointer-events: none;
 }
 
+/* Story 7.2: Warning badge on map markers */
+.zone-marker.has-warning {
+  border-color: #ef4444;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5), 0 0 0 2px #fecaca;
+  animation: pulseWarningMarker 2s ease-in-out infinite;
+}
+
+@keyframes pulseWarningMarker {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5), 0 0 0 2px #fecaca;
+  }
+  50% {
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.8), 0 0 0 4px rgba(239, 68, 68, 0.3);
+  }
+}
+
+.marker-warning-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 16px;
+  background: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  user-select: none;
+  pointer-events: none;
+}
+
 /* Story 5.7: Highlight marker when list item is hovered */
 .zone-marker.highlighted {
   transform: scale(1.3);

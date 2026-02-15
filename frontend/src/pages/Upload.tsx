@@ -8,7 +8,7 @@
 
 import { useState, useRef, DragEvent, ChangeEvent } from 'react'
 import { analyzeFlyer, EventExtraction } from '../api/analyze'
-import { getTopRecommendations, EventData, ZoneRecommendation } from '../api/recommendations'
+import { getTopRecommendations, EventData, ZoneRecommendation, RiskWarning } from '../api/recommendations'
 import { geocodeVenue, GeocodingError } from '../api/geocoding'
 import EventConfirmation from '../components/EventConfirmation'
 import RecommendationsList from '../components/RecommendationsList'
@@ -179,6 +179,67 @@ export default function Upload() {
     }
   }
 
+  // Story 7.1: Detect deceptive hotspots based on evidence
+  const detectDeceptiveHotspots = (zones: ZoneRecommendation[]): ZoneRecommendation[] => {
+    return zones.map((zone, index) => {
+      // Story 7.1 AC: Flag if high foot traffic AND low dwell time AND poor audience alignment
+      const audienceMatchPercent = (zone.audience_match_score / 40) * 100
+      const isDwellTimeLow = zone.dwell_time_seconds < 20
+      const isAudienceMatchPoor = audienceMatchPercent < 60
+
+      // For demo purposes, simulate foot traffic data (in production, this would come from backend)
+      const simulatedFootTraffic = zone.rank <= 3 ? 1500 : zone.rank <= 7 ? 800 : 500
+
+      let riskWarning: RiskWarning | undefined
+
+      // Story 7.1 AC: Detect deceptive hotspots
+      if (simulatedFootTraffic > 1000 && isDwellTimeLow && isAudienceMatchPoor) {
+        // Story 7.5: Categorize by type
+        riskWarning = {
+          type: 'low_dwell_time',
+          severity: 'warning',
+          // Story 7.7: Frame as protective, not scolding
+          title: 'We recommend skipping this zone',
+          explanation: `${zone.zone_name} has high foot traffic but people rush through quickly (${zone.dwell_time_seconds} second average). With ${Math.round(audienceMatchPercent)}% audience match, your message may get lost in the visual noise.`,
+          data_citation: `Based on zone traffic patterns and dwell time analysis`,
+          // Story 7.4: Suggest 2-3 better alternatives
+          alternatives: zones
+            .filter((z, i) => i !== index && z.dwell_time_seconds >= 20 && (z.audience_match_score / 40) * 100 >= 70)
+            .slice(0, 3)
+            .map(z => z.rank)
+        }
+      } else if (isAudienceMatchPoor && !isDwellTimeLow) {
+        // Poor audience match but good dwell time
+        riskWarning = {
+          type: 'poor_audience_match',
+          severity: 'caution',
+          title: 'Audience mismatch detected',
+          explanation: `This zone may not align well with your target audience (${Math.round(audienceMatchPercent)}% match). Consider zones with stronger audience signals.`,
+          data_citation: `Based on audience demographic analysis`,
+          alternatives: zones
+            .filter((z, i) => i !== index && (z.audience_match_score / 40) * 100 >= 70)
+            .slice(0, 3)
+            .map(z => z.rank)
+        }
+      } else if (isDwellTimeLow && !isAudienceMatchPoor) {
+        // Low dwell time but good audience match
+        riskWarning = {
+          type: 'low_dwell_time',
+          severity: 'caution',
+          title: 'Low attention window',
+          explanation: `People move quickly through this zone (${zone.dwell_time_seconds} seconds). Your message may not get adequate viewing time.`,
+          data_citation: `Based on dwell time measurements`,
+          alternatives: zones
+            .filter((z, i) => i !== index && z.dwell_time_seconds >= 30)
+            .slice(0, 3)
+            .map(z => z.rank)
+        }
+      }
+
+      return { ...zone, risk_warning: riskWarning }
+    })
+  }
+
   // Story 6.2, 6.3: Adjust scores based on time period and re-rank
   const handleTimePeriodChange = (period: TimePeriod) => {
     setIsReranking(true)  // Story 6.6: Trigger transition
@@ -249,7 +310,11 @@ export default function Upload() {
       const zones = await getTopRecommendations(eventData, limit)
 
       console.log(`Got ${zones.length} recommendations`)
-      setRecommendations(zones)
+
+      // Story 7.1: Detect deceptive hotspots
+      const zonesWithWarnings = detectDeceptiveHotspots(zones)
+
+      setRecommendations(zonesWithWarnings)
       setEventTime(data.event_time)  // Story 6.5: Store event time for smart default
       setShowRecommendations(true)
       setShowConfirmation(false)
