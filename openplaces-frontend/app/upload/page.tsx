@@ -19,16 +19,16 @@ export default function UploadPage() {
   const [showManualForm, setShowManualForm] = useState(false)
 
   const handleFileSelect = async (file: File) => {
-    // Client-side validation
+    // Client-side validation (Story 3.10: Enhanced error messages)
     const maxSize = 10 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
-      toast.error('File is too large. Maximum size is 10MB.')
+      toast.error('File too large (max 10MB). Compress image or enter details manually.')
       return
     }
 
     const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf']
     if (!allowedTypes.includes(file.type)) {
-      toast.error('File type not supported. Please upload JPG, PNG, or PDF.')
+      toast.error('File type not supported. Upload JPG, PNG, or PDF instead.')
       return
     }
 
@@ -62,14 +62,15 @@ export default function UploadPage() {
     } catch (error: any) {
       console.error('Upload error:', error)
 
+      // Story 3.10: Enhanced error messages (≤20 words, actionable)
       if (error.response?.status === 400) {
-        toast.error(error.response.data.detail || 'Invalid file. Please try another.', { id: 'upload' })
+        toast.error('File cannot be read. Try different file or enter manually.', { id: 'upload' })
       } else if (error.response?.status === 504) {
-        toast.error('Analysis timed out. Please try a clearer image.', { id: 'upload' })
+        toast.error('Analysis timed out. Use clearer image or enter manually.', { id: 'upload' })
       } else if (error.code === 'ECONNABORTED') {
-        toast.error('Upload timed out. Please check your connection.', { id: 'upload' })
+        toast.error('Upload timed out. Check connection and try again.', { id: 'upload' })
       } else {
-        toast.error('AI extraction unavailable. Please enter details manually.', { id: 'upload' })
+        toast.error('AI extraction unavailable. Enter event details manually instead.', { id: 'upload' })
       }
     } finally {
       setIsUploading(false)
