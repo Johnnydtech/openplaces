@@ -29,6 +29,18 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
   const [localData, setLocalData] = useState(data)
   const [isGeocoding, setIsGeocoding] = useState(false)
   const [geocodingError, setGeocodingError] = useState<string | null>(null)
+  // Story 3.7: Target audience editing state
+  const [editingAudiences, setEditingAudiences] = useState<string[]>([])
+
+  // Story 3.7: Audience options (from ManualEventForm)
+  const audienceOptions = [
+    'Young professionals',
+    'Families',
+    'Students',
+    'Coffee enthusiasts',
+    'Seniors',
+    'Local residents',
+  ]
 
   // Story 3.6: Auto-geocode venue when component mounts or venue changes
   useEffect(() => {
@@ -106,6 +118,36 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
   const handleCancel = () => {
     setEditingField(null)
     setEditValue('')
+  }
+
+  // Story 3.7: Target audience editing handlers
+  const handleEditAudience = () => {
+    setEditingField('target_audience')
+    setEditingAudiences([...localData.target_audience]) // Initialize with current values
+  }
+
+  const handleAudienceToggle = (audience: string) => {
+    setEditingAudiences(prev =>
+      prev.includes(audience)
+        ? prev.filter(a => a !== audience)  // Uncheck
+        : [...prev, audience]  // Check
+    )
+  }
+
+  const handleSaveAudience = () => {
+    // Validation: At least one audience required
+    if (editingAudiences.length === 0) {
+      toast.error('Please select at least one audience')
+      return
+    }
+
+    const updatedData = { ...localData, target_audience: editingAudiences }
+    setLocalData(updatedData)
+    if (onUpdate) {
+      onUpdate(updatedData)
+    }
+    setEditingField(null)
+    toast.success('Audience updated!')
   }
 
   return (
@@ -248,14 +290,53 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
 
         {/* Target Audience */}
         <div>
-          <label className="text-xs font-medium text-gray-500">Target Audience</label>
-          <div className="mt-1 flex flex-wrap gap-2">
-            {localData.target_audience.map((audience, index) => (
-              <span key={index} className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
-                {audience}
-              </span>
-            ))}
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-gray-500">Target Audience</label>
+            {editingField !== 'target_audience' && (
+              <button onClick={handleEditAudience} className="text-blue-600 hover:text-blue-700">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                </svg>
+              </button>
+            )}
           </div>
+          {editingField === 'target_audience' ? (
+            <div className="mt-1">
+              {/* Checkbox list */}
+              <div className="space-y-2 max-h-48 overflow-y-auto rounded border border-gray-300 p-3 bg-gray-50">
+                {audienceOptions.map((audience) => (
+                  <label key={audience} className="flex items-center cursor-pointer hover:bg-gray-100 p-1 rounded">
+                    <input
+                      type="checkbox"
+                      checked={editingAudiences.includes(audience)}
+                      onChange={() => handleAudienceToggle(audience)}
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">{audience}</span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Save/Cancel buttons */}
+              <div className="flex gap-2 mt-2">
+                <button onClick={handleSaveAudience} className="text-green-600 hover:text-green-700 font-bold">✓</button>
+                <button onClick={handleCancel} className="text-red-600 hover:text-red-700 font-bold">✕</button>
+              </div>
+
+              {/* Validation error */}
+              {editingAudiences.length === 0 && (
+                <p className="text-xs text-red-600 mt-1">⚠️ Select at least one audience</p>
+              )}
+            </div>
+          ) : (
+            <div className="mt-1 flex flex-wrap gap-2">
+              {localData.target_audience.map((audience, index) => (
+                <span key={index} className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
+                  {audience}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {localData.extraction_notes && (
