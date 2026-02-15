@@ -10,13 +10,22 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 from openai import AsyncOpenAI
 import httpx
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize OpenAI client
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Initialize OpenAI client (lazy loaded after env vars are available)
+def get_openai_client() -> AsyncOpenAI:
+    """Get or create OpenAI client"""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY environment variable is not set")
+    return AsyncOpenAI(api_key=api_key)
 
 
 class VisionAnalysisError(Exception):
@@ -99,6 +108,7 @@ If any information is unclear or missing, note it in extraction_notes and mark c
 
         # Story 3.2 AC: Response within 45 seconds (timeout)
         try:
+            client = get_openai_client()
             response = await asyncio.wait_for(
                 client.chat.completions.create(
                     model=os.getenv("OPENAI_MODEL", "gpt-4-vision-preview"),
