@@ -87,39 +87,16 @@ async def analyze_flyer(
         elif file_type not in ["image/jpeg", "image/png"]:
             raise VisionAnalysisError(f"Unsupported file type: {file_type}")
 
-        # Step 1: Use Google Cloud Vision API to extract text (OCR)
-        logger.info("Extracting text using Google Cloud Vision API...")
-        try:
-            vision_client = get_vision_client()
-            image = vision.Image(content=file_content)
-            response = vision_client.text_detection(image=image)
+        # Use OpenAI GPT-4o with vision to analyze the flyer directly
+        logger.info("Analyzing flyer with OpenAI GPT-4o vision...")
 
-            if response.error.message:
-                raise VisionAnalysisError(f"Google Vision API error: {response.error.message}")
+        # Convert to base64
+        base64_image = base64.b64encode(file_content).decode("utf-8")
+        image_format = "jpeg" if file_type == "image/jpeg" else "png"
 
-            texts = response.text_annotations
-            if not texts:
-                raise VisionAnalysisError("No text detected in the image. Please upload a clearer flyer.")
+        prompt = """Analyze this event flyer image and extract the following information in JSON format:
 
-            # The first annotation contains all detected text
-            extracted_text = texts[0].description
-            logger.info(f"Extracted {len(extracted_text)} characters from image")
-
-        except Exception as e:
-            logger.error(f"Google Cloud Vision API error: {str(e)}")
-            raise VisionAnalysisError(
-                "Text extraction failed. Please ensure GOOGLE_APPLICATION_CREDENTIALS is set."
-            )
-
-        # Step 2: Use OpenAI GPT-4 to parse the extracted text
-        logger.info("Parsing extracted text with GPT-4...")
-        prompt = f"""You are analyzing text extracted from an event flyer. Parse the following text and extract event information in JSON format:
-
-EXTRACTED TEXT:
-{extracted_text}
-
-Return ONLY a JSON object (no markdown, no explanation) with this structure:
-{{
+{
   "event_name": "Name of the event",
   "event_date": "Date of the event (convert to ISO format YYYY-MM-DD if possible, otherwise return as text)",
   "event_time": "Time of the event (e.g., '7:00 PM', '2-5 PM')",
@@ -127,21 +104,31 @@ Return ONLY a JSON object (no markdown, no explanation) with this structure:
   "target_audience": ["List", "of", "audience", "types"],
   "confidence": "High|Medium|Low",
   "extraction_notes": "Any warnings or missing information"
-}}
+}
 
 Target audience should describe who would be interested in this event (e.g., "young professionals", "families", "students", "fitness enthusiasts", "foodies", "coffee enthusiasts").
 
-If any information is unclear or missing, note it in extraction_notes and mark confidence as Medium or Low."""
+If any information is unclear or missing, note it in extraction_notes and mark confidence as Medium or Low.
+
+Return ONLY the JSON object, no markdown formatting."""
 
         try:
             client = get_openai_client()
             response = await asyncio.wait_for(
                 client.chat.completions.create(
-                    model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+                    model=os.getenv("OPENAI_MODEL", "gpt-4o"),
                     messages=[
                         {
                             "role": "user",
-                            "content": prompt,
+                            "content": [
+                                {"type": "text", "text": prompt},
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/{image_format};base64,{base64_image}"
+                                    },
+                                },
+                            ],
                         }
                     ],
                     max_tokens=500,
