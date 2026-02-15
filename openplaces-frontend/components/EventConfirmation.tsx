@@ -162,6 +162,49 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
     toast.success('Audience updated!')
   }
 
+  // Story 3.9: Required field validation
+  const isEventDataValid = (): boolean => {
+    return !!(
+      localData.event_name &&
+      localData.event_name.trim().length >= 3 &&
+      localData.event_date &&
+      localData.event_time &&
+      localData.venue &&
+      localData.venue.trim().length >= 3 &&
+      localData.target_audience &&
+      localData.target_audience.length > 0 &&
+      localData.event_type
+    )
+  }
+
+  const getMissingFields = (): string[] => {
+    const missing: string[] = []
+
+    if (!localData.event_name || localData.event_name.trim().length < 3) {
+      missing.push('event name')
+    }
+    if (!localData.event_date) {
+      missing.push('event date')
+    }
+    if (!localData.event_time) {
+      missing.push('event time')
+    }
+    if (!localData.venue || localData.venue.trim().length < 3) {
+      missing.push('venue')
+    }
+    if (!localData.target_audience || localData.target_audience.length === 0) {
+      missing.push('target audience')
+    }
+    if (!localData.event_type) {
+      missing.push('event type')
+    }
+
+    return missing
+  }
+
+  const isValid = isEventDataValid()
+  const missingFields = isValid ? [] : getMissingFields()
+
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
@@ -399,10 +442,22 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
 
       <button
         onClick={onGetRecommendations}
-        className="mt-6 w-full rounded-md bg-blue-600 px-4 py-3 text-base font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+        disabled={!isValid}
+        className={`mt-6 w-full rounded-md px-4 py-3 text-base font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+          isValid
+            ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-600 cursor-pointer'
+            : 'bg-gray-400 cursor-not-allowed opacity-60'
+        }`}
       >
         Get Recommendations →
       </button>
+
+      {/* Story 3.9: Validation error message */}
+      {!isValid && missingFields.length > 0 && (
+        <p className="mt-2 text-sm text-red-600 text-center" role="alert">
+          ⚠️ Complete all required fields: {missingFields.join(', ')}
+        </p>
+      )}
     </div>
   )
 }
