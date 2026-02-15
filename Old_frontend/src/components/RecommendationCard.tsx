@@ -141,8 +141,8 @@ export default function RecommendationCard({
     return `${miles.toFixed(1)} mi`
   }
 
-  // Format audience match percentage
-  const audienceMatchPercentage = Math.round(recommendation.audience_match_score * 100)
+  // Format audience match percentage (convert score out of 40 to percentage)
+  const audienceMatchPercentage = Math.round((recommendation.audience_match_score / 40) * 100)
 
   // Story 7.3: Warning panel expand/collapse state
   const [isWarningExpanded, setIsWarningExpanded] = useState(false)

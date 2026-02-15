@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@theme {
+  /* Color Palette - Deep Teal + Lime Green */
+  --color-deep-teal-50: #e6f2f5;
+  --color-deep-teal-100: #cce5eb;
+  --color-deep-teal-200: #99cbd7;
+  --color-deep-teal-300: #66b1c3;
+  --color-deep-teal-400: #3397af;
+  --color-deep-teal-500: #007d9b;
+  --color-deep-teal-600: #00647c;
+  --color-deep-teal-700: #004b5d;
+  --color-deep-teal-800: #15303d;
+  --color-deep-teal-900: #0d2833;
+  --color-deep-teal-950: #0a1f2e;
+
+  --color-lime-50: #f7fee7;
+  --color-lime-100: #ecfccb;
+  --color-lime-200: #d9f99d;
+  --color-lime-300: #bef264;
+  --color-lime-400: #a3e635;
+  --color-lime-500: #76ff03;
+  --color-lime-600: #64dd17;
+  --color-lime-700: #4d7c0f;
+  --color-lime-800: #3f6212;
+  --color-lime-900: #365314;
+  --color-lime-950: #1a2e05;
+
+  /* Semantic Colors */
+  --color-background: #0a1f2e;
+  --color-foreground: #d1e3e3;
+  --color-card: oklch(from #15303d l c h / 0.85);
+  --color-card-foreground: #d1e3e3;
+  --color-primary: #76ff03;
+  --color-primary-foreground: #0a1f2e;
+  --color-secondary: #15303d;
+  --color-secondary-foreground: #d1e3e3;
+  --color-muted: #15303d;
+  --color-muted-foreground: #7a8e9c;
+  --color-accent: #76ff03;
+  --color-accent-foreground: #0a1f2e;
+  --color-destructive: #ff5252;
+  --color-destructive-foreground: #d1e3e3;
+  --color-border: oklch(from #15303d l c h / 0.3);
+  --color-input: oklch(from #15303d l c h / 0.3);
+  --color-ring: #76ff03;
+
+  --radius-sm: 0.375rem;
+  --radius: 0.75rem;
+  --radius-lg: 1rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-deep-teal-950 text-foreground antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl;
+  }
+
+  h2 {
+    @apply text-3xl;
+  }
+
+  h3 {
+    @apply text-2xl;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-deep-teal-800) var(--color-deep-teal-900);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-deep-teal-900;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-deep-teal-800 rounded-full;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-deep-teal-700;
+  }
+}

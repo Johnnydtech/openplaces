@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
 from dotenv import load_dotenv
-from app.routes import webhooks, saved_recommendations, flyer_uploads, recommendations_cache, analyze
+from app.routes import webhooks, saved_recommendations, flyer_uploads, recommendations_cache, analyze, geocoding, recommendations
 
 # Load environment variables
 load_dotenv()
@@ -26,7 +26,7 @@ app = FastAPI(
 # Placeholder for now
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Frontend dev server
+    allow_origins=["http://localhost:5173", "http://localhost:5174"],  # Frontend dev server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -43,6 +43,10 @@ app.include_router(flyer_uploads.router)
 app.include_router(recommendations_cache.router)
 # Story 3.2: AI flyer analysis endpoint
 app.include_router(analyze.router)
+# Story 3.6: Venue geocoding endpoint
+app.include_router(geocoding.router, prefix="/api")
+# Story 4.2-4.3: Zone recommendations
+app.include_router(recommendations.router)
 
 
 @app.get("/")
