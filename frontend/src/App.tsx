@@ -8,6 +8,7 @@ import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
 import { Toaster } from 'react-hot-toast'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
+import Upload from './pages/Upload'
 import SavedRecommendations from './pages/SavedRecommendations'
 import UploadHistory from './pages/UploadHistory'
 import './App.css'
@@ -36,8 +37,9 @@ function App() {
       <Navbar />
       <div className="app-container">
         <Routes>
-          {/* Public route */}
+          {/* Public routes */}
           <Route path="/" element={<Home />} />
+          <Route path="/upload" element={<Upload />} />
 
           {/* Story 2.4 AC: Protected routes for authenticated users */}
           <Route
