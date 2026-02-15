@@ -101,6 +101,10 @@ export default function UploadPage() {
     setShowManualForm(false)
   }
 
+  const handleEventUpdate = (updatedData: any) => {
+    setExtractedData(updatedData)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <Toaster position="top-center" />
@@ -171,6 +175,7 @@ export default function UploadPage() {
               <EventConfirmation
                 data={extractedData}
                 onGetRecommendations={handleGetRecommendations}
+                onUpdate={handleEventUpdate}
               />
             </>
           )}
