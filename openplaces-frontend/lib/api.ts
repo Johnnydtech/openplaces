@@ -51,3 +51,21 @@ export async function analyzeFlyer(file: File) {
 
   return response.data
 }
+
+/**
+ * Geocode venue address to latitude/longitude coordinates
+ * POST /api/geocode
+ * Story 3.6: Venue geocoding integration
+ *
+ * @param venueAddress - Venue address string (e.g., "123 Main St, Arlington, VA")
+ * @returns Geocoding result with coordinates and metadata
+ */
+export async function geocodeVenue(venueAddress: string) {
+  const response = await apiClient.post('/api/geocode', {
+    venue_address: venueAddress
+  }, {
+    timeout: 2500, // 2 seconds + 500ms buffer
+  })
+
+  return response.data
+}

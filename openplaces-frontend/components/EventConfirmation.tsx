@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
+import { geocodeVenue } from '@/lib/api'
 
 interface EventData {
   event_name: string
@@ -11,6 +12,9 @@ interface EventData {
   target_audience: string[]
   confidence: string
   extraction_notes?: string
+  latitude?: number
+  longitude?: number
+  geocoded_address?: string
 }
 
 interface EventConfirmationProps {
@@ -23,6 +27,52 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editValue, setEditValue] = useState<string>('')
   const [localData, setLocalData] = useState(data)
+  const [isGeocoding, setIsGeocoding] = useState(false)
+  const [geocodingError, setGeocodingError] = useState<string | null>(null)
+
+  // Story 3.6: Auto-geocode venue when component mounts or venue changes
+  useEffect(() => {
+    const geocodeAddress = async () => {
+      // Skip if no venue or already geocoded
+      if (!localData.venue || localData.latitude) {
+        return
+      }
+
+      setIsGeocoding(true)
+      setGeocodingError(null)
+
+      try {
+        const result = await geocodeVenue(localData.venue)
+        const updatedData = {
+          ...localData,
+          latitude: result.latitude,
+          longitude: result.longitude,
+          geocoded_address: result.formatted_address
+        }
+        setLocalData(updatedData)
+        if (onUpdate) {
+          onUpdate(updatedData)
+        }
+        toast.success('📍 Venue located!')
+      } catch (error: any) {
+        if (error.response?.status === 404) {
+          setGeocodingError('Venue not found')
+          toast.error('Venue not found. Please check the address.')
+        } else if (error.code === 'ECONNABORTED') {
+          setGeocodingError('Geocoding timeout')
+          toast.error('Geocoding took too long. You can proceed without it.')
+        } else {
+          setGeocodingError('Geocoding unavailable')
+          // Gracefully degrade - don't show toast
+          console.warn('Geocoding failed:', error)
+        }
+      } finally {
+        setIsGeocoding(false)
+      }
+    }
+
+    geocodeAddress()
+  }, [localData.venue]) // Trigger when venue changes
 
   const confidenceColor = {
     high: 'text-green-600 bg-green-50 border-green-200',
@@ -37,6 +87,14 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
 
   const handleSave = (field: string) => {
     const updatedData = { ...localData, [field]: editValue }
+
+    // Story 3.6: Clear geocoding data when venue is edited to trigger re-geocoding
+    if (field === 'venue') {
+      updatedData.latitude = undefined
+      updatedData.longitude = undefined
+      updatedData.geocoded_address = undefined
+    }
+
     setLocalData(updatedData)
     if (onUpdate) {
       onUpdate(updatedData)
@@ -168,7 +226,23 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
               <button onClick={handleCancel} className="text-red-600">✕</button>
             </div>
           ) : (
-            <p className="text-sm text-gray-900">{localData.venue}</p>
+            <>
+              <p className="text-sm text-gray-900">{localData.venue}</p>
+              {/* Story 3.6: Display geocoded coordinates */}
+              {isGeocoding && (
+                <p className="mt-1 text-xs text-gray-500">📍 Locating venue...</p>
+              )}
+              {!isGeocoding && localData.latitude && localData.longitude && (
+                <p className="mt-1 text-xs text-green-600">
+                  📍 {localData.latitude.toFixed(4)}, {localData.longitude.toFixed(4)}
+                </p>
+              )}
+              {!isGeocoding && geocodingError && (
+                <p className="mt-1 text-xs text-yellow-600">
+                  ⚠️ {geocodingError}
+                </p>
+              )}
+            </>
           )}
         </div>
 
