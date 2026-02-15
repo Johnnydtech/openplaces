@@ -322,3 +322,70 @@
     transform: none;
   }
 }
+
+/* Story 3.10: Manual entry options */
+.manual-entry-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.manual-entry-text {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.manual-entry-button,
+.retry-button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.manual-entry-button {
+  background: #2563eb;
+  color: white;
+}
+
+.manual-entry-button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.retry-button {
+  background: white;
+  color: #374151;
+  border: 2px solid #d1d5db;
+}
+
+.retry-button:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* Responsive for manual entry options */
+@media (max-width: 640px) {
+  .manual-entry-option {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .manual-entry-button,
+  .retry-button {
+    width: 100%;
+  }
+
+  .manual-entry-text {
+    margin: 4px 0;
+  }
+}

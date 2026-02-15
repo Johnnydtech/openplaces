@@ -1,6 +1,8 @@
 /**
  * Story 3.1: Flyer Image Upload Interface
  * Story 3.3: Display Extracted Event Details for Confirmation
+ * Story 3.4: Manual Event Detail Entry
+ * Story 3.10: File Upload Error Handling
  * Upload page with drag-and-drop for event flyer analysis
  */
 
@@ -10,6 +12,7 @@ import { getTopRecommendations, EventData, ZoneRecommendation } from '../api/rec
 import { geocodeVenue, GeocodingError } from '../api/geocoding'
 import EventConfirmation from '../components/EventConfirmation'
 import RecommendationsList from '../components/RecommendationsList'
+import ManualEventForm, { EventData as ManualEventData } from '../components/ManualEventForm'
 import './Upload.css'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
@@ -37,6 +40,7 @@ export default function Upload() {
   const [venueCoordinates, setVenueCoordinates] = useState<{lat: number, lon: number} | null>(null)
   const [eventType] = useState<string>('community-event')
   const [isAuthenticated] = useState(false)  // TODO: integrate with Clerk auth (Story 2.x)
+  const [showManualForm, setShowManualForm] = useState(false)  // Story 3.4, 3.10
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const validateFile = (file: File): UploadError | null => {
@@ -231,6 +235,45 @@ export default function Upload() {
     }
   }
 
+  // Story 3.4, 3.10 AC: Handle manual event entry
+  const handleManualSubmit = async (manualData: ManualEventData) => {
+    setIsLoadingRecommendations(true)
+    setRecommendationsError(null)
+
+    try {
+      // Geocode venue
+      const geocodeResult = await geocodeVenue(manualData.venue)
+      const coordinates = { lat: geocodeResult.latitude, lon: geocodeResult.longitude }
+      setVenueCoordinates(coordinates)
+
+      // Build EventData for recommendations
+      const eventData: EventData = {
+        name: manualData.name,
+        date: manualData.date,
+        time: manualData.time,
+        venue: manualData.venue,
+        latitude: geocodeResult.latitude,
+        longitude: geocodeResult.longitude,
+        target_audience: manualData.target_audience,
+        event_type: manualData.event_type
+      }
+
+      // Get recommendations
+      const recs = await getTopRecommendations(eventData, isAuthenticated)
+      setRecommendations(recs)
+      setShowManualForm(false)
+      setShowRecommendations(true)
+    } catch (err) {
+      if (err instanceof GeocodingError) {
+        setRecommendationsError(err.message)
+      } else {
+        setRecommendationsError('Failed to get recommendations. Please try again.')
+      }
+    } finally {
+      setIsLoadingRecommendations(false)
+    }
+  }
+
   // Story 4.3: Show RecommendationsList after successful generation
   if (showRecommendations) {
     return (
@@ -251,6 +294,18 @@ export default function Upload() {
         >
           ← Back to Event Details
         </button>
+      </div>
+    )
+  }
+
+  // Story 3.4, 3.10 AC: Show ManualEventForm when requested
+  if (showManualForm) {
+    return (
+      <div className="upload-page">
+        <ManualEventForm
+          onSubmit={handleManualSubmit}
+          onCancel={() => setShowManualForm(false)}
+        />
       </div>
     )
   }
@@ -355,21 +410,44 @@ export default function Upload() {
 
         {/* Story 3.10 AC: Error messages ≤20 words with actionable next step */}
         {error && (
-          <div className="error-message" role="alert">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            <span>{error.message}</span>
-          </div>
+          <>
+            <div className="error-message" role="alert">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>{error.message}</span>
+            </div>
+
+            {/* Story 3.4, 3.10 AC: Manual entry option when AI fails */}
+            {error.type === 'upload' && (
+              <div className="manual-entry-option">
+                <button
+                  type="button"
+                  className="manual-entry-button"
+                  onClick={() => setShowManualForm(true)}
+                >
+                  Enter Details Manually
+                </button>
+                <span className="manual-entry-text">or</span>
+                <button
+                  type="button"
+                  className="retry-button"
+                  onClick={handleReset}
+                >
+                  Try Another File
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Story 3.1 AC: Upload progress indicator */}
