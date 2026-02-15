@@ -7,6 +7,7 @@ import UploadZone from '@/components/UploadZone'
 import FilePreview from '@/components/FilePreview'
 import EventConfirmation from '@/components/EventConfirmation'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import ManualEventForm from '@/components/ManualEventForm'
 import { analyzeFlyer } from '@/lib/api'
 
 export default function UploadPage() {
@@ -15,6 +16,7 @@ export default function UploadPage() {
   const [previewUrl, setPreviewUrl] = useState<string>('')
   const [isUploading, setIsUploading] = useState(false)
   const [extractedData, setExtractedData] = useState<any>(null)
+  const [showManualForm, setShowManualForm] = useState(false)
 
   const handleFileSelect = async (file: File) => {
     // Client-side validation
@@ -89,6 +91,16 @@ export default function UploadPage() {
     // router.push('/recommendations')
   }
 
+  const handleManualSubmit = (data: any) => {
+    setExtractedData(data)
+    setShowManualForm(false)
+    toast.success('Event details saved!')
+  }
+
+  const handleManualCancel = () => {
+    setShowManualForm(false)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <Toaster position="top-center" />
@@ -118,11 +130,28 @@ export default function UploadPage() {
         </div>
 
         <div className="mt-8 space-y-6">
-          {!selectedFile && (
-            <UploadZone onFileSelect={handleFileSelect} isUploading={isUploading} />
+          {!selectedFile && !showManualForm && (
+            <>
+              <UploadZone onFileSelect={handleFileSelect} isUploading={isUploading} />
+              <div className="text-center">
+                <button
+                  onClick={() => setShowManualForm(true)}
+                  className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                >
+                  Or enter details manually →
+                </button>
+              </div>
+            </>
           )}
 
-          {selectedFile && !isUploading && !extractedData && (
+          {showManualForm && !extractedData && (
+            <ManualEventForm
+              onSubmit={handleManualSubmit}
+              onCancel={handleManualCancel}
+            />
+          )}
+
+          {selectedFile && !isUploading && !extractedData && !showManualForm && (
             <FilePreview
               file={selectedFile}
               previewUrl={previewUrl}
