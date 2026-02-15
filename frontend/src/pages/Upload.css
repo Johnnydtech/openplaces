@@ -390,60 +390,64 @@
   }
 }
 
-/* Epic 5: Recommendations View with Map */
+/* Epic 5: Recommendations View with Map - Pinterest-style Layout */
 .recommendations-view {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px;
-}
-
-.map-section {
-  position: sticky;
-  top: 24px;
-  height: fit-content;
-  max-height: calc(100vh - 48px);
+  grid-template-columns: 420px 1fr;
+  gap: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  height: calc(100vh - 64px); /* Account for navbar */
 }
 
 .list-section {
+  background: #1a202c;
+  padding: 24px;
   overflow-y: auto;
+  height: 100%;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.map-section {
+  height: 100%;
+  position: relative;
 }
 
 /* Responsive: Stack map and list on smaller screens */
 @media (max-width: 1024px) {
   .recommendations-view {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-
-  .map-section {
-    position: relative;
-    top: 0;
-    order: 2;
+    grid-template-columns: 360px 1fr;
   }
 
   .list-section {
-    order: 1;
+    padding: 16px;
   }
 }
 
 @media (max-width: 768px) {
   .recommendations-view {
-    padding: 16px;
-    gap: 16px;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    height: auto;
+  }
+
+  .list-section {
+    order: 1;
+    height: auto;
+    max-height: 50vh;
+  }
+
+  .map-section {
+    order: 2;
+    height: 50vh;
   }
 }
 
 @media (max-width: 640px) {
-  .recommendations-view {
-    padding: 0;
-    gap: 0;
-  }
-
-  .map-section {
-    margin-bottom: 16px;
+  .list-section {
+    padding: 12px;
   }
 }
 

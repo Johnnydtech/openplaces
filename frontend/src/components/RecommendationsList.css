@@ -4,37 +4,39 @@
  */
 
 .recommendations-list {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 24px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 /* Header */
 .list-header {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .header-text {
   flex: 1;
+  min-width: 200px;
 }
 
 .list-header h2 {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 700;
-  color: #111827;
+  color: #f7fafc;
   margin: 0 0 8px 0;
 }
 
 .list-subtitle {
-  font-size: 16px;
-  color: #6b7280;
+  font-size: 14px;
+  color: #a0aec0;
   margin: 0;
 }
 
@@ -83,13 +85,13 @@
 }
 
 .loading-spinner {
-  width: 64px;
-  height: 64px;
-  border: 4px solid #e5e7eb;
+  width: 48px;
+  height: 48px;
+  border: 3px solid #2d3748;
   border-top-color: #3b82f6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 @keyframes spin {
@@ -99,15 +101,15 @@
 }
 
 .loading-text {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: #f7fafc;
   margin: 0 0 8px 0;
 }
 
 .loading-hint {
-  font-size: 14px;
-  color: #6b7280;
+  font-size: 13px;
+  color: #a0aec0;
   margin: 0;
 }
 
@@ -122,22 +124,22 @@
 }
 
 .error-state svg {
-  color: #ef4444;
-  margin-bottom: 24px;
+  color: #fc8181;
+  margin-bottom: 20px;
 }
 
 .error-state h3 {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 700;
-  color: #111827;
+  color: #f7fafc;
   margin: 0 0 12px 0;
 }
 
 .error-message {
-  font-size: 16px;
-  color: #6b7280;
-  margin: 0 0 24px 0;
-  max-width: 400px;
+  font-size: 14px;
+  color: #a0aec0;
+  margin: 0 0 20px 0;
+  max-width: 350px;
 }
 
 .retry-button {
@@ -166,27 +168,27 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px 24px;
+  padding: 60px 24px;
   text-align: center;
 }
 
 .empty-state svg {
-  color: #9ca3af;
-  margin-bottom: 24px;
+  color: #4a5568;
+  margin-bottom: 20px;
 }
 
 .empty-state h3 {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
-  color: #111827;
+  color: #f7fafc;
   margin: 0 0 12px 0;
 }
 
 .empty-state p {
-  font-size: 16px;
-  color: #6b7280;
+  font-size: 14px;
+  color: #a0aec0;
   margin: 0 0 8px 0;
-  max-width: 400px;
+  max-width: 350px;
 }
 
 /* Recommendations Cards Container */
@@ -261,7 +263,7 @@
   justify-content: space-between;
   align-items: center;
   padding-top: 24px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #2d3748;
   margin-top: 24px;
 }
 
@@ -272,15 +274,15 @@
 }
 
 .data-freshness {
-  font-size: 13px;
-  color: #9ca3af;
+  font-size: 12px;
+  color: #718096;
   margin: 0;
 }
 
 /* Story 4.12: Data freshness warning for stale data (>30 days) */
 .data-freshness-warning {
-  font-size: 13px;
-  color: #f59e0b;
+  font-size: 12px;
+  color: #f6ad55;
   font-weight: 600;
   margin: 0;
   display: flex;

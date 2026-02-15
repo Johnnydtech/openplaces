@@ -607,7 +607,7 @@ export default function Upload() {
         )}
 
         {/* Upload button */}
-        {selectedFile && !isUploading && (
+        {selectedFile && !isUploading && !error && (
           <button
             type="button"
             className="upload-button"
