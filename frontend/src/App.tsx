@@ -1,35 +1,63 @@
 /**
  * OpenPlaces App
- * Story 2.1, 2.2, 2.3: Navbar with authentication
+ * Story 2.1-2.4: Authentication and routing
  */
-import { useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
 import Navbar from './components/Navbar'
+import Home from './pages/Home'
+import SavedRecommendations from './pages/SavedRecommendations'
+import UploadHistory from './pages/UploadHistory'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
-
+/**
+ * Story 2.4: ProtectedRoute wrapper
+ * Redirects unauthenticated users to sign-in with return URL
+ */
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <SignedIn>{children}</SignedIn>
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    </>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
       <Navbar />
       <div className="app-container">
-        <h1>Welcome to OpenPlaces</h1>
-        <p className="tagline">Strategic Ad Placement Recommender for Arlington, VA</p>
+        <Routes>
+          {/* Public route */}
+          <Route path="/" element={<Home />} />
 
-        <div className="card">
-          <button onClick={() => setCount((count) => count + 1)}>
-            count is {count}
-          </button>
-          <p>
-            Development environment ready. Start building features!
-          </p>
-        </div>
+          {/* Story 2.4 AC: Protected routes for authenticated users */}
+          <Route
+            path="/saved-recommendations"
+            element={
+              <ProtectedRoute>
+                <SavedRecommendations />
+              </ProtectedRoute>
+            }
+          />
 
-        <p className="read-the-docs">
-          Frontend is running with React 18 + TypeScript + Vite 5.x
-        </p>
+          <Route
+            path="/upload-history"
+            element={
+              <ProtectedRoute>
+                <UploadHistory />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catch-all redirect to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </div>
-    </>
+    </BrowserRouter>
   )
 }
 
