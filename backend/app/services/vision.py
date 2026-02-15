@@ -111,7 +111,7 @@ If any information is unclear or missing, note it in extraction_notes and mark c
             client = get_openai_client()
             response = await asyncio.wait_for(
                 client.chat.completions.create(
-                    model=os.getenv("OPENAI_MODEL", "gpt-4-vision-preview"),
+                    model=os.getenv("OPENAI_MODEL", "gpt-4o"),
                     messages=[
                         {
                             "role": "user",
