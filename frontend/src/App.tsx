@@ -1,4 +1,9 @@
+/**
+ * OpenPlaces App
+ * Story 2.1, 2.2, 2.3: Navbar with authentication
+ */
 import { useState } from 'react'
+import Navbar from './components/Navbar'
 import './App.css'
 
 function App() {
@@ -6,8 +11,9 @@ function App() {
 
   return (
     <>
+      <Navbar />
       <div className="app-container">
-        <h1>OpenPlaces</h1>
+        <h1>Welcome to OpenPlaces</h1>
         <p className="tagline">Strategic Ad Placement Recommender for Arlington, VA</p>
 
         <div className="card">

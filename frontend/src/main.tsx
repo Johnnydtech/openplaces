@@ -20,12 +20,16 @@ if (!CLERK_PUBLISHABLE_KEY) {
 }
 
 // Story 1.7 AC: ClerkProvider wraps app in main.tsx
+// Story 2.1 AC: After registration, redirected to home
+// Story 2.2 AC: After login, redirected to home
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ClerkProvider
       publishableKey={CLERK_PUBLISHABLE_KEY || ''}
       afterSignInUrl="/"
       afterSignUpUrl="/"
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
     >
       <App />
     </ClerkProvider>
