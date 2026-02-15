@@ -47,6 +47,61 @@
   color: white;
 }
 
+/* Story 2.6: Card header with zone name and save button */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-right: 60px; /* Space for rank badge */
+}
+
+/* Story 2.6 AC: Save button */
+.save-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.save-button:hover:not(:disabled) {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+/* Story 2.6 AC: Button changes to "Saved" with checkmark */
+.save-button.saved {
+  border-color: #10b981;
+  background: #d1fae5;
+  color: #047857;
+  cursor: default;
+}
+
+.save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.save-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.save-text {
+  line-height: 1;
+}
+
 .rank-badge-green {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }

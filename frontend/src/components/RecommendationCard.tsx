@@ -5,11 +5,15 @@
  * Story 4.6: Display Timing Windows
  * Story 4.7: Display Cost Tier Indicators
  * Story 4.9: Display Transparent Reasoning
+ * Story 2.6: Save Recommendation Functionality
  *
  * Component that displays a single zone recommendation with all details
  */
 
+import { useState, useEffect } from 'react'
+import { useUser } from '@clerk/clerk-react'
 import { ZoneRecommendation } from '../api/recommendations'
+import toast from 'react-hot-toast'
 import './RecommendationCard.css'
 
 interface RecommendationCardProps {
@@ -25,6 +29,79 @@ export default function RecommendationCard({
   onClick,
   isHighlighted = false
 }: RecommendationCardProps) {
+  // Story 2.6: Save functionality state
+  const { user, isSignedIn } = useUser()
+  const [isSaved, setIsSaved] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Story 2.6 AC: Check if recommendation is already saved
+  useEffect(() => {
+    if (!isSignedIn || !recommendation.zone_id) return
+
+    const checkSavedStatus = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/saved-recommendations/check/${recommendation.zone_id}`,
+          {
+            headers: {
+              'X-Clerk-User-Id': user!.id
+            }
+          }
+        )
+        const data = await response.json()
+        setIsSaved(data.is_saved)
+      } catch (error) {
+        console.error('Error checking saved status:', error)
+      }
+    }
+
+    checkSavedStatus()
+  }, [isSignedIn, user, recommendation.zone_id])
+
+  // Story 2.6 AC: Save button handler
+  const handleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click event
+
+    if (!isSignedIn) {
+      toast.error('Please sign in to save recommendations')
+      return
+    }
+
+    setIsSaving(true)
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/saved-recommendations/save`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Clerk-User-Id': user!.id
+          },
+          body: JSON.stringify({
+            recommendation_id: recommendation.zone_id
+          })
+        }
+      )
+
+      const data = await response.json()
+
+      if (data.status === 'success') {
+        setIsSaved(true)
+        toast.success('Recommendation saved!') // Story 2.6 AC: Success toast
+      } else if (data.status === 'already_saved') {
+        setIsSaved(true)
+        toast('Already saved!', { icon: '✓' })
+      } else {
+        toast.error('Failed to save recommendation')
+      }
+    } catch (error) {
+      console.error('Error saving recommendation:', error)
+      toast.error('Failed to save recommendation')
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   // Story 4.3 AC: Rank badge color coding (top 3 green, 4-7 yellow, 8-10 orange)
   const getRankBadgeColor = (rankNum: number): string => {
@@ -80,8 +157,33 @@ export default function RecommendationCard({
         #{rank}
       </div>
 
-      {/* Zone Name */}
-      <h3 className="zone-name">{recommendation.zone_name}</h3>
+      {/* Header with Zone Name and Save Button */}
+      <div className="card-header">
+        {/* Zone Name */}
+        <h3 className="zone-name">{recommendation.zone_name}</h3>
+
+        {/* Story 2.6 AC: Save button (shows for signed-in users) */}
+        {isSignedIn && (
+          <button
+            className={`save-button ${isSaved ? 'saved' : ''}`}
+            onClick={handleSave}
+            disabled={isSaving || isSaved}
+            aria-label={isSaved ? 'Recommendation saved' : 'Save recommendation'}
+          >
+            {isSaved ? (
+              <>
+                <span className="save-icon">✓</span>
+                <span className="save-text">Saved</span>
+              </>
+            ) : (
+              <>
+                <span className="save-icon">☆</span>
+                <span className="save-text">{isSaving ? 'Saving...' : 'Save'}</span>
+              </>
+            )}
+          </button>
+        )}
+      </div>
 
       {/* Main Metrics Row */}
       <div className="metrics-row">

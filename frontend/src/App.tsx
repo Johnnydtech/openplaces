@@ -1,9 +1,11 @@
 /**
  * OpenPlaces App
  * Story 2.1-2.4: Authentication and routing
+ * Story 2.6: Toast notifications for save actions
  */
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
+import { Toaster } from 'react-hot-toast'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import SavedRecommendations from './pages/SavedRecommendations'
@@ -28,6 +30,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <BrowserRouter>
+      {/* Story 2.6: Toast notifications for save actions */}
+      <Toaster position="top-right" />
+
       <Navbar />
       <div className="app-container">
         <Routes>

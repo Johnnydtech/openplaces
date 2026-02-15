@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
 from dotenv import load_dotenv
-from app.routes import webhooks
+from app.routes import webhooks, saved_recommendations
 
 # Load environment variables
 load_dotenv()
@@ -35,6 +35,8 @@ app.add_middleware(
 # Include routers
 # Story 2.5: Clerk webhook endpoint
 app.include_router(webhooks.router)
+# Story 2.6-2.9: Saved recommendations
+app.include_router(saved_recommendations.router)
 
 
 @app.get("/")
