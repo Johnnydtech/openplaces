@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useUser } from '@clerk/nextjs'
+import { useUser, useClerk } from '@clerk/nextjs'
 import toast, { Toaster } from 'react-hot-toast'
 import MapComponent from '@/components/Map'
 import UploadZone from '@/components/UploadZone'
@@ -16,6 +16,7 @@ type UploadState = 'idle' | 'uploading' | 'analyzing' | 'confirming' | 'geocodin
 
 export default function UnifiedHomePage() {
   const { user, isLoaded, isSignedIn } = useUser()
+  const { signOut } = useClerk()
 
   // Upload state
   const [uploadState, setUploadState] = useState<UploadState>('idle')
@@ -254,13 +255,28 @@ export default function UnifiedHomePage() {
               Find OpenPlaces.
             </h1>
             {isSignedIn && user && (
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{ background: 'rgba(74, 222, 128, 0.1)' }}>
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: '#4ade80', color: '#0f1c24' }}>
-                  {user.firstName?.[0] || user.emailAddresses[0]?.emailAddress[0].toUpperCase()}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{ background: 'rgba(74, 222, 128, 0.1)' }}>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: '#4ade80', color: '#0f1c24' }}>
+                    {user.firstName?.[0] || user.emailAddresses[0]?.emailAddress[0].toUpperCase()}
+                  </div>
+                  <span className="text-xs font-medium" style={{ color: '#4ade80' }}>
+                    {user.firstName || 'User'}
+                  </span>
                 </div>
-                <span className="text-xs font-medium" style={{ color: '#4ade80' }}>
-                  {user.firstName || 'User'}
-                </span>
+                <button
+                  onClick={() => signOut()}
+                  className="p-1.5 rounded-lg transition-colors"
+                  style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                  title="Sign out"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                    <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M19 10a.75.75 0 00-.75-.75H8.704l1.048-.943a.75.75 0 10-1.004-1.114l-2.5 2.25a.75.75 0 000 1.114l2.5 2.25a.75.75 0 101.004-1.114l-1.048-.943h9.546A.75.75 0 0019 10z" clipRule="evenodd" />
+                  </svg>
+                </button>
               </div>
             )}
           </div>
