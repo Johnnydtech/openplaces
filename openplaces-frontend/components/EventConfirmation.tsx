@@ -27,7 +27,11 @@ interface EventConfirmationProps {
 export default function EventConfirmation({ data, onGetRecommendations, onUpdate }: EventConfirmationProps) {
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editValue, setEditValue] = useState<string>('')
-  const [localData, setLocalData] = useState(data)
+  // Story 3.8: Default event_type to 'Community event' if not provided
+  const [localData, setLocalData] = useState({
+    ...data,
+    event_type: data.event_type || 'Community event'
+  })
   const [isGeocoding, setIsGeocoding] = useState(false)
   const [geocodingError, setGeocodingError] = useState<string | null>(null)
   // Story 3.7: Target audience editing state
