@@ -111,8 +111,8 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-2 min-w-0">
               {/* Rank Badge */}
               <div
