@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import RecommendationCard from '@/components/RecommendationCard'
-import Map from '@/components/Map'
+import MapComponent from '@/components/Map'
 import TimePeriodToggle, { type TimePeriod } from '@/components/TimePeriodToggle'
 import { getRecommendations, type EventDataForRecommendations, type ZoneRecommendation } from '@/lib/api'
 import { getDefaultTimePeriod } from '@/lib/timeUtils'
@@ -363,7 +363,7 @@ function RecommendationsContent() {
         {/* Story 5.4: Venue marker with blue star */}
         {/* Story 5.7: Hover list → highlight map */}
         <div className="mb-8">
-          <Map
+          <MapComponent
             className="h-[500px] w-full"
             recommendations={recommendations}
             eventData={eventData}
