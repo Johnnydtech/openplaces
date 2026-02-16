@@ -249,9 +249,21 @@ export default function UnifiedHomePage() {
       >
         {/* Sidebar Header */}
         <div className="p-6 border-b" style={{ borderColor: 'rgba(42, 69, 81, 0.5)' }}>
-          <h1 className="text-2xl font-bold text-white mb-2">
-            Find OpenPlaces.
-          </h1>
+          <div className="flex items-start justify-between mb-2">
+            <h1 className="text-2xl font-bold text-white">
+              Find OpenPlaces.
+            </h1>
+            {isSignedIn && user && (
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{ background: 'rgba(74, 222, 128, 0.1)' }}>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: '#4ade80', color: '#0f1c24' }}>
+                  {user.firstName?.[0] || user.emailAddresses[0]?.emailAddress[0].toUpperCase()}
+                </div>
+                <span className="text-xs font-medium" style={{ color: '#4ade80' }}>
+                  {user.firstName || 'User'}
+                </span>
+              </div>
+            )}
+          </div>
           <p className="text-sm" style={{ color: '#94a3b8' }}>
             Upload a flyer to discover the best billboard locations
           </p>
@@ -427,31 +439,70 @@ export default function UnifiedHomePage() {
       {/* Bottom Auth Bar - Only if not signed in */}
       {isLoaded && !isSignedIn && (
         <div
-          className="absolute bottom-0 left-0 right-0 p-4 backdrop-blur-xl border-t animate-in slide-in-from-bottom duration-300"
-          style={{ background: 'rgba(26, 47, 58, 0.95)', borderColor: 'rgba(74, 222, 128, 0.2)' }}
+          className="fixed bottom-0 left-0 right-0 p-5 backdrop-blur-xl border-t shadow-2xl"
+          style={{
+            background: 'rgba(26, 47, 58, 0.98)',
+            borderColor: 'rgba(74, 222, 128, 0.3)',
+            zIndex: 2000,
+            boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.5)'
+          }}
         >
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <p className="text-sm" style={{ color: '#94a3b8' }}>
-              Sign in to save your favorite places and access your history
-            </p>
-            <div className="flex gap-3">
+          <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(74, 222, 128, 0.2)' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5" style={{ color: '#4ade80' }}>
+                  <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  Sign in to unlock all features
+                </p>
+                <p className="text-xs" style={{ color: '#94a3b8' }}>
+                  Save your favorite places and access your search history
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 flex-shrink-0">
               <a
                 href="/sign-in"
-                className="px-6 py-2 rounded-lg text-sm font-medium transition-colors"
-                style={{ background: 'rgba(74, 222, 128, 0.1)', color: '#4ade80' }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(74, 222, 128, 0.2)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(74, 222, 128, 0.1)'}
+                className="px-6 py-2.5 rounded-lg text-sm font-semibold transition-all border-2"
+                style={{
+                  background: 'transparent',
+                  color: '#4ade80',
+                  borderColor: '#4ade80'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(74, 222, 128, 0.1)'
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.transform = 'translateY(0)'
+                }}
               >
                 Log In
               </a>
               <a
                 href="/sign-up"
-                className="px-6 py-2 rounded-lg text-sm font-medium transition-colors"
-                style={{ background: '#4ade80', color: '#0f1c24' }}
-                onMouseEnter={(e) => e.currentTarget.style.background = '#22c55e'}
-                onMouseLeave={(e) => e.currentTarget.style.background = '#4ade80'}
+                className="px-6 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                style={{
+                  background: '#4ade80',
+                  color: '#0f1c24',
+                  boxShadow: '0 4px 12px rgba(74, 222, 128, 0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#22c55e'
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(74, 222, 128, 0.4)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#4ade80'
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(74, 222, 128, 0.3)'
+                }}
               >
-                Sign Up
+                Sign Up Free
               </a>
             </div>
           </div>
