@@ -21,7 +21,7 @@ function RecommendationsContent() {
   // Story 5.7: Track hovered zone for map highlighting
   const [hoveredZoneId, setHoveredZoneId] = useState<string | null>(null)
   // Story 5.8: Track recommendation card refs for scroll-into-view
-  const recommendationRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const recommendationRefs = useRef(new globalThis.Map<string, HTMLDivElement>())
   // Story 6.1: Time period selection state
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<TimePeriod>('evening')
 
