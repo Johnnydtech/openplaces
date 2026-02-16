@@ -46,7 +46,7 @@ export default function RootLayout({
           headerSubtitle: 'text-slate-300',
           socialButtonsBlockButton: 'bg-[#1e3a48] border-[#2a4551] text-white hover:bg-[#243f4d]',
           socialButtonsBlockButtonText: 'text-white font-medium',
-          formButtonPrimary: 'bg-[#4ade80] text-[#0f1c24] hover:bg-[#22c55e] font-semibold',
+          formButtonPrimary: 'bg-[#4ade80] text-white hover:bg-[#22c55e] font-semibold shadow-lg',
           formFieldInput: 'bg-[#1e3a48] border-[#2a4551] text-white placeholder:text-slate-400',
           footerActionLink: 'text-[#4ade80] hover:text-[#22c55e] font-medium',
           footerActionText: 'text-slate-300',
