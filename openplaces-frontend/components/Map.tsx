@@ -22,9 +22,10 @@ interface MapProps {
   onZoneHover?: (zoneId: string) => void  // Story 5.8: Map hover callback
   onZoneLeave?: () => void  // Story 5.8: Map hover callback
   onZoneClick?: (zone: ZoneRecommendation, rank: number) => void  // Zone click callback
+  zoomToLocation?: { lat: number; lon: number; zoneId: string } | null  // Zoom to specific location
 }
 
-export default function Map({ className = '', recommendations = [], eventData = null, hoveredZoneId = null, onZoneHover, onZoneLeave, onZoneClick }: MapProps) {
+export default function Map({ className = '', recommendations = [], eventData = null, hoveredZoneId = null, onZoneHover, onZoneLeave, onZoneClick, zoomToLocation = null }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
   const markersRef = useRef<mapboxgl.Marker[]>([])  // Story 5.3: Track markers for cleanup
@@ -253,6 +254,18 @@ export default function Map({ className = '', recommendations = [], eventData = 
       })
     })
   }
+
+  // Zoom to specific location when zoomToLocation changes
+  useEffect(() => {
+    if (!zoomToLocation || !map.current) return
+
+    map.current.flyTo({
+      center: [zoomToLocation.lon, zoomToLocation.lat],
+      zoom: 16,
+      duration: 1500,
+      essential: true
+    })
+  }, [zoomToLocation])
 
   // Story 5.7: Update marker highlighting when hoveredZoneId changes
   useEffect(() => {

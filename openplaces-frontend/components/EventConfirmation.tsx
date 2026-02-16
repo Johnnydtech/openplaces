@@ -217,7 +217,7 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
             <label className="text-xs font-medium block mb-2" style={{ color: '#94a3b8' }}>Target Audience</label>
             <div className="space-y-2 max-h-40 overflow-y-auto rounded-lg p-3" style={{ background: 'rgba(30, 58, 72, 0.5)' }}>
               {audienceOptions.map((audience) => (
-                <label key={audience} className="flex items-center cursor-pointer p-2 rounded transition-colors" style={{ '&:hover': { background: 'rgba(74, 222, 128, 0.1)' } }}>
+                <label key={audience} className="flex items-center cursor-pointer p-2 rounded transition-colors hover:bg-[rgba(74,222,128,0.1)]">
                   <input
                     type="checkbox"
                     checked={selectedAudiences.includes(audience)}

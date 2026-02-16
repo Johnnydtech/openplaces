@@ -1,7 +1,18 @@
 'use client'
 
 import { type ZoneRecommendation } from '@/lib/api'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import AudienceMetrics from './analytics/AudienceMetrics'
+import HourlyTrafficChart from './analytics/HourlyTrafficChart'
+import GenderDistributionChart from './analytics/GenderDistributionChart'
+import BusiestDaysChart from './analytics/BusiestDaysChart'
+
+declare global {
+  interface Window {
+    google: any
+    initStreetView: () => void
+  }
+}
 
 interface ZoneDetailsPanelProps {
   zone: ZoneRecommendation | null
@@ -57,6 +68,54 @@ export default function ZoneDetailsPanel({ zone, rank, onClose }: ZoneDetailsPan
             <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
           </svg>
         </button>
+      </div>
+
+      {/* Interactive Street View - Using Google Maps Embed */}
+      <div className="mb-6 rounded-lg overflow-hidden" style={{ background: '#2a4551' }}>
+        <iframe
+          width="100%"
+          height="256"
+          style={{ border: 0 }}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          src={`https://www.google.com/maps/embed/v1/streetview?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}&location=${zone.latitude},${zone.longitude}&heading=0&pitch=0&fov=90`}
+          allowFullScreen
+        />
+      </div>
+
+      {/* Analytics Section */}
+      <div className="mb-6 space-y-4">
+        {/* Section Header */}
+        <div className="flex items-center gap-2 mb-3">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5" style={{ color: '#4ade80' }}>
+            <path d="M10 9a3 3 0 100-6 3 3 0 000 6zM6 8a2 2 0 11-4 0 2 2 0 014 0zM1.49 15.326a.78.78 0 01-.358-.442 3 3 0 014.308-3.516 6.484 6.484 0 00-1.905 3.959c-.023.222-.014.442.025.654a4.97 4.97 0 01-2.07-.655zM16.44 15.98a4.97 4.97 0 002.07-.654.78.78 0 00.357-.442 3 3 0 00-4.308-3.517 6.484 6.484 0 011.907 3.96 2.32 2.32 0 01-.026.654zM18 8a2 2 0 11-4 0 2 2 0 014 0zM5.304 16.19a.844.844 0 01-.277-.71 5 5 0 019.947 0 .843.843 0 01-.277.71A6.975 6.975 0 0110 18a6.974 6.974 0 01-4.696-1.81z" />
+          </svg>
+          <h3 className="text-base font-bold text-white">Audience & Traffic Analytics</h3>
+        </div>
+
+        {/* Metrics Cards */}
+        <AudienceMetrics />
+
+        {/* Hourly Traffic Pattern */}
+        <HourlyTrafficChart />
+
+        {/* Gender Distribution */}
+        <GenderDistributionChart />
+
+        {/* Busiest Days */}
+        <BusiestDaysChart />
+
+        {/* Data Source Note */}
+        <div className="rounded-lg p-3 text-xs" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+          <div className="flex items-start gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 flex-shrink-0 mt-0.5">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+            </svg>
+            <p>
+              <strong>Analytics data:</strong> Showing aggregated patterns from Arlington parking & traffic data. Individual location metrics vary by time and season.
+            </p>
+          </div>
+        </div>
       </div>
 
         <div>
@@ -152,6 +211,19 @@ export default function ZoneDetailsPanel({ zone, rank, onClose }: ZoneDetailsPan
               </div>
             </div>
           )}
+
+          {/* View on Google Maps Button */}
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${zone.latitude},${zone.longitude}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full rounded-lg px-4 py-3 text-center text-sm font-semibold transition-colors mb-4"
+            style={{ background: 'rgba(74, 222, 128, 0.1)', color: '#4ade80' }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(74, 222, 128, 0.2)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(74, 222, 128, 0.1)'}
+          >
+            📍 View on Google Maps →
+          </a>
 
           {/* Story 5.5 AC: Scoring breakdown */}
           <div className="rounded-lg p-3" style={{ border: '1px solid #2a4551', background: 'rgba(30, 58, 72, 0.5)' }}>

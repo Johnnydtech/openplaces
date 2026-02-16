@@ -19,6 +19,7 @@
     "react-dropzone": "^15.0.0",
     "react-hook-form": "^7.71.1",
     "react-hot-toast": "^2.6.0",
+    "recharts": "^3.7.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

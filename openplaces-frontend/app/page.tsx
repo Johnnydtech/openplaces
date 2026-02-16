@@ -165,7 +165,12 @@ export default function UnifiedHomePage() {
   // Handle zone click
   const handleZoneClick = (zone: ZoneRecommendation, rank: number) => {
     setSelectedZone({ zone, rank })
+    // Pass zoom command to map via state
+    setZoomToZone({ lat: zone.latitude, lon: zone.longitude, zoneId: zone.zone_id })
   }
+
+  // State for triggering map zoom to specific zone
+  const [zoomToZone, setZoomToZone] = useState<{ lat: number; lon: number; zoneId: string } | null>(null)
 
   // Reset to upload new flyer
   const handleNewUpload = () => {
@@ -233,6 +238,7 @@ export default function UnifiedHomePage() {
           onZoneHover={(zoneId) => setHoveredZoneId(zoneId)}
           onZoneLeave={() => setHoveredZoneId(null)}
           onZoneClick={handleZoneClick}
+          zoomToLocation={zoomToZone}
         />
       </div>
 
@@ -254,7 +260,7 @@ export default function UnifiedHomePage() {
         {/* Upload Section */}
         {uploadState === 'idle' && (
           <div className="p-6">
-            <UploadZone onFileSelect={handleFileUpload} />
+            <UploadZone onFileSelect={handleFileUpload} isUploading={false} />
           </div>
         )}
 
