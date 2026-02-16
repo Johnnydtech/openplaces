@@ -1,7 +1,7 @@
 """
 Story 2.11: Recommendation Caching Per User
-
 Caches recommendation results to avoid redundant API calls.
+Updated for TEXT user_id (Clerk IDs directly) and recommendations_cache table.
 """
 from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
@@ -29,24 +29,25 @@ class CheckCacheRequest(BaseModel):
 
 def generate_event_hash(event_data: dict) -> str:
     """
-    Story 2.11 AC: event_hash (SHA-256 hash of event details)
+    Story 2.11 AC: Generate MD5 hash of event details for cache key
 
-    Generates SHA-256 hash of event details for cache lookup.
+    Generates deterministic hash from event details for cache lookup.
     Normalizes event data to ensure consistent hashing.
     """
-    # Normalize event data (sort keys, remove timestamps)
+    # Normalize event data (sort keys, lowercase strings)
     normalized = {
         "name": event_data.get("name", "").lower().strip(),
-        "date": event_data.get("date", ""),
-        "time": event_data.get("time", ""),
-        "venue": event_data.get("venue", "").lower().strip(),
-        "audience": sorted(event_data.get("audience", [])),
-        "event_type": event_data.get("event_type", "").lower()
+        "date": event_data.get("date", "").strip(),
+        "time": event_data.get("time", "").strip(),
+        "venue_lat": round(event_data.get("venue_lat", 0), 4),
+        "venue_lon": round(event_data.get("venue_lon", 0), 4),
+        "target_audience": sorted(event_data.get("target_audience", [])),
+        "event_type": event_data.get("event_type", "").lower().strip()
     }
 
     # Create hash from normalized JSON
     json_str = json.dumps(normalized, sort_keys=True)
-    return hashlib.sha256(json_str.encode()).hexdigest()
+    return hashlib.md5(json_str.encode()).hexdigest()
 
 
 @router.post("/save")
@@ -57,21 +58,11 @@ async def save_recommendations_to_cache(
     """
     Story 2.11 AC: Save recommendations to cache
 
-    Saves recommendation results to recommendations table.
-    Cache persists for 30 days.
+    Saves recommendation results to recommendations_cache table.
+    Cache persists for 30 days (auto-set by database default).
     """
     if not x_clerk_user_id:
-        # Allow caching for anonymous users (user_id = null)
-        user_id = None
-    else:
-        # Get internal user_id for authenticated users
-        supabase = get_supabase_client()
-        user_result = supabase.table("users").select("id").eq("clerk_user_id", x_clerk_user_id).execute()
-
-        if user_result.data:
-            user_id = user_result.data[0]["id"]
-        else:
-            user_id = None
+        raise HTTPException(status_code=401, detail="User not authenticated")
 
     try:
         supabase = get_supabase_client()
@@ -79,43 +70,28 @@ async def save_recommendations_to_cache(
         # Story 2.11 AC: Generate event hash for cache key
         event_hash = generate_event_hash(request.event_data)
 
-        # Check if cache already exists
-        existing = supabase.table("recommendations")\
-            .select("id")\
-            .eq("event_hash", event_hash)
+        # Upsert cache entry (insert or update if exists)
+        # The unique constraint on (user_id, event_hash) handles deduplication
+        cache_entry = {
+            "user_id": x_clerk_user_id,  # TEXT field with Clerk ID directly
+            "event_hash": event_hash,
+            "event_data": request.event_data,
+            "zones": request.zones
+            # expires_at auto-set to 30 days by database default
+            # last_accessed_at auto-set to NOW() by database default
+        }
 
-        if user_id:
-            existing = existing.eq("user_id", user_id)
-        else:
-            existing = existing.is_("user_id", "null")
+        result = supabase.table("recommendations_cache")\
+            .upsert(cache_entry, on_conflict="user_id,event_hash")\
+            .execute()
 
-        existing_result = existing.execute()
-
-        if existing_result.data:
-            # Update existing cache
-            result = supabase.table("recommendations")\
-                .update({
-                    "event_data": request.event_data,
-                    "zones": request.zones,
-                    "created_at": datetime.utcnow().isoformat()  # Refresh timestamp
-                })\
-                .eq("id", existing_result.data[0]["id"])\
-                .execute()
-        else:
-            # Create new cache entry
-            result = supabase.table("recommendations").insert({
-                "user_id": user_id,
-                "event_hash": event_hash,
-                "event_data": request.event_data,
-                "zones": request.zones
-            }).execute()
-
-        logger.info(f"Recommendations cached: event_hash={event_hash}, user_id={user_id}")
+        logger.info(f"Recommendations cached: event_hash={event_hash}, user={x_clerk_user_id}")
 
         return {
             "status": "success",
             "message": "Recommendations cached",
-            "cache_id": result.data[0]["id"] if result.data else None
+            "cache_id": result.data[0]["id"] if result.data else None,
+            "event_hash": event_hash
         }
 
     except Exception as e:
@@ -132,14 +108,10 @@ async def check_cache(
     Story 2.11 AC: Check cache and return if exists
 
     Returns cached recommendations if available and not expired.
-    Cache persists 30 days.
+    Cache persists 30 days, updates last_accessed_at on hit.
     """
     if not x_clerk_user_id:
-        user_id = None
-    else:
-        supabase = get_supabase_client()
-        user_result = supabase.table("users").select("id").eq("clerk_user_id", x_clerk_user_id).execute()
-        user_id = user_result.data[0]["id"] if user_result.data else None
+        raise HTTPException(status_code=401, detail="User not authenticated")
 
     try:
         supabase = get_supabase_client()
@@ -148,16 +120,12 @@ async def check_cache(
         event_hash = generate_event_hash(request.event_data)
 
         # Story 2.11 AC: Check cache (same event hash returns cached instantly)
-        query = supabase.table("recommendations")\
+        result = supabase.table("recommendations_cache")\
             .select("*")\
-            .eq("event_hash", event_hash)
-
-        if user_id:
-            query = query.eq("user_id", user_id)
-        else:
-            query = query.is_("user_id", "null")
-
-        result = query.execute()
+            .eq("user_id", x_clerk_user_id)\
+            .eq("event_hash", event_hash)\
+            .gt("expires_at", datetime.utcnow().isoformat())\
+            .execute()
 
         if not result.data:
             return {
@@ -168,18 +136,17 @@ async def check_cache(
 
         cached_rec = result.data[0]
 
-        # Story 2.11 AC: Cache persists 30 days
-        created_at = datetime.fromisoformat(cached_rec["created_at"].replace("Z", "+00:00"))
-        age_days = (datetime.now(created_at.tzinfo) - created_at).days
+        # Update last_accessed_at for LRU tracking
+        supabase.table("recommendations_cache")\
+            .update({"last_accessed_at": datetime.utcnow().isoformat()})\
+            .eq("id", cached_rec["id"])\
+            .execute()
 
-        if age_days > 30:
-            # Cache expired
-            return {
-                "status": "expired",
-                "cached": False,
-                "message": "Cache expired (>30 days)",
-                "age_days": age_days
-            }
+        # Calculate cache age
+        created_at = datetime.fromisoformat(cached_rec["created_at"].replace("Z", "+00:00"))
+        age_hours = (datetime.now(created_at.tzinfo) - created_at).total_seconds() / 3600
+
+        logger.info(f"Cache hit: event_hash={event_hash}, user={x_clerk_user_id}, age={age_hours:.1f}h")
 
         # Cache hit
         return {
@@ -190,7 +157,7 @@ async def check_cache(
                 "event_data": cached_rec["event_data"],
                 "zones": cached_rec["zones"],
                 "cached_at": cached_rec["created_at"],
-                "age_days": age_days
+                "age_hours": round(age_hours, 1)
             }
         }
 
@@ -214,27 +181,18 @@ async def clear_cache(
     Clears cached recommendations to force regeneration.
     """
     if not x_clerk_user_id:
-        user_id = None
-    else:
-        supabase = get_supabase_client()
-        user_result = supabase.table("users").select("id").eq("clerk_user_id", x_clerk_user_id).execute()
-        user_id = user_result.data[0]["id"] if user_result.data else None
+        raise HTTPException(status_code=401, detail="User not authenticated")
 
     try:
         supabase = get_supabase_client()
 
-        query = supabase.table("recommendations")\
+        result = supabase.table("recommendations_cache")\
             .delete()\
-            .eq("event_hash", event_hash)
+            .eq("user_id", x_clerk_user_id)\
+            .eq("event_hash", event_hash)\
+            .execute()
 
-        if user_id:
-            query = query.eq("user_id", user_id)
-        else:
-            query = query.is_("user_id", "null")
-
-        result = query.execute()
-
-        logger.info(f"Cache cleared: event_hash={event_hash}, user_id={user_id}")
+        logger.info(f"Cache cleared: event_hash={event_hash}, user={x_clerk_user_id}")
 
         return {
             "status": "success",
@@ -246,22 +204,55 @@ async def clear_cache(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.delete("/clear-all")
+async def clear_all_user_cache(
+    x_clerk_user_id: Optional[str] = Header(None, alias="X-Clerk-User-Id")
+):
+    """
+    Clear all cached recommendations for the current user.
+    Useful for testing or user-requested cache reset.
+    """
+    if not x_clerk_user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+
+    try:
+        supabase = get_supabase_client()
+
+        result = supabase.table("recommendations_cache")\
+            .delete()\
+            .eq("user_id", x_clerk_user_id)\
+            .execute()
+
+        deleted_count = len(result.data) if result.data else 0
+
+        logger.info(f"User cache cleared: user={x_clerk_user_id}, count={deleted_count}")
+
+        return {
+            "status": "success",
+            "deleted_count": deleted_count,
+            "message": f"Cleared {deleted_count} cached recommendations"
+        }
+
+    except Exception as e:
+        logger.error(f"Error clearing user cache: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/cleanup-expired")
 async def cleanup_expired_cache():
     """
-    Cleanup endpoint to delete cache entries older than 30 days.
+    Story 2.11 AC: Cache expires after 30 days
+
+    Cleanup endpoint to delete expired cache entries.
     Should be called by a cron job or scheduled task.
     """
     try:
         supabase = get_supabase_client()
 
-        # Calculate cutoff date (30 days ago)
-        cutoff_date = (datetime.utcnow() - timedelta(days=30)).isoformat()
-
-        # Delete expired cache entries
-        result = supabase.table("recommendations")\
+        # Delete expired cache entries (expires_at < now)
+        result = supabase.table("recommendations_cache")\
             .delete()\
-            .lt("created_at", cutoff_date)\
+            .lt("expires_at", datetime.utcnow().isoformat())\
             .execute()
 
         deleted_count = len(result.data) if result.data else 0

@@ -360,47 +360,99 @@ class RecommendationsService:
         """
         Generate plain-language reasoning for why this zone scored as it did
         Story 4.9: Display transparent reasoning for each recommendation
+        Story 6.4: Enhanced with time period behavioral insights
         """
         reasons = []
 
+        # Story 6.4: Get time period behavioral context (most important - goes first!)
+        time_period = event_data.time_period or "evening"
+        time_context = self._get_time_period_behavioral_context(
+            time_period, zone, audience_match
+        )
+        if time_context:
+            reasons.append(time_context)
+
         # Audience match reasoning
         if audience_match >= 32:  # 80% of 40 points
-            reasons.append(f"Excellent audience match for your target demographics")
+            reasons.append(f"excellent audience match for your target demographics")
         elif audience_match >= 24:  # 60% of 40 points
-            reasons.append(f"Good audience alignment")
-        else:
-            reasons.append(f"Limited audience overlap")
-
-        # Temporal reasoning
-        if temporal_alignment >= 24:  # 80% of 30 points
-            reasons.append(f"optimal timing for your event schedule")
-        elif temporal_alignment >= 18:  # 60% of 30 points
-            reasons.append(f"decent timing alignment")
-        else:
-            reasons.append(f"timing may not align perfectly")
+            reasons.append(f"good audience alignment")
 
         # Distance reasoning
         if distance_miles < 1:
             reasons.append(f"very close to venue ({distance_miles:.1f} mi)")
         elif distance_miles < 3:
             reasons.append(f"walkable distance ({distance_miles:.1f} mi)")
-        elif distance_miles < 5:
-            reasons.append(f"moderate distance ({distance_miles:.1f} mi)")
-        else:
-            reasons.append(f"farther from venue ({distance_miles:.1f} mi)")
 
         # Dwell time reasoning
         if dwell_time_seconds >= 45:
             reasons.append(f"high dwell time ({dwell_time_seconds}s) for ad visibility")
         elif dwell_time_seconds >= 30:
             reasons.append(f"moderate dwell time ({dwell_time_seconds}s)")
-        else:
-            reasons.append(f"lower dwell time ({dwell_time_seconds}s) - people may rush past")
+
+        # Capitalize first letter of first reason
+        if reasons:
+            reasons[0] = reasons[0][0].upper() + reasons[0][1:]
 
         # Combine into sentence
         reasoning = f"{zone.name}: {', '.join(reasons)}."
 
         return reasoning
+
+    def _get_time_period_behavioral_context(
+        self, time_period: str, zone: Zone, audience_match: float
+    ) -> str:
+        """
+        Story 6.4: Generate time period behavioral reasoning
+
+        Returns strategic context explaining WHY this time period works
+        Examples:
+        - Morning: "Commuters heading to work, high attention during routine"
+        - Lunch: "Office workers on break, browsing mindset, walkable activities"
+        - Evening: "Commuters heading home, weekend planning mode"
+        """
+        zone_name_lower = zone.name.lower()
+
+        # Identify zone type for context-specific reasoning
+        is_transit = any(keyword in zone_name_lower for keyword in ["metro", "station", "transit", "ballston", "rosslyn", "clarendon"])
+        is_restaurant = any(keyword in zone_name_lower for keyword in ["restaurant", "dining", "cafe", "coffee", "food"])
+        is_retail = any(keyword in zone_name_lower for keyword in ["retail", "shopping", "store", "shops"])
+
+        # Morning behavioral patterns (6-11am)
+        if time_period == "morning":
+            if is_transit:
+                return "commuters heading to work (7-9am), high attention during morning routine, prime time for weekend event discovery"
+            elif is_restaurant:
+                return "morning coffee crowd, leisurely browsing, receptive to event information"
+            elif is_retail:
+                return "early shoppers with time to browse, unhurried pace, good attention span"
+            else:
+                return "morning foot traffic with routine patterns, consistent daily exposure"
+
+        # Lunch behavioral patterns (11am-2pm)
+        elif time_period == "lunch":
+            if is_transit:
+                return "lunch-hour commuters and office workers, mid-day breaks, good browsing time"
+            elif is_restaurant:
+                return "office workers on lunch break (11am-2pm), browsing mindset, looking for nearby activities"
+            elif is_retail:
+                return "lunch shoppers taking breaks, relaxed pace, receptive to event details"
+            else:
+                return "mid-day crowd with flexible schedule, good dwell time, walkable radius matters"
+
+        # Evening behavioral patterns (5-9pm)
+        elif time_period == "evening":
+            if is_transit:
+                return "commuters heading home (5-7pm), weekend planning mode, repetition builds awareness"
+            elif is_restaurant:
+                return "dinner crowd with leisure time, social mindset, discussing weekend plans"
+            elif is_retail:
+                return "evening shoppers unwinding, browsing for entertainment, receptive to event ideas"
+            else:
+                return "evening foot traffic with leisure mindset, good attention for event details"
+
+        # Fallback (shouldn't happen)
+        return "strategic timing for target audience behavior patterns"
 
 
 # Singleton instance
