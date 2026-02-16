@@ -429,6 +429,28 @@ export default function Map({ className = '', recommendations = [], eventData = 
           console.warn(`Map load time (${loadTime}ms) exceeds 2s target`)
         }
 
+        // 🎨 Customize road colors to green for app aesthetic
+        const greenColor = '#4ade80' // Main green accent
+        const darkGreen = '#22c55e'  // Darker green
+        const roadLayers = [
+          'road-simple',
+          'road-primary',
+          'road-secondary-tertiary',
+          'road-street',
+          'road-minor',
+          'road-motorway-trunk',
+          'bridge-primary',
+          'bridge-secondary-tertiary',
+          'bridge-street',
+          'bridge-motorway-trunk'
+        ]
+
+        roadLayers.forEach(layerId => {
+          if (map.current?.getLayer(layerId)) {
+            map.current.setPaintProperty(layerId, 'line-color', greenColor)
+          }
+        })
+
         // Story 5.4: Add venue marker after map loads
         // Story 5.6: Add distance circles centered on venue
         if (eventData) {
