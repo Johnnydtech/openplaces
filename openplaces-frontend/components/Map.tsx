@@ -389,7 +389,7 @@ export default function Map({ className = '', recommendations = [], eventData = 
 
     // Story 5.9: Focus indicator for venue marker
     el.addEventListener('focus', () => {
-      const svg = el.querySelector('svg') as HTMLElement
+      const svg = el.querySelector('svg') as SVGElement
       if (svg) {
         svg.style.outline = '3px solid #3b82f6'
         svg.style.outlineOffset = '2px'
@@ -398,7 +398,7 @@ export default function Map({ className = '', recommendations = [], eventData = 
     })
 
     el.addEventListener('blur', () => {
-      const svg = el.querySelector('svg') as HTMLElement
+      const svg = el.querySelector('svg') as SVGElement
       if (svg) {
         svg.style.outline = 'none'
       }
