@@ -364,7 +364,7 @@ export default function UnifiedHomePage() {
             </div>
 
             {/* Zones List */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-3">
+            <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3">
               {recommendations.map((recommendation, index) => (
                 <div
                   key={`${recommendation.zone_id}-${selectedTimePeriod}`}
@@ -378,7 +378,7 @@ export default function UnifiedHomePage() {
                   onMouseEnter={() => setHoveredZoneId(recommendation.zone_id)}
                   onMouseLeave={() => setHoveredZoneId(null)}
                   onClick={() => handleZoneClick(recommendation, index + 1)}
-                  className={`transition-all duration-200 cursor-pointer ${
+                  className={`mx-3 transition-all duration-200 cursor-pointer ${
                     hoveredZoneId === recommendation.zone_id ? 'scale-[1.02]' : ''
                   }`}
                 >
