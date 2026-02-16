@@ -1,255 +1,273 @@
 # OpenPlaces - Strategic Ad Placement Recommender
 
-> AI-powered strategic ad placement recommendations for small businesses in Arlington, VA
+**AI-powered flyer placement recommendations for Arlington, VA events**
 
-## Overview
+OpenPlaces uses computer vision, semantic matching, and real-time data to recommend the best locations to place event flyers based on audience demographics, timing, distance, and foot traffic patterns.
 
-OpenPlaces helps small business owners make data-driven decisions about where to place physical advertisements for their events. By analyzing event flyers with AI and combining it with community data, OpenPlaces provides transparent, ranked recommendations with the "Permission to Say No" - protecting users from costly placement mistakes.
+## 🎯 What It Does
 
-## Core Features
+1. **Upload an event flyer** (image or PDF)
+2. **AI extracts event details** (OpenAI Vision API)
+3. **Get top 10 placement recommendations** ranked by:
+   - 🎯 **Audience Match** (40%) - Semantic matching with OpenAI embeddings
+   - ⏰ **Timing** (30%) - When your target audience is there
+   - 📍 **Distance** (20%) - Proximity to venue
+   - 👀 **Dwell Time** (10%) - How long people stop and look
 
-### 🎯 Smart Recommendations
-- Upload event flyers for instant AI analysis
-- Get ranked top 10 placement zones based on:
-  - Audience match (40%)
-  - Timing alignment (30%)
-  - Distance from venue (20%)
-  - Dwell time (10%)
+4. **Interactive map** showing recommendations with Mapbox
+5. **Risk warnings** for low-ROI locations with alternative suggestions
+6. **Save recommendations** for future reference
 
-### 🗺️ Interactive Mapping
-- Visualize recommendations on interactive Arlington map
-- Click zones for detailed breakdowns
-- Distance circles for geographic context
-
-### ⏰ Temporal Intelligence
-- Toggle between Morning/Lunch/Evening time periods
-- Dynamic re-ranking based on time-of-day audience behavior
-- Strategic reasoning (e.g., "commuters planning weekends")
-
-### ⚠️ Risk Protection
-- Deceptive hotspot detection
-- Clear warnings for ineffective zones
-- Better alternative suggestions
-
-### 🔍 Transparency
-- Every recommendation shows WHY with data sources
-- Scoring breakdown (never black-box)
-- Signals found vs. not detected
-- Data freshness timestamps
-
-## Tech Stack
+## 🏗️ Architecture
 
 ### Frontend
-- **React 18** + **TypeScript** - Modern, type-safe UI
-- **Vite 5** - Lightning-fast development and builds
-- **Mapbox GL JS** - Interactive map visualization
-- **Vitest** - Unit testing with coverage
+- **Next.js 16** with App Router
+- **React 19** with TypeScript
+- **Tailwind CSS 4** for styling
+- **Mapbox GL JS** for interactive maps
+- **Clerk** for authentication
+- **Axios** for API calls
 
 ### Backend
-- **FastAPI** (Python 3.11+) - High-performance async API
-- **OpenAI Vision API** - Flyer analysis and event extraction
-- **Supabase PostgreSQL + PostGIS** - Geospatial database
-- **Pytest** - Comprehensive API testing
+- **FastAPI** (Python 3.11+)
+- **OpenAI API** for:
+  - Vision: Event detail extraction from flyers
+  - Embeddings: Semantic audience matching
+- **Supabase PostgreSQL** for data storage
+- **Geopy** for geocoding
 
-### Infrastructure
-- **Clerk** - Authentication (optional for freemium model)
-- **Supabase Storage** - Flyer upload persistence
-- **Arlington Open Data** - Community signals and data
+### Data Sources
+- **Static zones** (10 curated Arlington locations) - Current
+- **Arlington Parking API** (real parking data) - In progress
+- **Google Places API** (venue data, popular times) - In progress
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+
-- Python 3.11+
-- npm/yarn/pnpm
+- **Node.js 18+** and npm
+- **Python 3.11+** and pip
+- **OpenAI API key** ([Get one](https://platform.openai.com/api-keys))
+- **Supabase account** ([Sign up](https://supabase.com))
+- **Clerk account** ([Sign up](https://clerk.com))
+- **Mapbox API key** ([Sign up](https://account.mapbox.com/))
 
-### Installation
+### 1. Clone Repository
+```bash
+git clone https://github.com/yourusername/openplaces.git
+cd openplaces
+```
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd Claude-Code-Hack
-   ```
-
-2. **Setup Frontend**
-   ```bash
-   cd frontend
-   npm install
-   cp .env.example .env.local
-   # Edit .env.local with your API keys
-   ```
-
-3. **Setup Backend**
-   ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate  # Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   cp .env.example .env
-   # Edit .env with your API keys
-   ```
-
-### Development
-
-**Start Backend** (Terminal 1):
+### 2. Backend Setup
 ```bash
 cd backend
-source venv/bin/activate
-python app/main.py
-```
-Backend runs at `http://localhost:8000` with docs at `/docs`
 
-**Start Frontend** (Terminal 2):
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Create .env file
+cp .env.example .env
+# Add your API keys to .env:
+# OPENAI_API_KEY=sk-...
+# SUPABASE_URL=https://...
+# SUPABASE_KEY=...
+# CLERK_SECRET_KEY=...
+
+# Run database migrations (see SUPABASE_SETUP.md)
+
+# Start backend
+python -m uvicorn app.main:app --reload --port 8000
+```
+
+### 3. Frontend Setup
 ```bash
-cd frontend
+cd openplaces-frontend
+
+# Install dependencies
+npm install
+
+# Create .env.local file
+cp .env.local.example .env.local
+# Add your API keys:
+# NEXT_PUBLIC_API_URL=http://localhost:8000
+# NEXT_PUBLIC_MAPBOX_API_KEY=pk.eyJ1...
+# NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+
+# Start frontend
 npm run dev
 ```
-Frontend runs at `http://localhost:5173`
 
-### Testing
+### 4. Open Application
+- **Frontend**: http://localhost:3000
+- **Backend API Docs**: http://localhost:8000/docs
 
-**Frontend Tests**:
-```bash
-cd frontend
-npm test                # Watch mode
-npm run test:coverage   # With coverage report
-```
-
-**Backend Tests**:
-```bash
-cd backend
-pytest                  # Run all tests
-pytest --cov=app tests/ --cov-report=term-missing  # With coverage
-```
-
-## Project Structure
+## 📁 Project Structure
 
 ```
-/
-├── frontend/              # React + TypeScript frontend
-│   ├── src/
-│   │   ├── components/   # React components
-│   │   ├── services/     # API clients
-│   │   ├── types/        # TypeScript types
-│   │   └── test/         # Test utilities
+openplaces/
+├── backend/
+│   ├── app/
+│   │   ├── data/             # Zone data (GeoJSON)
+│   │   ├── routes/           # API endpoints
+│   │   ├── services/         # Business logic
+│   │   │   ├── recommendations.py  # Scoring algorithm + embeddings
+│   │   │   ├── zones.py           # Zone data management
+│   │   │   └── data_ingestion.py  # Real data integration
+│   │   └── main.py          # FastAPI app
+│   ├── requirements.txt
+│   └── .env
+│
+├── openplaces-frontend/
+│   ├── app/                 # Next.js pages
+│   │   ├── upload/         # Flyer upload
+│   │   ├── recommendations/ # Results display
+│   │   └── saved-recommendations/
+│   ├── components/         # React components
+│   │   ├── Map.tsx        # Mapbox integration
+│   │   ├── RecommendationCard.tsx
+│   │   └── ...
+│   ├── lib/
+│   │   ├── api.ts         # API client
+│   │   └── analytics.ts   # Event tracking
 │   └── package.json
 │
-├── backend/              # FastAPI backend
-│   ├── app/
-│   │   ├── main.py      # Application entry
-│   │   ├── models/      # Database models
-│   │   ├── schemas/     # Pydantic schemas
-│   │   ├── services/    # Business logic
-│   │   └── routers/     # API routes
-│   ├── tests/           # Backend tests
-│   └── requirements.txt
-│
-├── .ralph/              # Ralph AI agent configuration
-│   ├── specs/           # Project specifications
-│   ├── @fix_plan.md    # Prioritized task list
-│   └── logs/            # Development logs
-│
-└── docs/                # Project documentation
+└── README.md
 ```
 
-## API Endpoints
+## 🎨 Key Features
+
+### 1. AI Event Extraction
+- Upload flyer image/PDF → OpenAI Vision extracts event details
+- Edit extracted data before getting recommendations
+- Automatic venue geocoding
+
+### 2. Semantic Audience Matching
+- **Problem**: Event targets "art enthusiasts", zones have "cultural interests"
+- **Solution**: OpenAI embeddings for semantic similarity
+- **Result**: Intelligent matching instead of exact string matching
+
+### 3. Interactive Map
+- Mapbox GL JS for smooth pan/zoom/rotate
+- Zone markers color-coded by rank (green = top 3)
+- Venue marker with distance circles (1km, 3km, 5km)
+- Click zone → see details panel
+- Hover card ↔ highlight map marker
+
+### 4. Risk Warnings
+- Detects "deceptive hotspots" (high traffic, low conversion)
+- Visual warnings with alternative suggestions
+- Categorized by issue: Low dwell time, poor audience match, timing misalignment, visual noise
+- "Permission to Say No" framing (advisory, not prescriptive)
+
+### 5. Temporal Intelligence
+- Toggle time period: Morning / Lunch / Evening
+- Dynamic re-ranking based on when people are actually there
+- Timing-specific reasoning for each zone
+
+### 6. Save & Track
+- Save recommendations for future reference
+- Add notes to saved zones
+- View history of all saved recommendations
+- Delete recommendations when no longer needed
+
+## 🔬 Technical Highlights
+
+### Scoring Algorithm
+```python
+total_score = (
+    audience_match_score +      # 0-40 points (OpenAI embeddings)
+    temporal_alignment_score +   # 0-30 points
+    distance_score +             # 0-20 points
+    dwell_time_score             # 0-10 points
+)  # Final: 0-100%
+```
+
+### Semantic Audience Matching
+```python
+# Get embeddings for event audience and zone signals
+event_embedding = openai.embeddings.create(
+    model="text-embedding-3-small",
+    input="kids, teens, adults, art enthusiasts"
+)
+
+zone_embedding = cached_embeddings["families, cultural, community"]
+
+# Calculate cosine similarity
+similarity = cosine_similarity(event_embedding, zone_embedding)
+score = similarity * 40  # Scale to 0-40 points
+```
+
+## 🗺️ Data Sources
+
+### Current (Static)
+- 10 manually curated zones in Arlington, VA
+- Based on real locations (metro stations, Whole Foods, gyms, etc.)
+- Synthetic but realistic audience/timing data
+
+### Future (Real Data Integration)
+- **Arlington Parking API**: Real parking locations → high-traffic areas
+- **Google Places API**: Venue data, popular times, foot traffic patterns
+- **Census Data**: Demographics, household composition
+- **Transit APIs**: WMATA ridership, peak times
+
+## 📊 API Endpoints
 
 ### Core Endpoints
-- `GET /` - API information
-- `GET /api/health` - Health check
-- `GET /api/status` - Configuration status
-- `GET /docs` - Interactive API documentation
+- `POST /api/analyze` - Extract event details from flyer image
+- `POST /api/geocode` - Convert address to coordinates
+- `POST /api/recommendations/top` - Get ranked zone recommendations
+- `GET /api/saved-recommendations/{user_id}` - View saved recommendations
 
-### Planned Endpoints
-- `POST /api/analyze` - Analyze event flyer
-- `POST /api/recommend` - Generate recommendations
-- `GET /api/zones` - Get placement zones
-- `POST /api/webhook/clerk` - User sync webhook
+### Data Ingestion (In Progress)
+- `POST /api/data/generate-zones` - Generate zones from real data
+- `GET /api/data/parking-locations` - Fetch Arlington parking data
+- `GET /api/data/test-google-places` - Test Google Places integration
 
-## Development Workflow
+See full API documentation at `http://localhost:8000/docs`
 
-### Epic Progress (66 stories across 7 epics)
+## 🧪 Development
 
-- ✅ **Epic 1: Project Foundation** (Stories 1.1-1.4 complete)
-- ⏳ **Epic 1: Remaining** (Stories 1.5-1.7 in progress)
-- ⏳ Epic 2: Authentication & User Management
-- ⏳ Epic 3: Upload & Event Discovery
-- ⏳ Epic 4: Strategic Placement Recommendations
-- ⏳ Epic 5: Interactive Map Visualization
-- ⏳ Epic 6: Temporal Intelligence
-- ⏳ Epic 7: Risk Assessment & Warnings
-
-### Current Status
-- **Phase**: Foundation Setup Complete
-- **Next**: Database initialization and schema creation
-- **See**: `.ralph/@fix_plan.md` for detailed task list
-
-## Environment Variables
-
-### Frontend (.env.local)
+### Running Tests
 ```bash
-VITE_MAPBOX_API_KEY=your_mapbox_key
-VITE_CLERK_PUBLISHABLE_KEY=your_clerk_key
-VITE_API_URL=http://localhost:8000
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+cd backend
+pytest
 ```
 
-### Backend (.env)
+### Database Migrations
 ```bash
-OPENAI_API_KEY=your_openai_key
-SUPABASE_URL=your_supabase_url
-SUPABASE_SERVICE_KEY=your_supabase_service_key
-MAPBOX_API_KEY=your_mapbox_key
-CLERK_WEBHOOK_SECRET=your_webhook_secret
+cd backend/migrations
+# Follow instructions in APPLY_MIGRATIONS.md
 ```
 
-## Performance Requirements
+### Analytics Tracking
+Event tracking is implemented with console.log (development).
+For production, integrate PostHog or Mixpanel in `lib/analytics.ts`.
 
-- **Time to Strategic Clarity**: ≤60 seconds from upload to recommendations
-  - OpenAI Vision API: <45 seconds
-  - Recommendation Engine: <10 seconds
-  - Map Rendering: <3 seconds
-- **Map Interactions**: <200ms response time
-- **Test Coverage**: 85% minimum for all new code
+## 🎯 Roadmap
 
-## Architecture Highlights
+- [x] AI flyer analysis (OpenAI Vision)
+- [x] Semantic audience matching (OpenAI embeddings)
+- [x] Interactive map with Mapbox
+- [x] Risk warnings with alternatives
+- [x] Temporal intelligence (time period toggle)
+- [x] Save recommendations
+- [ ] Real data integration (Arlington Parking + Google Places)
+- [ ] Mobile app (React Native)
+- [ ] Multi-city support
+- [ ] A/B testing for recommendations
+- [ ] Historical performance tracking
 
-### Key Design Decisions
-1. **Transparency First**: Every recommendation includes reasoning and data sources
-2. **Privacy-Focused**: No permanent storage of uploaded flyers (7-day expiration)
-3. **Offline-Capable**: Cached data and map tiles for demo reliability
-4. **Freemium Model**: Anonymous users see top 3 zones, authenticated users see all 10
-5. **Ethical AI**: "Permission to Say No" - warnings protect from bad placements
+## 📝 License
 
-## Contributing
+MIT License - see LICENSE file for details
 
-This project follows TDD methodology with red-green-refactor cycles:
-1. Write failing test first (from acceptance criteria)
-2. Implement minimum code to pass
-3. Refactor for quality
-4. Commit with conventional commit message
+## 🤝 Contributing
 
-### Commit Convention
-```bash
-feat(epic-N): complete Story N.M - [title]
-fix(component): description
-test(service): add tests for feature
-docs(readme): update documentation
-```
-
-## License
-
-[To be determined]
-
-## Team
-
-Built with ❤️ by Yohanesw
-
-## Support
-
-For issues and feature requests, see `.ralph/specs/` for project specifications or check the interactive API docs at `http://localhost:8000/docs` when running locally.
+Contributions welcome! Please open an issue or PR.
 
 ---
 
-**Note**: This project is built using the BMAD methodology with Ralph autonomous AI agent. See `CLAUDE.md` and `.ralph/PROMPT.md` for agent instructions and development workflow.
+**Built with ❤️ using Claude Code**

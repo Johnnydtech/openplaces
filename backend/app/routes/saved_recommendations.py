@@ -51,7 +51,8 @@ async def save_recommendation(
         user_result = supabase.table("users").select("id").eq("clerk_user_id", x_clerk_user_id).execute()
 
         if not user_result.data:
-            raise HTTPException(status_code=404, detail="User not found in database")
+            logger.warning(f"User not found in database: clerk_user_id={x_clerk_user_id}")
+            raise HTTPException(status_code=404, detail="User not found in database. Please sign in again or contact support.")
 
         internal_user_id = user_result.data[0]["id"]
 
@@ -72,12 +73,15 @@ async def save_recommendation(
             "saved_recommendation_id": result.data[0]["id"] if result.data else None
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error saving recommendation: {str(e)}")
+        error_msg = f"Error saving recommendation: {str(e)}"
+        logger.error(error_msg)
         # Check for duplicate constraint violation
         if "duplicate" in str(e).lower() or "unique" in str(e).lower():
             raise HTTPException(status_code=409, detail="Recommendation already saved")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=error_msg)
 
 
 @router.post("/unsave")
