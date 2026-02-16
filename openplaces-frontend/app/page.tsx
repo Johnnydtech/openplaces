@@ -406,9 +406,43 @@ export default function UnifiedHomePage() {
               </div>
             </div>
 
-            {/* Upload Zone */}
-            <div>
-              <UploadZone onFileSelect={handleFileUpload} isUploading={false} />
+            {/* Sign In Required - Upload Blocked */}
+            <div className="rounded-xl border-2 border-dashed p-8 text-center" style={{ borderColor: 'rgba(74, 222, 128, 0.3)', background: 'rgba(74, 222, 128, 0.05)' }}>
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'rgba(74, 222, 128, 0.1)' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-8 h-8" style={{ color: '#4ade80' }}>
+                    <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white mb-1">Sign In Required</p>
+                  <p className="text-xs" style={{ color: '#94a3b8' }}>
+                    You need to sign in to upload and analyze flyers
+                  </p>
+                </div>
+                <div className="flex gap-3 mt-2">
+                  <SignInButton mode="modal">
+                    <button
+                      className="px-5 py-2 rounded-lg text-sm font-semibold transition-colors"
+                      style={{ background: '#4ade80', color: '#0f1c24' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#22c55e'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = '#4ade80'}
+                    >
+                      Sign In
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <button
+                      className="px-5 py-2 rounded-lg text-sm font-semibold transition-colors border"
+                      style={{ background: 'transparent', color: '#4ade80', borderColor: '#4ade80' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(74, 222, 128, 0.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      Sign Up
+                    </button>
+                  </SignUpButton>
+                </div>
+              </div>
             </div>
 
             {/* How it works */}
@@ -635,10 +669,10 @@ export default function UnifiedHomePage() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-white">
-                  Sign in to unlock all features
+                  Sign in to upload and analyze
                 </p>
                 <p className="text-xs" style={{ color: '#94a3b8' }}>
-                  Save your favorite places and access your search history
+                  AI analysis requires authentication for security
                 </p>
               </div>
             </div>
