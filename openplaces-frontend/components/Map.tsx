@@ -429,23 +429,14 @@ export default function Map({ className = '', recommendations = [], eventData = 
           console.warn(`Map load time (${loadTime}ms) exceeds 2s target`)
         }
 
-        // 🎨 Customize road colors to green for app aesthetic
+        // 🎨 Customize only main highways to green for app aesthetic
         const greenColor = '#4ade80' // Main green accent
-        const darkGreen = '#22c55e'  // Darker green
-        const roadLayers = [
-          'road-simple',
-          'road-primary',
-          'road-secondary-tertiary',
-          'road-street',
-          'road-minor',
+        const mainHighwayLayers = [
           'road-motorway-trunk',
-          'bridge-primary',
-          'bridge-secondary-tertiary',
-          'bridge-street',
           'bridge-motorway-trunk'
         ]
 
-        roadLayers.forEach(layerId => {
+        mainHighwayLayers.forEach(layerId => {
           if (map.current?.getLayer(layerId)) {
             map.current.setPaintProperty(layerId, 'line-color', greenColor)
           }
