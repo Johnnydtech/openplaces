@@ -20,7 +20,7 @@ class DataIngestionService:
     """
 
     # Arlington GIS ArcGIS REST API endpoint for parking meters
-    ARLINGTON_PARKING_API = "https://services.arcgis.com/4J3o4jUCTOQqBGWO/arcgis/rest/services/Parking_Meter_Points/FeatureServer/0/query"
+    ARLINGTON_PARKING_API = "https://gis2.arlingtonva.us/arlgis/rest/services/QAlert/QA_Parking_Meters/MapServer/0/query"
 
     def __init__(self):
         self.google_api_key = os.getenv("GOOGLE_PLACES_API_KEY")
