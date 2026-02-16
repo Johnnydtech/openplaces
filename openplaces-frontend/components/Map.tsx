@@ -333,23 +333,32 @@ export default function Map({ className = '', recommendations = [], eventData = 
     el.setAttribute('role', 'button')
     el.setAttribute('aria-label', `Event venue: ${event.name}`)
     el.innerHTML = `
-      <div style="
-        width: 40px;
-        height: 40px;
-        background-color: #3b82f6;
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        border: 3px solid white;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.4);
-        cursor: default;
-        position: relative;
-        z-index: 1000;
-      ">
-        ⭐
+      <div style="position: relative; z-index: 1000;">
+        <svg width="40" height="52" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));">
+          <path d="M12 0C5.4 0 0 5.4 0 12c0 8.1 10.2 18.5 10.8 19.1.4.4 1 .4 1.4 0C12.8 30.5 24 20.1 24 12c0-6.6-5.4-12-12-12z" fill="#3b82f6"/>
+          <path d="M12 0C5.4 0 0 5.4 0 12c0 8.1 10.2 18.5 10.8 19.1.4.4 1 .4 1.4 0C12.8 30.5 24 20.1 24 12c0-6.6-5.4-12-12-12z" fill="url(#venue-gradient)"/>
+          <circle cx="12" cy="12" r="5" fill="white"/>
+          <circle cx="12" cy="12" r="3" fill="#3b82f6"/>
+          <defs>
+            <linearGradient id="venue-gradient" x1="12" y1="0" x2="12" y2="32" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#3b82f6"/>
+              <stop offset="100%" stop-color="#1e40af"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div style="
+          position: absolute;
+          top: 8px;
+          left: 50%;
+          transform: translateX(-50%);
+          color: white;
+          font-size: 16px;
+          font-weight: bold;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+          pointer-events: none;
+        ">
+          📍
+        </div>
       </div>
     `
 
@@ -380,17 +389,18 @@ export default function Map({ className = '', recommendations = [], eventData = 
 
     // Story 5.9: Focus indicator for venue marker
     el.addEventListener('focus', () => {
-      const innerDiv = el.querySelector('div') as HTMLElement
-      if (innerDiv) {
-        innerDiv.style.outline = '2px solid #3b82f6'
-        innerDiv.style.outlineOffset = '2px'
+      const svg = el.querySelector('svg') as HTMLElement
+      if (svg) {
+        svg.style.outline = '3px solid #3b82f6'
+        svg.style.outlineOffset = '2px'
+        svg.style.borderRadius = '50%'
       }
     })
 
     el.addEventListener('blur', () => {
-      const innerDiv = el.querySelector('div') as HTMLElement
-      if (innerDiv) {
-        innerDiv.style.outline = 'none'
+      const svg = el.querySelector('svg') as HTMLElement
+      if (svg) {
+        svg.style.outline = 'none'
       }
     })
 
