@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
@@ -10,6 +10,9 @@ import FilePreview from '@/components/FilePreview'
 import EventConfirmation from '@/components/EventConfirmation'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { analyzeFlyer } from '@/lib/api'
+import dynamic from 'next/dynamic'
+
+const MapComponent = dynamic(() => import('@/components/Map'), { ssr: false })
 
 export default function Home() {
   const router = useRouter()
@@ -277,41 +280,88 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          ) : (
-            // Upload Results Section
-            <div className="space-y-6">
+          ) : null}
+        </div>
+      </main>
+
+      {/* Map View with Floating Panels (after upload) */}
+      {(selectedFile || extractedData) && (
+        <div className="fixed inset-0 z-50 flex">
+          {/* Map Background */}
+          <div className="absolute inset-0">
+            {extractedData?.latitude && extractedData?.longitude ? (
+              <MapComponent
+                className="h-full w-full"
+                recommendations={[]}
+                eventData={{
+                  name: extractedData.event_name,
+                  date: extractedData.event_date,
+                  time: extractedData.event_time,
+                  venue_lat: extractedData.latitude,
+                  venue_lon: extractedData.longitude,
+                  target_audience: extractedData.target_audience,
+                  event_type: extractedData.event_type
+                }}
+                hoveredZoneId={null}
+                onZoneHover={() => {}}
+                onZoneLeave={() => {}}
+              />
+            ) : (
+              <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, #0a1628 0%, #1a2f3a 50%, #0f3d3e 100%)' }} />
+            )}
+          </div>
+
+          {/* Floating Panels Container */}
+          <div className="relative z-10 w-full h-full overflow-y-auto p-6">
+            <div className="max-w-2xl">
+              {/* Back Button */}
               <button
                 onClick={handleRemoveFile}
-                className="text-sm font-semibold hover:text-white transition-colors flex items-center gap-2 mb-4"
-                style={{ color: '#94a3b8' }}
+                className="mb-4 px-4 py-2 rounded-lg backdrop-blur-xl text-sm font-semibold hover:text-white transition-all flex items-center gap-2 shadow-lg"
+                style={{
+                  background: 'rgba(26, 47, 58, 0.9)',
+                  color: '#94a3b8',
+                  border: '1px solid rgba(74, 222, 128, 0.2)'
+                }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                   <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
                 </svg>
-                Upload a different flyer
+                Upload different flyer
               </button>
 
-              {isUploading && <LoadingSpinner />}
-
-              {selectedFile && !isUploading && (
-                <FilePreview
-                  file={selectedFile}
-                  previewUrl={previewUrl}
-                  onRemove={handleRemoveFile}
-                />
+              {/* Loading State */}
+              {isUploading && (
+                <div className="backdrop-blur-xl rounded-xl p-8 shadow-2xl" style={{ background: 'rgba(26, 47, 58, 0.9)' }}>
+                  <LoadingSpinner />
+                </div>
               )}
 
+              {/* File Preview */}
+              {selectedFile && !isUploading && !extractedData && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <FilePreview
+                    file={selectedFile}
+                    previewUrl={previewUrl}
+                    onRemove={handleRemoveFile}
+                  />
+                </div>
+              )}
+
+              {/* Event Confirmation */}
               {extractedData && (
-                <EventConfirmation
-                  data={extractedData}
-                  onGetRecommendations={handleGetRecommendations}
-                  onUpdate={handleEventUpdate}
-                />
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <EventConfirmation
+                    data={extractedData}
+                    onGetRecommendations={handleGetRecommendations}
+                    onUpdate={handleEventUpdate}
+                  />
+                </div>
               )}
             </div>
-          )}
+          </div>
         </div>
-      </main>
+      )}
     </div>
   )
 }
