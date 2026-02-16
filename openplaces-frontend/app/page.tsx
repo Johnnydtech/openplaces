@@ -316,42 +316,45 @@ export default function UnifiedHomePage() {
       >
         {/* Sidebar Header */}
         <div className="p-6 border-b" style={{ borderColor: 'rgba(42, 69, 81, 0.5)' }}>
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="OpenPlaces" className="w-10 h-10" />
-              <h1 className="text-2xl font-bold text-white">
+          {/* User info - top right if signed in */}
+          {isSignedIn && user && (
+            <div className="flex items-center justify-end gap-2 mb-3">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{ background: 'rgba(74, 222, 128, 0.1)' }}>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: '#4ade80', color: '#0f1c24' }}>
+                  {user.firstName?.[0] || user.emailAddresses[0]?.emailAddress[0].toUpperCase()}
+                </div>
+                <span className="text-xs font-medium" style={{ color: '#4ade80' }}>
+                  {user.firstName || 'User'}
+                </span>
+              </div>
+              <button
+                onClick={() => signOut()}
+                className="p-1.5 rounded-lg transition-colors"
+                style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                title="Sign out"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z" clipRule="evenodd" />
+                  <path fillRule="evenodd" d="M19 10a.75.75 0 00-.75-.75H8.704l1.048-.943a.75.75 0 10-1.004-1.114l-2.5 2.25a.75.75 0 000 1.114l2.5 2.25a.75.75 0 101.004-1.114l-1.048-.943h9.546A.75.75 0 0019 10z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* Centered Logo & Title */}
+          <div className="flex flex-col items-center gap-3 mb-2">
+            <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="OpenPlaces" className="w-12 h-12" />
+              <h1 className="text-3xl font-extrabold text-white" style={{ fontFamily: 'var(--font-jakarta)' }}>
                 OpenPlaces
               </h1>
             </div>
-            {isSignedIn && user && (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{ background: 'rgba(74, 222, 128, 0.1)' }}>
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: '#4ade80', color: '#0f1c24' }}>
-                    {user.firstName?.[0] || user.emailAddresses[0]?.emailAddress[0].toUpperCase()}
-                  </div>
-                  <span className="text-xs font-medium" style={{ color: '#4ade80' }}>
-                    {user.firstName || 'User'}
-                  </span>
-                </div>
-                <button
-                  onClick={() => signOut()}
-                  className="p-1.5 rounded-lg transition-colors"
-                  style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-                  title="Sign out"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                    <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z" clipRule="evenodd" />
-                    <path fillRule="evenodd" d="M19 10a.75.75 0 00-.75-.75H8.704l1.048-.943a.75.75 0 10-1.004-1.114l-2.5 2.25a.75.75 0 000 1.114l2.5 2.25a.75.75 0 101.004-1.114l-1.048-.943h9.546A.75.75 0 0019 10z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-            )}
+            <p className="text-sm text-center" style={{ color: '#94a3b8' }}>
+              Find WHERE to place your ads to get people to your event
+            </p>
           </div>
-          <p className="text-sm" style={{ color: '#94a3b8' }}>
-            Find WHERE to place your ads to get people to your event
-          </p>
         </div>
 
         {/* Upload Section */}

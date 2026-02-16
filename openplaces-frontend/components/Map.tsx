@@ -429,49 +429,19 @@ export default function Map({ className = '', recommendations = [], eventData = 
           console.warn(`Map load time (${loadTime}ms) exceeds 2s target`)
         }
 
-        // 🎨 Customize only main highways to green for app aesthetic
-        const greenColor = '#4ade80' // Main green accent
+        // 🎨 Make only highways green in the road-simple layer
+        const greenColor = '#4ade80'
 
-        // Try multiple possible highway layer names for dark-v11 style
-        const mainHighwayLayers = [
-          'road-motorway-trunk',
-          'road-motorway',
-          'road-trunk',
-          'bridge-motorway-trunk',
-          'bridge-motorway',
-          'bridge-trunk',
-          'highway-motorway-trunk',
-          'highway-motorway',
-          'road-highway',
-          'tunnel-motorway-trunk'
-        ]
-
-        // Debug: log which layers were found and updated
-        let updatedLayers = 0
-        mainHighwayLayers.forEach(layerId => {
-          if (map.current?.getLayer(layerId)) {
-            map.current.setPaintProperty(layerId, 'line-color', greenColor)
-            console.log(`✅ Updated highway layer: ${layerId}`)
-            updatedLayers++
-          }
-        })
-
-        if (updatedLayers === 0) {
-          console.warn('⚠️ No highway layers found. Trying all road layers...')
-          // Fallback: find all layers with 'road' or 'highway' in the name
-          const allLayers = map.current?.getStyle().layers || []
-          allLayers.forEach((layer: any) => {
-            if (layer.type === 'line' &&
-                (layer.id.includes('motorway') || layer.id.includes('trunk') || layer.id.includes('highway'))) {
-              console.log(`Found road layer: ${layer.id}`)
-              try {
-                map.current?.setPaintProperty(layer.id, 'line-color', greenColor)
-                console.log(`✅ Updated: ${layer.id}`)
-              } catch (e) {
-                console.log(`❌ Could not update: ${layer.id}`)
-              }
-            }
-          })
+        if (map.current?.getLayer('road-simple')) {
+          // Use data-driven styling to only color motorways/trunk roads green
+          map.current.setPaintProperty('road-simple', 'line-color', [
+            'match',
+            ['get', 'class'],
+            ['motorway', 'trunk', 'motorway_link', 'trunk_link'], // Highway classes
+            greenColor, // Green for highways
+            ['get', 'line-color'] // Default color for other roads
+          ])
+          console.log('✅ Updated road-simple layer with green highways')
         }
 
         // Story 5.4: Add venue marker after map loads
