@@ -85,7 +85,7 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
         onLeave?.()
       }}
     >
-      <div className="flex items-center gap-3 p-4">
+      <div className="flex items-center gap-3 p-3">
         {/* Map Thumbnail */}
         <div
           className="flex-shrink-0 w-24 h-20 rounded-lg overflow-hidden"
@@ -111,18 +111,18 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="flex-1 min-w-0 self-center">
+          <div className="flex items-center justify-between gap-2 mb-0.5">
             <div className="flex items-center gap-2 min-w-0">
               {/* Rank Badge */}
               <div
-                className="flex-shrink-0 w-7 h-7 rounded flex items-center justify-center text-sm font-bold"
+                className="flex-shrink-0 w-6 h-6 rounded flex items-center justify-center text-xs font-bold"
                 style={{ background: '#4ade80', color: '#0f1c24' }}
               >
                 {rank}
               </div>
               {/* Overall Score */}
-              <span className="text-base font-bold" style={{ color: '#4ade80' }}>
+              <span className="text-sm font-bold" style={{ color: '#4ade80' }}>
                 {overallPercent}%
               </span>
               <span className="text-xs" style={{ color: '#94a3b8' }}>
@@ -134,10 +134,10 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
             {recommendation.risk_warning?.is_flagged && (
               <button
                 onClick={handleWarningClick}
-                className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center bg-red-500 hover:bg-red-600 transition-colors"
+                className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center bg-red-500 hover:bg-red-600 transition-colors"
                 title="Risk warning"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 text-white">
                   <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                 </svg>
               </button>
@@ -145,7 +145,7 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
           </div>
 
           {/* Zone Name */}
-          <h3 className="text-sm font-semibold text-white mb-1 truncate">
+          <h3 className="text-xs font-semibold text-white mb-0.5 truncate">
             {recommendation.zone_name}
           </h3>
 
