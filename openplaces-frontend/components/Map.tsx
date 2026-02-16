@@ -418,7 +418,7 @@ export default function Map({ className = '', recommendations = [], eventData = 
       // Story 5.2 AC: Interactive map with rotation support
       map.current = new mapboxgl.Map({
         container: mapContainer.current!,
-        style: 'mapbox://styles/mapbox/satellite-streets-v12', // Satellite style with labels
+        style: 'mapbox://styles/mapbox/dark-v11', // Dark theme style
         center: [ARLINGTON_CENTER.lng, ARLINGTON_CENTER.lat],
         zoom: 12, // Zoom level to show most of Arlington
         attributionControl: true,
