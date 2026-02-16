@@ -65,10 +65,24 @@ export default function Map({ className = '', recommendations = [], eventData = 
       const hasWarning = zone.risk_warning?.is_flagged
 
       el.innerHTML = `
-        <div style="position: relative;">
+        <div style="position: relative; cursor: pointer;">
+          <img
+            src="/logo.png"
+            alt="OpenPlace marker"
+            style="
+              width: 48px;
+              height: 48px;
+              filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+              transition: transform 0.2s;
+            "
+          />
           <div style="
-            width: 36px;
-            height: 36px;
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 22px;
+            height: 22px;
             background-color: ${color};
             color: white;
             border-radius: 50%;
@@ -76,11 +90,9 @@ export default function Map({ className = '', recommendations = [], eventData = 
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 11px;
             border: 2px solid white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            cursor: pointer;
-            transition: transform 0.2s;
           ">
             ${rank}
           </div>
@@ -109,29 +121,30 @@ export default function Map({ className = '', recommendations = [], eventData = 
 
       // Hover effect
       el.addEventListener('mouseenter', () => {
-        const innerDiv = el.querySelector('div') as HTMLElement
-        if (innerDiv) innerDiv.style.transform = 'scale(1.1)'
+        const img = el.querySelector('img') as HTMLElement
+        if (img) img.style.transform = 'scale(1.15)'
         onZoneHover?.(zone.zone_id)  // Story 5.8: Notify parent on hover
       })
       el.addEventListener('mouseleave', () => {
-        const innerDiv = el.querySelector('div') as HTMLElement
-        if (innerDiv) innerDiv.style.transform = 'scale(1)'
+        const img = el.querySelector('img') as HTMLElement
+        if (img) img.style.transform = 'scale(1)'
         onZoneLeave?.()  // Story 5.8: Notify parent on leave
       })
 
       // Story 5.9: Focus indicator
       el.addEventListener('focus', () => {
-        const innerDiv = el.querySelector('div') as HTMLElement
-        if (innerDiv) {
-          innerDiv.style.outline = '2px solid #3b82f6'
-          innerDiv.style.outlineOffset = '2px'
+        const img = el.querySelector('img') as HTMLElement
+        if (img) {
+          img.style.outline = '3px solid #3b82f6'
+          img.style.outlineOffset = '2px'
+          img.style.borderRadius = '50%'
         }
       })
 
       el.addEventListener('blur', () => {
-        const innerDiv = el.querySelector('div') as HTMLElement
-        if (innerDiv) {
-          innerDiv.style.outline = 'none'
+        const img = el.querySelector('img') as HTMLElement
+        if (img) {
+          img.style.outline = 'none'
         }
       })
 
@@ -272,10 +285,10 @@ export default function Map({ className = '', recommendations = [], eventData = 
     if (!hoveredZoneId) {
       // Remove all highlights
       markerElementsRef.current.forEach(el => {
-        const innerDiv = el.querySelector('div') as HTMLElement
-        if (innerDiv) {
-          innerDiv.style.transform = 'scale(1)'
-          innerDiv.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)'
+        const img = el.querySelector('img') as HTMLElement
+        if (img) {
+          img.style.transform = 'scale(1)'
+          img.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))'
         }
       })
       return
@@ -284,21 +297,21 @@ export default function Map({ className = '', recommendations = [], eventData = 
     // Highlight the hovered marker
     const hoveredEl = markerElementsRef.current.get(hoveredZoneId)
     if (hoveredEl) {
-      const innerDiv = hoveredEl.querySelector('div') as HTMLElement
-      if (innerDiv) {
-        innerDiv.style.transform = 'scale(1.5)'
-        innerDiv.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.6)'
-        innerDiv.style.transition = 'all 0.1s ease-out'
+      const img = hoveredEl.querySelector('img') as HTMLElement
+      if (img) {
+        img.style.transform = 'scale(1.3)'
+        img.style.filter = 'drop-shadow(0 6px 16px rgba(74, 222, 128, 0.8))'
+        img.style.transition = 'all 0.2s ease-out'
       }
     }
 
     // Remove highlight from other markers
     markerElementsRef.current.forEach((el, zoneId) => {
       if (zoneId !== hoveredZoneId) {
-        const innerDiv = el.querySelector('div') as HTMLElement
-        if (innerDiv) {
-          innerDiv.style.transform = 'scale(1)'
-          innerDiv.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)'
+        const img = el.querySelector('img') as HTMLElement
+        if (img) {
+          img.style.transform = 'scale(1)'
+          img.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))'
         }
       }
     })
