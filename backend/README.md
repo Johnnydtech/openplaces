@@ -1,340 +1,238 @@
-# OpenPlaces Backend 🎯
+# OpenPlaces Backend
 
-**Smart Placement Intelligence for Any Message** - AI-powered location recommendations for physical ads, posters, and public notices in Arlington, VA.
+**AI-powered flyer placement recommendations for Arlington, VA events**
 
-## 🌟 What is OpenPlaces?
+FastAPI backend using Claude Opus 4.6 for vision analysis, semantic audience matching, and content moderation.
 
-OpenPlaces uses AI and real-time data to recommend the best physical locations to place your message—whether it's an event poster, lost pet flyer, or emergency notice. Upload any image, and get ranked location recommendations based on:
-
-- 👥 **Audience matching** - Demographics aligned with your target audience
-- 📊 **Foot traffic patterns** - Real-time pedestrian data
-- 📍 **Location intelligence** - Distance scoring from your venue
-- ⚠️ **Risk detection** - Automated warnings for low-performing zones
-
-**Current Coverage:** Arlington, VA (Beta)
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
-- Python 3.11 or higher
-- pip (Python package manager)
-- API keys (see [Getting API Keys](#-getting-api-keys) section)
+- Python 3.11+
+- pip
+- API keys (see below)
 
 ### Installation
 
-1. **Clone and navigate to backend:**
 ```bash
-cd backend
-```
-
-2. **Create virtual environment:**
-```bash
+# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-3. **Install dependencies:**
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-4. **Configure environment variables:**
-```bash
+# Configure environment
 cp .env.example .env
+# Edit .env with your API keys
+
+# Start server
+uvicorn app.main:app --reload --port 8000
 ```
 
-Edit `.env` and add your API keys (see below for how to get them).
+API available at:
+- http://localhost:8000
+- http://localhost:8000/docs (Swagger)
 
-5. **Set up Google Cloud credentials** (for OCR):
-- Download service account JSON from [Google Cloud Console](https://console.cloud.google.com/iam-admin/serviceaccounts)
-- Save as `google-cloud-key.json` in the `backend/` directory
-- ⚠️ **Important:** This file is gitignored and should NEVER be committed
+## Required API Keys
 
-6. **Start the server:**
+| Service | Purpose | Get Key |
+|---------|---------|---------|
+| **Anthropic** | Claude Opus 4.6 (vision, semantic, moderation) | [console.anthropic.com](https://console.anthropic.com/) |
+| **Supabase** | PostgreSQL database with PostGIS | [supabase.com](https://supabase.com) |
+| **Clerk** | User authentication | [clerk.com](https://clerk.com) |
+| **Google Places** | Venue data (optional) | [console.cloud.google.com](https://console.cloud.google.com) |
+
+## Environment Variables
+
 ```bash
-python app/main.py
+# Claude API (required)
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Database (required)
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_KEY=eyJhbG...
+
+# Authentication (required)
+CLERK_SECRET_KEY=sk_test_...
+
+# External data (optional)
+GOOGLE_PLACES_API_KEY=AIza...
 ```
 
-The API will be available at:
-- 🌐 **API:** http://localhost:8000
-- 📚 **Swagger Docs:** http://localhost:8000/docs
-- 📖 **ReDoc:** http://localhost:8000/redoc
-
-## 🔑 Getting API Keys
-
-### Required API Keys
-
-| Service | Purpose | Get It Here | Cost |
-|---------|---------|-------------|------|
-| **OpenAI** | AI flyer analysis & embeddings | [platform.openai.com](https://platform.openai.com/api-keys) | Pay-as-you-go ($) |
-| **Supabase** | PostgreSQL database with PostGIS | [supabase.com](https://supabase.com) | Free tier available |
-| **Mapbox** | Geocoding & mapping | [mapbox.com](https://account.mapbox.com/) | Free tier available |
-| **Clerk** | User authentication | [clerk.com](https://clerk.com) | Free tier available |
-| **Google Cloud** | Vision API for OCR | [console.cloud.google.com](https://console.cloud.google.com) | Free tier available |
-| **Google Places** | Location data | [Google Cloud Console](https://console.cloud.google.com/apis/credentials) | Free tier available |
-
-### Setting Up Google Cloud Vision API
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com)
-2. Create a new project or select existing
-3. Enable **Cloud Vision API**
-4. Create a **Service Account**:
-   - Go to IAM & Admin → Service Accounts
-   - Click "Create Service Account"
-   - Grant "Viewer" role
-   - Create and download JSON key
-5. Save the JSON key as `google-cloud-key.json` in `backend/` directory
-6. Set path in `.env`:
-   ```
-   GOOGLE_APPLICATION_CREDENTIALS=/path/to/backend/google-cloud-key.json
-   ```
-
-### Setting Up Clerk Webhooks
-
-1. Go to [Clerk Dashboard](https://dashboard.clerk.com)
-2. Navigate to **Webhooks** → **Add Endpoint**
-3. Configure endpoint:
-   - URL: `https://your-ngrok-url.ngrok-free.dev/api/webhooks/clerk`
-   - Events: Select `user.created` and `user.updated`
-4. Copy the **Signing Secret** and add to `.env`:
-   ```
-   CLERK_WEBHOOK_SECRET=whsec_xxxxx
-   ```
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 backend/
 ├── app/
-│   ├── main.py                    # FastAPI app & route configuration
-│   ├── supabase_client.py         # Supabase connection
+│   ├── main.py                     # FastAPI app
+│   ├── supabase_client.py          # Database client
 │   ├── routes/
-│   │   ├── analyze.py             # POST /api/analyze - Flyer analysis
-│   │   ├── recommendations.py     # POST /api/recommendations/top - Get recommendations
-│   │   ├── saved_recommendations.py # Saved places CRUD
-│   │   ├── webhooks.py            # Clerk webhook handler
-│   │   ├── geocoding.py           # Venue geocoding
-│   │   └── data_ingestion.py     # Arlington & Google data sync
+│   │   ├── analyze.py              # POST /api/analyze
+│   │   ├── recommendations.py      # POST /api/recommendations/top
+│   │   ├── zones.py                # Zone management
+│   │   ├── saved_recommendations.py # Save/view history
+│   │   └── geocoding.py            # Venue geocoding
 │   ├── services/
-│   │   ├── openai_service.py      # OpenAI Vision & embeddings
-│   │   ├── recommendation_engine.py # Scoring algorithm
-│   │   └── audience_matching.py   # Semantic matching
+│   │   ├── vision.py               # Claude Vision (flyer extraction)
+│   │   ├── recommendations.py      # Scoring engine
+│   │   ├── content_moderator.py    # Claude moderation
+│   │   ├── zones.py                # Zone management
+│   │   └── data_ingestion.py       # Arlington + Google data
+│   ├── middleware/
+│   │   └── rate_limiter.py         # Abuse prevention
 │   └── data/
-│       └── zones.geojson          # Arlington placement zones
-├── tests/                         # Test suite
-├── requirements.txt               # Python dependencies
-├── .env.example                   # Environment template
-├── google-cloud-key.json          # ⚠️ Your credentials (gitignored)
-└── README.md                      # You are here
+│       └── zones.geojson           # Static fallback zones
+├── migrations/                     # Database migrations
+├── requirements.txt
+└── .env.example
 ```
 
-## 🔌 API Endpoints
+## API Endpoints
 
-### Core Endpoints
+### Core
+- `POST /api/analyze` - Extract event details from flyer (Claude Vision)
+- `POST /api/geocode` - Geocode venue address
+- `POST /api/recommendations/top` - Get ranked recommendations
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/` | API info & version |
-| `GET` | `/api/health` | Health check |
-| `GET` | `/api/status` | Configuration status |
-| `GET` | `/docs` | Swagger UI documentation |
+### Zones
+- `GET /api/zones` - List all zones
+- `POST /api/zones/refresh` - Refresh from APIs
+- `POST /api/zones/import-static` - Import from GeoJSON
+- `DELETE /api/zones/clear` - Clear database
 
-### Analysis & Recommendations
+### Saved Recommendations
+- `GET /api/saved-recommendations/{user_id}` - View saved
+- `POST /api/saved-recommendations/save` - Save zone
+- `DELETE /api/saved-recommendations/{id}` - Delete saved
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/analyze` | Analyze flyer image with AI (OCR + extraction) |
-| `POST` | `/api/geocode` | Convert venue address to coordinates |
-| `POST` | `/api/recommendations/top` | Get ranked placement recommendations |
+Full docs: http://localhost:8000/docs
 
-**Example Request:**
-```bash
-# Analyze a flyer
-curl -X POST http://localhost:8000/api/analyze \
-  -F "file=@event-flyer.jpg"
+## Tech Stack
 
-# Get recommendations
-curl -X POST http://localhost:8000/api/recommendations/top \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Summer Music Festival",
-    "date": "2026-07-15",
-    "venue_lat": 38.8816,
-    "venue_lon": -77.0910,
-    "target_audience": ["young-adults", "music-lovers"],
-    "event_type": "music",
-    "time_period": "evening"
-  }'
+- **FastAPI** - Python async web framework
+- **Claude Opus 4.6** - Vision, semantic matching, moderation
+- **Supabase PostgreSQL** - Database with PostGIS
+- **Geopy** - Geocoding
+
+## Recommendation Algorithm
+
+```python
+total_score = (
+    audience_match +     # 0-40 points (Claude semantic)
+    temporal_score +     # 0-30 points
+    distance_score +     # 0-20 points
+    dwell_time_score     # 0-10 points
+)  # Final: 0-100%
 ```
 
-### User Management
+### Features
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/webhooks/clerk` | Clerk webhook (syncs users to DB) |
-| `GET` | `/api/saved-recommendations/{user_id}` | Get user's saved places |
-| `POST` | `/api/saved-recommendations/save` | Save a recommendation |
-| `DELETE` | `/api/saved-recommendations/{id}` | Delete saved recommendation |
+1. **Claude Vision Analysis** - Extract event details from flyers
+2. **Semantic Matching** - Claude understands audience compatibility
+3. **Dynamic Zones** - 29 zones from Arlington Parking + Google Places
+4. **Database Persistence** - 3-tier caching (memory → DB → APIs → static)
+5. **Risk Detection** - Warns about low-ROI zones with alternatives
+6. **Content Moderation** - Claude scans uploaded images
+7. **Rate Limiting** - Per-user abuse prevention
 
-### Data Sync
+## Database Schema
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/data/sync-arlington-parking` | Sync Arlington parking data |
-| `POST` | `/api/data/sync-google-places` | Sync Google Places data |
-| `GET` | `/api/data/status` | Check data freshness |
-
-## 🏗️ Architecture
-
-### Tech Stack
-
-- **FastAPI** - Modern Python async web framework
-- **OpenAI GPT-4o** - Vision API for flyer analysis + text-embedding-3-small
-- **Supabase PostgreSQL** - Database with PostGIS for geospatial queries
-- **Google Cloud Vision** - OCR for text extraction
-- **Clerk** - User authentication & webhooks
-- **Mapbox** - Geocoding services
-
-### Recommendation Algorithm
-
-1. **Flyer Analysis** - Extract event details, audience, type
-2. **Audience Matching** - Semantic similarity using OpenAI embeddings (40 points)
-3. **Temporal Scoring** - Match event time with zone traffic patterns (30 points)
-4. **Distance Scoring** - Proximity to venue location (20 points)
-5. **Dwell Time** - Pedestrian lingering duration (10 points)
-6. **Risk Detection** - Flag zones with poor metrics (<50% threshold)
-
-**Total Score:** 0-100 scale (weighted sum of all factors)
-
-## 🧪 Testing
-
-Run the test suite:
-
-```bash
-# All tests
-pytest
-
-# With coverage report
-pytest --cov=app tests/ --cov-report=html
-
-# Specific test file
-pytest tests/test_recommendations.py -v
-```
-
-## 🛠️ Development
-
-### Code Quality
-
-```bash
-# Format code
-black app tests
-
-# Lint
-ruff check app tests
-
-# Type check
-mypy app
-```
-
-### Database Setup
-
-The app uses Supabase PostgreSQL. Schema is managed via Supabase migrations:
-
+### Zones Table
 ```sql
--- Key tables:
-- users (id, clerk_user_id, email)
-- saved_recommendations (user saves)
-- zones (Arlington placement zones with GeoJSON)
-- zone_analytics (traffic data from Arlington + Google)
+CREATE TABLE zones (
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255),
+    location GEOGRAPHY(POINT, 4326),  -- PostGIS
+    latitude DECIMAL(10, 8),          -- Simple queries
+    longitude DECIMAL(11, 8),
+    audience_signals JSONB,
+    timing_windows JSONB,
+    dwell_time_seconds INTEGER,
+    cost_tier VARCHAR(50),
+    foot_traffic_daily INTEGER,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
+);
 ```
 
-See `DATABASE_SETUP.md` for detailed schema.
+### Saved Recommendations Table
+```sql
+CREATE TABLE saved_recommendations (
+    id UUID PRIMARY KEY,
+    user_id VARCHAR(255),
+    zone_id VARCHAR(255),
+    zone_name VARCHAR(255),
+    event_name VARCHAR(255),
+    event_date DATE,
+    notes TEXT,
+    created_at TIMESTAMPTZ
+);
+```
 
-## 🚨 Common Issues
+## Testing
 
-### "google-cloud-key.json not found"
-- Ensure file exists in `backend/` directory
-- Check `GOOGLE_APPLICATION_CREDENTIALS` path in `.env`
-- File should NOT be committed to git (it's in `.gitignore`)
+```bash
+pytest
+pytest --cov=app tests/
+```
 
-### "CLERK_WEBHOOK_SECRET not set"
-- Add webhook secret from Clerk dashboard to `.env`
-- Format: `CLERK_WEBHOOK_SECRET=whsec_xxxxx`
+## Deployment
 
-### "ModuleNotFoundError: No module named 'app'"
-- Activate virtual environment: `source venv/bin/activate`
-- Ensure dependencies installed: `pip install -r requirements.txt`
+### Railway (Recommended)
+1. Push to GitHub
+2. Connect to Railway
+3. Add environment variables
+4. Railway auto-deploys
+
+Files included:
+- `railway.json` - Railway config
+- `Procfile` - Process definition
+- `runtime.txt` - Python version
+
+### Render/Fly.io
+Works with Procfile and requirements.txt
+
+## Performance
+
+- Flyer extraction: 8-12s (Claude Vision)
+- Zone loading: <100ms (from database)
+- Recommendations: 45-90s (29 zones with Claude scoring)
+- Geocoding: 1-2s
+
+## API Costs
+
+- Claude Opus 4.6: $15/1M input, $75/1M output tokens
+- Vision analysis: ~$0.02-0.05 per flyer
+- Audience matching: ~$0.001-0.002 per zone
+- **Total per recommendation**: ~$0.05-0.10
+
+## Common Issues
+
+### "Failed to generate recommendations"
+- Claude API timeout (29 zones take 45-90s)
+- Check `ANTHROPIC_API_KEY` is set correctly
+- Ensure model name is `claude-opus-4-6`
+
+### "No zones in database"
+- Run: `POST /api/zones/import-static`
+- Or: `POST /api/zones/refresh` to generate from APIs
 
 ### Database connection errors
-- Check Supabase URL and service key in `.env`
-- Verify Supabase project is active
-- Ensure PostGIS extension is enabled
+- Verify `SUPABASE_URL` and `SUPABASE_KEY`
+- Check PostGIS extension enabled
+- Run migrations in `migrations/` folder
 
-## 📊 Data Sources
+## Data Sources
 
-### Arlington County Open Data
-- **Parking Locations** - MapServer API (street parking zones)
-- **Demographics** - Census tract data
-- **Foot Traffic** - Anonymized pedestrian counts
+- **Arlington Parking API** - 400+ parking locations
+- **Google Places API** - Venue data, foot traffic
+- **Static zones** - Curated fallback (29 zones)
 
-### Google Places API
-- **Business listings** - POI data for Arlington
-- **Reviews & ratings** - Location popularity
-- **Opening hours** - Temporal patterns
+## License
 
-## 🎯 Hackathon Highlights
-
-- ✨ **AI-Powered Analysis** - Computer vision extracts event details automatically
-- 🧠 **Semantic Matching** - Embeddings match audience demographics intelligently
-- 📍 **Real Data** - Arlington County open data + Google Places
-- ⚠️ **Smart Warnings** - Automatic risk detection with better alternatives
-- 🚀 **Production-Ready** - Full test coverage, type hints, error handling
-
-## 📝 Environment Variables Reference
-
-```bash
-# OpenAI (required)
-OPENAI_API_KEY=sk-proj-xxxxx
-OPENAI_MODEL=gpt-4o-mini
-
-# Google Cloud Vision (required for OCR)
-GOOGLE_APPLICATION_CREDENTIALS=/path/to/google-cloud-key.json
-
-# Supabase (required)
-SUPABASE_URL=https://xxxxx.supabase.co
-SUPABASE_SERVICE_KEY=eyJxxxxx...
-
-# Mapbox (required)
-MAPBOX_API_KEY=sk.eyJ1xxxxx...
-
-# Clerk (required for auth)
-CLERK_WEBHOOK_SECRET=whsec_xxxxx
-
-# Google Places (required)
-GOOGLE_PLACES_API=AIzaSyxxxxx...
-
-# Server config (optional)
-API_HOST=0.0.0.0
-API_PORT=8000
-API_RELOAD=true
-ENVIRONMENT=development
-```
-
-## 🤝 Contributing
-
-This is an open-source hackathon project. Contributions welcome!
-
-## 📄 License
-
-MIT License - See LICENSE file for details
-
-## 🙋 Questions?
-
-- Check `/docs` endpoint for interactive API documentation
-- Review test files in `tests/` for usage examples
-- Open an issue on GitHub
+MIT License
 
 ---
 
-**Built with ❤️ for Arlington, VA** | Beta Program | [OpenPlaces](https://openplaces.dev)
+**Built with Claude Opus 4.6**
