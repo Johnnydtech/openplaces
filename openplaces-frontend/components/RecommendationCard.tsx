@@ -26,7 +26,7 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
   return (
     <div
       ref={ref}
-      className={`rounded-lg border p-6 shadow-sm hover:shadow-md transition-all duration-100 ${
+      className={`relative rounded-lg border p-6 shadow-sm hover:shadow-md transition-all duration-100 ${
         isHighlighted
           ? 'border-blue-500 border-2 bg-blue-50 scale-[1.02]'
           : 'border-gray-200 bg-white'
@@ -34,6 +34,36 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
       onMouseEnter={() => onHover?.(recommendation.zone_id)}
       onMouseLeave={() => onLeave?.()}
     >
+      {/* Story 7.2: Risk Warning Badge */}
+      {recommendation.risk_warning?.is_flagged && (
+        <div
+          className="absolute top-4 right-4 group cursor-pointer"
+          title="Risk Warning - This zone may be ineffective"
+        >
+          <div className="relative flex items-center justify-center w-8 h-8 bg-orange-500 rounded-full shadow-lg animate-pulse">
+            {/* Warning icon */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="w-5 h-5 text-white"
+            >
+              <path
+                fillRule="evenodd"
+                d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                clipRule="evenodd"
+              />
+            </svg>
+
+            {/* Tooltip on hover */}
+            <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+              Risk Warning - Click for details
+              <div className="absolute bottom-full right-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-start gap-4">
         {/* Rank Badge */}
         <div className="flex-shrink-0">

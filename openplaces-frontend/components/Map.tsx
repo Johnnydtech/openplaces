@@ -60,25 +60,51 @@ export default function Map({ className = '', recommendations = [], eventData = 
       // Story 5.9: Make marker keyboard-focusable
       el.setAttribute('tabindex', '0')
       el.setAttribute('role', 'button')
-      el.setAttribute('aria-label', `Zone ${rank}: ${zone.zone_name}, ${Math.round((zone.audience_match_score / 40) * 100)}% audience match`)
+      el.setAttribute('aria-label', `Zone ${rank}: ${zone.zone_name}, ${Math.round((zone.audience_match_score / 40) * 100)}% audience match${zone.risk_warning?.is_flagged ? ' - Risk Warning' : ''}`)
+
+      // Story 7.2: Add warning badge if zone is flagged
+      const hasWarning = zone.risk_warning?.is_flagged
+
       el.innerHTML = `
-        <div style="
-          width: 36px;
-          height: 36px;
-          background-color: ${color};
-          color: white;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: bold;
-          font-size: 14px;
-          border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          cursor: pointer;
-          transition: transform 0.2s;
-        ">
-          ${rank}
+        <div style="position: relative;">
+          <div style="
+            width: 36px;
+            height: 36px;
+            background-color: ${color};
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+          ">
+            ${rank}
+          </div>
+          ${hasWarning ? `
+            <div style="
+              position: absolute;
+              top: -4px;
+              right: -4px;
+              width: 16px;
+              height: 16px;
+              background-color: #f97316;
+              border-radius: 50%;
+              border: 2px solid white;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 10px; height: 10px; color: white;">
+                <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          ` : ''}
         </div>
       `
 
