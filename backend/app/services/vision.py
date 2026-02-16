@@ -8,11 +8,10 @@ import base64
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
-from openai import AsyncOpenAI
+import anthropic
 import httpx
 from dotenv import load_dotenv
-from google.cloud import vision
-import io
+import asyncio
 
 # Load environment variables
 load_dotenv()
@@ -21,19 +20,13 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize OpenAI client (lazy loaded after env vars are available)
-def get_openai_client() -> AsyncOpenAI:
-    """Get or create OpenAI client"""
-    api_key = os.getenv("OPENAI_API_KEY")
+# Initialize Anthropic client for Claude Opus 4.6
+def get_anthropic_client() -> anthropic.AsyncAnthropic:
+    """Get or create Anthropic Claude client"""
+    api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
-        raise ValueError("OPENAI_API_KEY environment variable is not set")
-    return AsyncOpenAI(api_key=api_key)
-
-# Initialize Google Cloud Vision client
-def get_vision_client() -> vision.ImageAnnotatorClient:
-    """Get or create Google Cloud Vision client"""
-    # Google Cloud SDK will automatically use GOOGLE_APPLICATION_CREDENTIALS env var
-    return vision.ImageAnnotatorClient()
+        raise ValueError("ANTHROPIC_API_KEY environment variable is not set")
+    return anthropic.AsyncAnthropic(api_key=api_key)
 
 
 class VisionAnalysisError(Exception):
@@ -46,15 +39,15 @@ async def analyze_flyer(
     file_content: bytes, file_type: str, timeout: float = 45.0
 ) -> Dict[str, Any]:
     """
-    Analyze uploaded flyer using Google Cloud Vision OCR + OpenAI GPT-4
+    Analyze uploaded flyer using Claude Opus 4.6 Vision API
 
-    Story 3.2 Acceptance Criteria:
-    - Backend /api/analyze endpoint extracts text via Google Cloud Vision OCR
-    - GPT-4 parses text to extract: name, date, time, venue, audience
+    Uses Claude Opus 4.6's vision capabilities to:
+    - Extract text via Claude's built-in OCR
+    - Parse and understand event details semantically
+    - Assess creative quality and target audience
     - Response within 45 seconds (timeout)
     - Returns JSON
     - Errors logged with fallback message
-    - API costs logged
 
     Args:
         file_content: Raw bytes of the uploaded file
@@ -87,36 +80,16 @@ async def analyze_flyer(
         elif file_type not in ["image/jpeg", "image/png"]:
             raise VisionAnalysisError(f"Unsupported file type: {file_type}")
 
-        # Step 1: Use Google Cloud Vision API to extract text (OCR)
-        logger.info("Extracting text using Google Cloud Vision API...")
-        try:
-            vision_client = get_vision_client()
-            image = vision.Image(content=file_content)
-            response = vision_client.text_detection(image=image)
+        # Use Claude Opus 4.6 Vision API to analyze the flyer image directly
+        logger.info("Analyzing flyer with Claude Opus 4.6 Vision...")
 
-            if response.error.message:
-                raise VisionAnalysisError(f"Google Vision API error: {response.error.message}")
+        # Encode image to base64 for Claude
+        image_base64 = base64.b64encode(file_content).decode('utf-8')
 
-            texts = response.text_annotations
-            if not texts:
-                raise VisionAnalysisError("No text detected in the image. Please upload a clearer flyer.")
+        # Determine media type
+        media_type = "image/jpeg" if file_type == "image/jpeg" else "image/png"
 
-            # The first annotation contains all detected text
-            extracted_text = texts[0].description
-            logger.info(f"Extracted {len(extracted_text)} characters from image")
-
-        except Exception as e:
-            logger.error(f"Google Cloud Vision API error: {str(e)}")
-            raise VisionAnalysisError(
-                f"Text extraction failed: {str(e)}"
-            )
-
-        # Step 2: Use OpenAI GPT-4 to parse the extracted text
-        logger.info("Parsing extracted text with GPT-4...")
-        prompt = f"""You are analyzing text extracted from an event flyer. Parse the following text and extract event information in JSON format:
-
-EXTRACTED TEXT:
-{extracted_text}
+        prompt = """Analyze this event flyer image and extract event information in JSON format.
 
 Return ONLY a JSON object (no markdown, no explanation) with this structure:
 {{
@@ -131,34 +104,48 @@ Return ONLY a JSON object (no markdown, no explanation) with this structure:
 
 Target audience should describe who would be interested in this event (e.g., "young professionals", "families", "students", "fitness enthusiasts", "foodies", "coffee enthusiasts").
 
-If any information is unclear or missing, note it in extraction_notes and mark confidence as Medium or Low."""
+If any information is unclear or missing, note it in extraction_notes and mark confidence as Medium or Low.
+
+Analyze the visual design, readability, and overall quality of the flyer as well."""
 
         try:
-            client = get_openai_client()
+            client = get_anthropic_client()
             response = await asyncio.wait_for(
-                client.chat.completions.create(
-                    model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+                client.messages.create(
+                    model="claude-opus-4-20250514",  # Claude Opus 4.6
+                    max_tokens=1024,
                     messages=[
                         {
                             "role": "user",
-                            "content": prompt,
+                            "content": [
+                                {
+                                    "type": "image",
+                                    "source": {
+                                        "type": "base64",
+                                        "media_type": media_type,
+                                        "data": image_base64,
+                                    },
+                                },
+                                {
+                                    "type": "text",
+                                    "text": prompt
+                                }
+                            ],
                         }
                     ],
-                    max_tokens=500,
-                    temperature=0.2,
                 ),
                 timeout=timeout,
             )
         except asyncio.TimeoutError:
-            logger.error(f"OpenAI API call timed out after {timeout} seconds")
+            logger.error(f"Claude API call timed out after {timeout} seconds")
             raise VisionAnalysisError(
                 "AI extraction timed out. Please try again or enter event details manually."
             )
 
-        # Extract response text
-        content = response.choices[0].message.content
+        # Extract response text from Claude
+        content = response.content[0].text if response.content else None
         if not content:
-            raise VisionAnalysisError("No response from AI extraction")
+            raise VisionAnalysisError("No response from Claude vision analysis")
 
         # Parse JSON response
         import json

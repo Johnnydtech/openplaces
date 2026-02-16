@@ -354,6 +354,17 @@ export default function UnifiedHomePage() {
             <p className="text-sm text-center" style={{ color: '#94a3b8' }}>
               Find WHERE to place your ads to get people to your event
             </p>
+            {/* Powered by Claude Opus 4.6 Badge */}
+            <div className="inline-flex items-center gap-2 rounded-full px-3 py-1.5" style={{ background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#a855f7" opacity="0.6"/>
+                <path d="M2 17L12 22L22 17" stroke="#a855f7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="#a855f7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span className="text-xs font-medium" style={{ color: '#d8b4fe' }}>
+                Powered by Claude Opus 4.6
+              </span>
+            </div>
           </div>
         </div>
 
