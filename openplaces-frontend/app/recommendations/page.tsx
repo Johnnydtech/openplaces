@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import RecommendationCard from '@/components/RecommendationCard'
 import Map from '@/components/Map'
+import TimePeriodToggle, { type TimePeriod } from '@/components/TimePeriodToggle'
 import { getRecommendations, type EventDataForRecommendations, type ZoneRecommendation } from '@/lib/api'
+import { getDefaultTimePeriod } from '@/lib/timeUtils'
 
 function RecommendationsContent() {
   const router = useRouter()
@@ -20,6 +22,8 @@ function RecommendationsContent() {
   const [hoveredZoneId, setHoveredZoneId] = useState<string | null>(null)
   // Story 5.8: Track recommendation card refs for scroll-into-view
   const recommendationRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  // Story 6.1: Time period selection state
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState<TimePeriod>('evening')
 
   // Story 5.10: Register service worker for offline tile caching (production only)
   useEffect(() => {
@@ -63,6 +67,10 @@ function RecommendationsContent() {
     setEventData(parsedEventData)
     setEditableEventData(parsedEventData) // Story 4.8: Initialize editable data
 
+    // Story 6.1: Calculate default time period based on event time
+    const defaultPeriod = getDefaultTimePeriod(parsedEventData.date, parsedEventData.time)
+    setSelectedTimePeriod(defaultPeriod)
+
     const fetchRecommendations = async () => {
       setIsLoading(true)
       try {
@@ -104,6 +112,13 @@ function RecommendationsContent() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Story 6.1: Handler for time period changes
+  const handleTimePeriodChange = (period: TimePeriod) => {
+    setSelectedTimePeriod(period)
+    console.log(`[Recommendations] Time period changed to: ${period}`)
+    // Story 6.2 will add re-ranking logic here
   }
 
   return (
@@ -228,6 +243,16 @@ function RecommendationsContent() {
             </div>
           </details>
         </div>
+
+        {/* Story 6.1: Time Period Toggle */}
+        {eventData && !isLoading && recommendations.length > 0 && (
+          <div className="mb-6 flex justify-center">
+            <TimePeriodToggle
+              selectedPeriod={selectedTimePeriod}
+              onPeriodChange={handleTimePeriodChange}
+            />
+          </div>
+        )}
 
         {/* Story 4.8: Event Details Editor for Re-ranking */}
         {eventData && editableEventData && (
