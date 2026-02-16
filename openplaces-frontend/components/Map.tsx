@@ -29,7 +29,7 @@ export default function Map({ className = '', recommendations = [], eventData = 
   const map = useRef<mapboxgl.Map | null>(null)
   const markersRef = useRef<mapboxgl.Marker[]>([])  // Story 5.3: Track markers for cleanup
   const venueMarkerRef = useRef<mapboxgl.Marker | null>(null)  // Story 5.4: Track venue marker
-  const markerElementsRef = useRef<Map<string, HTMLElement>>(new Map())  // Story 5.7: Track marker elements for highlighting
+  const markerElementsRef = useRef(new globalThis.Map<string, HTMLElement>())  // Story 5.7: Track marker elements for highlighting
   const [mapLoaded, setMapLoaded] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   // Story 5.5: Track selected zone for details panel
