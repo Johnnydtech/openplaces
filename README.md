@@ -4,7 +4,9 @@
 
 OpenPlaces uses Claude Opus 4.6 vision AI, semantic matching, and real-time data to recommend the best locations to place event flyers based on audience demographics, timing, distance, and foot traffic patterns.
 
-🎥 **[Watch Demo Video](#)** | 📖 **[View Documentation](./docs/)** | 🚀 **[Live Demo](#)**
+🚀 **[Live APP](#)**
+
+https://openplaces.ai
 
 ## 🎯 What It Does
 
