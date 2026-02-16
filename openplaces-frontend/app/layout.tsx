@@ -26,7 +26,37 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        baseTheme: undefined,
+        variables: {
+          colorPrimary: '#4ade80',
+          colorBackground: '#1a2f3a',
+          colorInputBackground: '#1e3a48',
+          colorInputText: '#ffffff',
+          colorText: '#ffffff',
+          colorTextSecondary: '#94a3b8',
+          colorDanger: '#fb923c',
+          colorSuccess: '#4ade80',
+          borderRadius: '0.75rem',
+        },
+        elements: {
+          card: 'bg-[#1a2f3a] border border-[#4ade80]/20 shadow-2xl',
+          headerTitle: 'text-white font-bold',
+          headerSubtitle: 'text-[#94a3b8]',
+          socialButtonsBlockButton: 'bg-[#1e3a48] border-[#2a4551] text-white hover:bg-[#243f4d]',
+          formButtonPrimary: 'bg-[#4ade80] text-[#0f1c24] hover:bg-[#22c55e] font-semibold',
+          formFieldInput: 'bg-[#1e3a48] border-[#2a4551] text-white',
+          footerActionLink: 'text-[#4ade80] hover:text-[#22c55e]',
+          identityPreviewText: 'text-white',
+          identityPreviewEditButton: 'text-[#4ade80]',
+          formFieldLabel: 'text-[#94a3b8]',
+          dividerLine: 'bg-[#2a4551]',
+          dividerText: 'text-[#94a3b8]',
+          logoBox: 'justify-center',
+        },
+      }}
+    >
       <html lang="en">
         <body
           className={`${inter.variable} ${jakarta.variable} antialiased font-sans`}
