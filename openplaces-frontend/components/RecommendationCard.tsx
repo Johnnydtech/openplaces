@@ -59,20 +59,33 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
     }
   }
 
+  const [isHovered, setIsHovered] = useState(false)
+
   return (
     <div
       ref={ref}
       data-zone-id={recommendation.zone_id}
-      className={`relative rounded-lg overflow-hidden transition-all duration-200 ${
+      className={`relative overflow-hidden transition-all duration-300 cursor-pointer ${
         isHighlighted
           ? 'ring-2 ring-green-400'
           : ''
       }`}
-      style={{ background: '#1e3a48' }}
-      onMouseEnter={() => onHover?.(recommendation.zone_id)}
-      onMouseLeave={() => onLeave?.()}
+      style={{
+        background: '#1e3a48',
+        borderRadius: isHovered ? '16px' : '8px',
+        transform: isHovered ? 'scale(1.02)' : 'scale(1)',
+        boxShadow: isHovered ? '0 8px 24px rgba(74, 222, 128, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.2)'
+      }}
+      onMouseEnter={() => {
+        setIsHovered(true)
+        onHover?.(recommendation.zone_id)
+      }}
+      onMouseLeave={() => {
+        setIsHovered(false)
+        onLeave?.()
+      }}
     >
-      <div className="flex gap-3 p-3">
+      <div className="flex items-center gap-3 p-4">
         {/* Map Thumbnail */}
         <div
           className="flex-shrink-0 w-24 h-20 rounded-lg overflow-hidden"
