@@ -125,8 +125,9 @@ class RecommendationsService:
             data_sources = self._detect_data_sources(zone, event_data)
 
             # Story 7.1: Detect deceptive hotspots
+            # Story 7.5: Pass temporal_alignment for timing misalignment category
             risk_warning = self._detect_deceptive_hotspot(
-                zone, audience_match, zone.dwell_time_seconds
+                zone, audience_match, zone.dwell_time_seconds, temporal_alignment
             )
 
             scored_zones.append(
@@ -485,60 +486,117 @@ class RecommendationsService:
         return "strategic timing for target audience behavior patterns"
 
     def _detect_deceptive_hotspot(
-        self, zone: Zone, audience_match_score: float, dwell_time_seconds: int
+        self, zone: Zone, audience_match_score: float, dwell_time_seconds: int,
+        temporal_alignment_score: float
     ) -> Optional[RiskWarning]:
         """
         Story 7.1: Detect deceptive hotspots
+        Story 7.5: Added categorization by type
 
         A deceptive hotspot is a zone that APPEARS attractive (high traffic)
         but is ACTUALLY ineffective (people rush through, wrong audience).
 
-        Detection Criteria (ALL must be true):
-        1. High foot traffic (>1000/day) - appears attractive
-        2. Low dwell time (<20 seconds) - people rush through
-        3. Poor audience alignment (<60% match / <24 points) - wrong demographic
-
         Returns:
-            RiskWarning if zone is deceptive hotspot, None otherwise
+            RiskWarning with categories if zone is problematic, None otherwise
         """
         # Get foot traffic data (from zone metadata)
         foot_traffic_daily = getattr(zone, 'foot_traffic_daily', 0)
 
-        # Check all three criteria
+        # Check all criteria
         has_high_traffic = foot_traffic_daily > 1000
         has_low_dwell_time = dwell_time_seconds < 20
         has_poor_audience_match = audience_match_score < 24.0  # <60% of 40 points
+        has_timing_misalignment = temporal_alignment_score < 15.0  # <50% of 30 points
 
-        # All three must be true for deceptive hotspot
-        if has_high_traffic and has_low_dwell_time and has_poor_audience_match:
-            # Calculate audience match percentage for display
+        # Story 7.5: Determine specific warning categories
+        categories = []
+
+        if has_low_dwell_time:
+            categories.append(WarningCategory(
+                category_type="low_dwell_time",
+                display_name="Low Dwell Time",
+                icon="⏱️",
+                description=f"People spend only {dwell_time_seconds}s here - not enough time to notice ads",
+                severity="high",
+                metric_value=float(dwell_time_seconds)
+            ))
+
+        if has_poor_audience_match:
             audience_match_percent = int((audience_match_score / 40.0) * 100)
+            categories.append(WarningCategory(
+                category_type="poor_audience_match",
+                display_name="Poor Audience Match",
+                icon="🎯",
+                description=f"Only {audience_match_percent}% audience match - your target audience doesn't frequent this zone",
+                severity="high",
+                metric_value=float(audience_match_percent)
+            ))
 
-            # Generate specific reason
-            reason = (
-                f"High traffic ({foot_traffic_daily}/day) but people rush through "
-                f"({dwell_time_seconds}s dwell time). Poor audience match ({audience_match_percent}%). "
-                f"Posters likely to be overlooked."
-            )
+        if has_timing_misalignment:
+            timing_percent = int((temporal_alignment_score / 30.0) * 100)
+            categories.append(WarningCategory(
+                category_type="timing_misalignment",
+                display_name="Timing Misalignment",
+                icon="📅",
+                description=f"Only {timing_percent}% timing alignment - people aren't there when you need them",
+                severity="medium",
+                metric_value=float(timing_percent)
+            ))
 
-            return RiskWarning(
-                is_flagged=True,
-                warning_type="deceptive_hotspot",
-                reason=reason,
-                severity="high",  # High severity because users might waste money
-                details={
-                    "foot_traffic_daily": foot_traffic_daily,
-                    "dwell_time_seconds": dwell_time_seconds,
-                    "audience_match_score": audience_match_score,
-                    "audience_match_percent": audience_match_percent,
-                    "threshold_traffic": 1000,
-                    "threshold_dwell_time": 20,
-                    "threshold_audience_match": 24.0
-                }
-            )
+        # Check for visual noise (if zone has metadata)
+        visual_distractions = getattr(zone, 'visual_distractions', 'medium')
+        advertising_density = getattr(zone, 'advertising_density', 0)
+        if visual_distractions == "high" or advertising_density > 10:
+            categories.append(WarningCategory(
+                category_type="visual_noise",
+                display_name="Visual Noise Saturation",
+                icon="👁️",
+                description=f"High visual clutter - your ad will compete with {advertising_density} others",
+                severity="medium",
+                metric_value=float(advertising_density) if advertising_density > 0 else None
+            ))
 
-        # No warning needed
-        return None
+        # If no categories triggered, no warning needed
+        if not categories:
+            return None
+
+        # Generate overall reason with category names
+        category_names = [cat.display_name for cat in categories]
+        reason = f"Multiple risk factors detected: {', '.join(category_names)}. "
+
+        if has_high_traffic:
+            reason += f"High traffic ({foot_traffic_daily}/day) but "
+
+        if has_low_dwell_time:
+            reason += f"people rush through ({dwell_time_seconds}s). "
+
+        if has_poor_audience_match:
+            audience_match_percent = int((audience_match_score / 40.0) * 100)
+            reason += f"Poor audience match ({audience_match_percent}%). "
+
+        reason += "Posters likely to be overlooked."
+
+        # Calculate audience match percentage for details
+        audience_match_percent = int((audience_match_score / 40.0) * 100)
+
+        return RiskWarning(
+            is_flagged=True,
+            warning_type="deceptive_hotspot",  # Keep for backward compatibility
+            reason=reason.strip(),
+            severity="high" if len(categories) >= 2 else "medium",
+            details={
+                "foot_traffic_daily": foot_traffic_daily,
+                "dwell_time_seconds": dwell_time_seconds,
+                "audience_match_score": audience_match_score,
+                "audience_match_percent": audience_match_percent,
+                "temporal_alignment_score": temporal_alignment_score,
+                "threshold_traffic": 1000,
+                "threshold_dwell_time": 20,
+                "threshold_audience_match": 24.0,
+                "threshold_temporal": 15.0
+            },
+            warning_categories=categories  # Story 7.5: Add categories
+        )
 
     def _select_alternative_zones(
         self, flagged_zone: Zone, all_scored_zones: List[ZoneScore], max_alternatives: int = 3

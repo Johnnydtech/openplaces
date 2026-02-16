@@ -105,6 +105,15 @@ export interface DataSource {
   last_updated: string
 }
 
+export interface WarningCategory {
+  category_type: 'low_dwell_time' | 'poor_audience_match' | 'visual_noise' | 'timing_misalignment'
+  display_name: string
+  icon: string
+  description: string
+  severity: 'high' | 'medium' | 'low'
+  metric_value?: number
+}
+
 export interface RiskWarning {
   is_flagged: boolean
   warning_type: string
@@ -126,6 +135,7 @@ export interface RiskWarning {
     total_score: number
     reason: string
   }>
+  warning_categories?: WarningCategory[]  // Story 7.5: Category breakdown
 }
 
 export interface ZoneRecommendation {

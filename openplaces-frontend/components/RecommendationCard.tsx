@@ -63,9 +63,21 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
               />
             </svg>
 
-            {/* Tooltip on hover */}
+            {/* Story 7.5: Enhanced tooltip with categories */}
             <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-              Risk Warning - Click for details
+              <div className="font-semibold mb-1">Risk Warning</div>
+              {recommendation.risk_warning.warning_categories &&
+               recommendation.risk_warning.warning_categories.length > 0 && (
+                <div className="text-xs space-y-0.5">
+                  {recommendation.risk_warning.warning_categories.map((cat) => (
+                    <div key={cat.category_type} className="flex items-center gap-1">
+                      <span>{cat.icon}</span>
+                      <span>{cat.display_name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="text-xs mt-1 opacity-75">Click for details</div>
               <div className="absolute bottom-full right-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"></div>
             </div>
           </div>
@@ -289,6 +301,27 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
               <h4 className="text-lg font-bold text-orange-900 mb-1">
                 ⚠️ Risk Warning: Deceptive Hotspot
               </h4>
+
+              {/* Story 7.5: Category badges */}
+              {recommendation.risk_warning.warning_categories &&
+               recommendation.risk_warning.warning_categories.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {recommendation.risk_warning.warning_categories.map((cat) => (
+                    <span
+                      key={cat.category_type}
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
+                        cat.severity === 'high'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-orange-100 text-orange-800'
+                      }`}
+                    >
+                      <span>{cat.icon}</span>
+                      <span>{cat.display_name}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+
               <p className="text-sm text-orange-800 leading-relaxed">
                 {recommendation.risk_warning.reason}
               </p>
@@ -329,6 +362,34 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
                     )}
                   </span>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Story 7.5: Detailed category explanations */}
+          {recommendation.risk_warning.warning_categories &&
+           recommendation.risk_warning.warning_categories.length > 0 && (
+            <div className="bg-white rounded-md p-3 mb-3 border border-orange-200">
+              <h5 className="text-xs font-semibold text-gray-700 mb-2 uppercase">
+                Risk Factors Detected
+              </h5>
+              <div className="space-y-2">
+                {recommendation.risk_warning.warning_categories.map((cat) => (
+                  <div key={cat.category_type} className="flex items-start gap-2 text-sm">
+                    <span className="text-lg flex-shrink-0">{cat.icon}</span>
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900">{cat.display_name}</div>
+                      <div className="text-gray-600 text-xs">{cat.description}</div>
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 rounded ${
+                      cat.severity === 'high'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-orange-100 text-orange-700'
+                    }`}>
+                      {cat.severity}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
