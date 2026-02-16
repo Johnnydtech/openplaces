@@ -99,9 +99,6 @@ export default function SavedRecommendationCard({
         <p className="text-base font-semibold text-white">
           {savedRecommendation.zone_name}
         </p>
-        <p className="text-sm mt-1" style={{ color: '#94a3b8' }}>
-          {savedRecommendation.audience_match}% Audience Match
-        </p>
       </div>
 
       {/* Notes Section */}

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { ZoneRecommendation, EventDataForRecommendations } from '@/lib/api'
-import ZoneDetailsPanel from './ZoneDetailsPanel'
 
 // Story 5.1 AC: API key from environment variables (not hardcoded)
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_API_KEY || ''
@@ -22,9 +21,10 @@ interface MapProps {
   hoveredZoneId?: string | null  // Story 5.7: Highlight support
   onZoneHover?: (zoneId: string) => void  // Story 5.8: Map hover callback
   onZoneLeave?: () => void  // Story 5.8: Map hover callback
+  onZoneClick?: (zone: ZoneRecommendation, rank: number) => void  // Zone click callback
 }
 
-export default function Map({ className = '', recommendations = [], eventData = null, hoveredZoneId = null, onZoneHover, onZoneLeave }: MapProps) {
+export default function Map({ className = '', recommendations = [], eventData = null, hoveredZoneId = null, onZoneHover, onZoneLeave, onZoneClick }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
   const markersRef = useRef<mapboxgl.Marker[]>([])  // Story 5.3: Track markers for cleanup
@@ -32,8 +32,6 @@ export default function Map({ className = '', recommendations = [], eventData = 
   const markerElementsRef = useRef(new globalThis.Map<string, HTMLElement>())  // Story 5.7: Track marker elements for highlighting
   const [mapLoaded, setMapLoaded] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
-  // Story 5.5: Track selected zone for details panel
-  const [selectedZone, setSelectedZone] = useState<{ zone: ZoneRecommendation; rank: number } | null>(null)
 
   // Story 5.3: Color coding by rank
   const getRankColor = (rank: number): string => {
@@ -140,13 +138,13 @@ export default function Map({ className = '', recommendations = [], eventData = 
       el.addEventListener('keydown', (e: KeyboardEvent) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          setSelectedZone({ zone, rank })
+          onZoneClick?.(zone, rank)
         }
       })
 
       // Story 5.5: Click handler to open details panel
       el.addEventListener('click', () => {
-        setSelectedZone({ zone, rank })
+        onZoneClick?.(zone, rank)
       })
 
       // Story 5.7: Store marker element for highlighting
@@ -407,7 +405,7 @@ export default function Map({ className = '', recommendations = [], eventData = 
       // Story 5.2 AC: Interactive map with rotation support
       map.current = new mapboxgl.Map({
         container: mapContainer.current!,
-        style: 'mapbox://styles/mapbox/streets-v12', // Mapbox Streets style
+        style: 'mapbox://styles/mapbox/satellite-streets-v12', // Satellite style with labels
         center: [ARLINGTON_CENTER.lng, ARLINGTON_CENTER.lat],
         zoom: 12, // Zoom level to show most of Arlington
         attributionControl: true,
@@ -420,7 +418,8 @@ export default function Map({ className = '', recommendations = [], eventData = 
       })
 
       // Add navigation controls (zoom +/-, compass)
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right')
+      // Position at bottom-right to avoid blocking sidebar close button
+      map.current.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
 
       // Story 5.1 AC: Map loads within 2 seconds
       const loadStartTime = Date.now()
@@ -433,16 +432,45 @@ export default function Map({ className = '', recommendations = [], eventData = 
           console.warn(`Map load time (${loadTime}ms) exceeds 2s target`)
         }
 
-        // Story 5.3: Add zone markers after map loads
-        if (recommendations.length > 0) {
-          addZoneMarkers(recommendations)
-        }
-
         // Story 5.4: Add venue marker after map loads
         // Story 5.6: Add distance circles centered on venue
         if (eventData) {
           addDistanceCircles(eventData.venue_lat, eventData.venue_lon)
           addVenueMarker(eventData)
+
+          // If no recommendations yet, zoom to venue
+          if (recommendations.length === 0) {
+            map.current?.flyTo({
+              center: [eventData.venue_lon, eventData.venue_lat],
+              zoom: 15,
+              duration: 1500
+            })
+          }
+        }
+
+        // Story 5.3: Add zone markers after map loads
+        if (recommendations.length > 0) {
+          addZoneMarkers(recommendations)
+
+          // Auto-fit map to show all recommendations + venue
+          const bounds = new mapboxgl.LngLatBounds()
+
+          // Add all zone coordinates to bounds
+          recommendations.forEach(zone => {
+            bounds.extend([zone.longitude, zone.latitude])
+          })
+
+          // Add venue to bounds if exists
+          if (eventData) {
+            bounds.extend([eventData.venue_lon, eventData.venue_lat])
+          }
+
+          // Fit map to bounds with padding
+          map.current?.fitBounds(bounds, {
+            padding: { top: 100, bottom: 100, left: 550, right: 100 }, // Account for left sidebar
+            maxZoom: 13.5,
+            duration: 1500
+          })
         }
 
         setMapLoaded(true)
@@ -528,21 +556,22 @@ export default function Map({ className = '', recommendations = [], eventData = 
 
   if (loadError) {
     return (
-      <div className={`flex items-center justify-center bg-gray-100 rounded-lg ${className}`}>
+      <div className={`flex items-center justify-center rounded-lg ${className}`} style={{ background: '#0a1628' }}>
         <div className="text-center p-8">
-          <p className="text-red-600 font-medium mb-2">Map Error</p>
-          <p className="text-sm text-gray-600">{loadError}</p>
+          <p className="font-medium mb-2" style={{ color: '#ef4444' }}>Map Error</p>
+          <p className="text-sm" style={{ color: '#94a3b8' }}>{loadError}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className}`} style={{ width: '100%', height: '100%' }}>
       {/* Map container */}
       <div
         ref={mapContainer}
-        className="absolute inset-0 rounded-lg overflow-hidden"
+        className="absolute inset-0 overflow-hidden"
+        style={{ width: '100%', height: '100%' }}
         tabIndex={0}
         role="region"
         aria-label="Interactive map of Arlington, VA with placement zone recommendations"
@@ -550,21 +579,12 @@ export default function Map({ className = '', recommendations = [], eventData = 
 
       {/* Loading indicator */}
       {!mapLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75">
+        <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(10, 22, 40, 0.95)' }}>
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-            <p className="text-sm text-gray-600">Loading map...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-4 mx-auto mb-4" style={{ borderColor: 'rgba(74, 222, 128, 0.2)', borderTopColor: '#4ade80' }}></div>
+            <p className="text-sm text-white">Loading map...</p>
           </div>
         </div>
-      )}
-
-      {/* Story 5.5: Zone details panel */}
-      {selectedZone && (
-        <ZoneDetailsPanel
-          zone={selectedZone.zone}
-          rank={selectedZone.rank}
-          onClose={() => setSelectedZone(null)}
-        />
       )}
     </div>
   )

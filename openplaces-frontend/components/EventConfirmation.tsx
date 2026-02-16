@@ -15,29 +15,27 @@ interface EventData {
   latitude?: number
   longitude?: number
   geocoded_address?: string
-  event_type?: string  // Story 3.8: Event type classification
+  event_type?: string
 }
 
 interface EventConfirmationProps {
   data: EventData
-  onGetRecommendations: () => void
+  onGetRecommendations: (data: any) => void
   onUpdate?: (updatedData: EventData) => void
 }
 
 export default function EventConfirmation({ data, onGetRecommendations, onUpdate }: EventConfirmationProps) {
-  const [editingField, setEditingField] = useState<string | null>(null)
-  const [editValue, setEditValue] = useState<string>('')
-  // Story 3.8: Default event_type to 'Community event' if not provided
   const [localData, setLocalData] = useState({
     ...data,
     event_type: data.event_type || 'Community event'
   })
   const [isGeocoding, setIsGeocoding] = useState(false)
-  const [geocodingError, setGeocodingError] = useState<string | null>(null)
-  // Story 3.7: Target audience editing state
-  const [editingAudiences, setEditingAudiences] = useState<string[]>([])
+  const [isEditMode, setIsEditMode] = useState(false)
 
-  // Story 3.7: Audience options (from ManualEventForm)
+  // Edit mode states
+  const [editedData, setEditedData] = useState(localData)
+  const [selectedAudiences, setSelectedAudiences] = useState<string[]>(data.target_audience)
+
   const audienceOptions = [
     'Young professionals',
     'Families',
@@ -47,7 +45,6 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
     'Local residents',
   ]
 
-  // Story 3.8: Event type options (FR11)
   const eventTypeOptions = [
     'Workshop',
     'Concert',
@@ -58,17 +55,12 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
     'Cultural',
   ]
 
-  // Story 3.6: Auto-geocode venue when component mounts or venue changes
+  // Auto-geocode venue
   useEffect(() => {
     const geocodeAddress = async () => {
-      // Skip if no venue or already geocoded
-      if (!localData.venue || localData.latitude) {
-        return
-      }
+      if (!localData.venue || localData.latitude) return
 
       setIsGeocoding(true)
-      setGeocodingError(null)
-
       try {
         const result = await geocodeVenue(localData.venue)
         const updatedData = {
@@ -78,405 +70,274 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
           geocoded_address: result.formatted_address
         }
         setLocalData(updatedData)
-        if (onUpdate) {
-          onUpdate(updatedData)
-        }
-        toast.success('📍 Venue located!')
-      } catch (error: any) {
-        if (error.response?.status === 404) {
-          setGeocodingError('Venue not found')
-          toast.error('Venue not found. Please check the address.')
-        } else if (error.code === 'ECONNABORTED') {
-          setGeocodingError('Geocoding timeout')
-          toast.error('Geocoding took too long. You can proceed without it.')
-        } else {
-          setGeocodingError('Geocoding unavailable')
-          // Gracefully degrade - don't show toast
-          console.warn('Geocoding failed:', error)
-        }
+        setEditedData(updatedData)
+        if (onUpdate) onUpdate(updatedData)
+      } catch (error) {
+        console.warn('Geocoding failed:', error)
       } finally {
         setIsGeocoding(false)
       }
     }
 
     geocodeAddress()
-  }, [localData.venue]) // Trigger when venue changes
+  }, [localData.venue])
 
-  const confidenceColor = {
-    high: 'text-green-600 bg-green-50 border-green-200',
-    medium: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-    low: 'text-red-600 bg-red-50 border-red-200',
-  }[localData.confidence.toLowerCase()] || 'text-gray-600 bg-gray-50 border-gray-200'
+  const handleConfirm = () => {
+    console.log('[EventConfirmation] Confirming with data:', localData)
+    console.log('[EventConfirmation] Has latitude:', localData.latitude)
 
-  const handleEdit = (field: string, currentValue: string) => {
-    setEditingField(field)
-    setEditValue(currentValue)
-  }
-
-  const handleSave = (field: string) => {
-    const updatedData = { ...localData, [field]: editValue }
-
-    // Story 3.6: Clear geocoding data when venue is edited to trigger re-geocoding
-    if (field === 'venue') {
-      updatedData.latitude = undefined
-      updatedData.longitude = undefined
-      updatedData.geocoded_address = undefined
-    }
-
-    setLocalData(updatedData)
-    if (onUpdate) {
-      onUpdate(updatedData)
-    }
-    setEditingField(null)
-    toast.success('Field updated!')
-  }
-
-  const handleCancel = () => {
-    setEditingField(null)
-    setEditValue('')
-  }
-
-  // Story 3.7: Target audience editing handlers
-  const handleEditAudience = () => {
-    setEditingField('target_audience')
-    setEditingAudiences([...localData.target_audience]) // Initialize with current values
-  }
-
-  const handleAudienceToggle = (audience: string) => {
-    setEditingAudiences(prev =>
-      prev.includes(audience)
-        ? prev.filter(a => a !== audience)  // Uncheck
-        : [...prev, audience]  // Check
-    )
-  }
-
-  const handleSaveAudience = () => {
-    // Validation: At least one audience required
-    if (editingAudiences.length === 0) {
-      toast.error('Please select at least one audience')
+    if (!localData.latitude || !localData.longitude) {
+      toast.error('Please wait for venue location to be confirmed')
       return
     }
 
-    const updatedData = { ...localData, target_audience: editingAudiences }
-    setLocalData(updatedData)
-    if (onUpdate) {
-      onUpdate(updatedData)
-    }
-    setEditingField(null)
-    toast.success('Audience updated!')
+    onGetRecommendations({
+      event_name: localData.event_name,
+      event_date: localData.event_date,
+      event_time: localData.event_time,
+      venue_address: localData.venue,
+      target_audience: localData.target_audience,
+      event_type: localData.event_type
+    })
   }
 
-  // Story 3.9: Required field validation
-  const isEventDataValid = (): boolean => {
-    return !!(
-      localData.event_name &&
-      localData.event_name.trim().length >= 3 &&
-      localData.event_date &&
-      localData.event_time &&
-      localData.venue &&
-      localData.venue.trim().length >= 3 &&
-      localData.target_audience &&
-      localData.target_audience.length > 0 &&
-      localData.event_type
+  const handleEdit = () => {
+    setIsEditMode(true)
+    setEditedData(localData)
+    setSelectedAudiences(localData.target_audience)
+  }
+
+  const handleSaveEdits = () => {
+    const updatedData = {
+      ...editedData,
+      target_audience: selectedAudiences,
+      latitude: undefined,
+      longitude: undefined
+    }
+    setLocalData(updatedData)
+    if (onUpdate) onUpdate(updatedData)
+    setIsEditMode(false)
+    toast.success('Details updated!')
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false)
+    setEditedData(localData)
+    setSelectedAudiences(localData.target_audience)
+  }
+
+  const toggleAudience = (audience: string) => {
+    setSelectedAudiences(prev =>
+      prev.includes(audience)
+        ? prev.filter(a => a !== audience)
+        : [...prev, audience]
     )
   }
 
-  const getMissingFields = (): string[] => {
-    const missing: string[] = []
-
-    if (!localData.event_name || localData.event_name.trim().length < 3) {
-      missing.push('event name')
-    }
-    if (!localData.event_date) {
-      missing.push('event date')
-    }
-    if (!localData.event_time) {
-      missing.push('event time')
-    }
-    if (!localData.venue || localData.venue.trim().length < 3) {
-      missing.push('venue')
-    }
-    if (!localData.target_audience || localData.target_audience.length === 0) {
-      missing.push('target audience')
-    }
-    if (!localData.event_type) {
-      missing.push('event type')
-    }
-
-    return missing
-  }
-
-  const isValid = isEventDataValid()
-  const missingFields = isValid ? [] : getMissingFields()
-
-  return (
-    <div className="rounded-lg border p-6 shadow-lg" style={{ background: '#1a2f3a', borderColor: '#2a4551' }}>
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white">Extracted Event Details</h3>
-        <span className={`rounded-full px-3 py-1 text-xs font-medium ${confidenceColor}`} style={{
-          background: localData.confidence.toLowerCase() === 'high' ? '#4ade80' : localData.confidence.toLowerCase() === 'medium' ? '#facc15' : '#fb923c',
-          color: '#0f1c24'
-        }}>
-          {localData.confidence} Confidence
-        </span>
-      </div>
-
-      {localData.confidence.toLowerCase() === 'low' && (
-        <div className="mb-4 rounded-md p-3 text-sm" style={{ background: '#fb923c20', color: '#fb923c' }}>
-          ⚠️ Low confidence extraction. Please review and edit details carefully.
+  if (isEditMode) {
+    return (
+      <div className="rounded-xl border p-6 shadow-2xl backdrop-blur-xl" style={{ background: 'rgba(26, 47, 58, 0.95)', borderColor: 'rgba(74, 222, 128, 0.2)' }}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold text-white">Edit Event Details</h3>
+          <button
+            onClick={handleCancelEdit}
+            className="text-sm"
+            style={{ color: '#94a3b8' }}
+          >
+            Cancel
+          </button>
         </div>
-      )}
 
-      <div className="space-y-3">
-        {/* Event Name */}
-        <div>
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-medium" style={{ color: '#94a3b8' }}>Event Name</label>
-            {editingField !== 'event_name' && (
-              <button
-                onClick={() => handleEdit('event_name', localData.event_name)}
-                style={{ color: '#4ade80' }}
-                className="hover:opacity-80"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                </svg>
-              </button>
-            )}
+        <div className="space-y-4">
+          {/* Event Name */}
+          <div>
+            <label className="text-xs font-medium block mb-1" style={{ color: '#94a3b8' }}>Event Name</label>
+            <input
+              type="text"
+              value={editedData.event_name}
+              onChange={(e) => setEditedData({ ...editedData, event_name: e.target.value })}
+              className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 text-white"
+              style={{ background: '#1e3a48', borderColor: '#2a4551', '--tw-ring-color': '#4ade80' } as React.CSSProperties}
+            />
           </div>
-          {editingField === 'event_name' ? (
-            <div className="flex gap-2 mt-1">
+
+          {/* Date & Time */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium block mb-1" style={{ color: '#94a3b8' }}>Date</label>
               <input
-                type="text"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                className="flex-1 rounded border px-2 py-1 text-sm focus:outline-none focus:ring-2 text-white"
+                type="date"
+                value={editedData.event_date}
+                onChange={(e) => setEditedData({ ...editedData, event_date: e.target.value })}
+                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 text-white"
                 style={{ background: '#1e3a48', borderColor: '#2a4551', '--tw-ring-color': '#4ade80' } as React.CSSProperties}
-                autoFocus
               />
-              <button onClick={() => handleSave('event_name')} style={{ color: '#4ade80' }} className="font-bold hover:opacity-80">
-                ✓
-              </button>
-              <button onClick={handleCancel} style={{ color: '#ef4444' }} className="font-bold hover:opacity-80">
-                ✕
-              </button>
             </div>
-          ) : (
-            <p className="text-sm font-medium text-white">{localData.event_name}</p>
-          )}
-        </div>
+            <div>
+              <label className="text-xs font-medium block mb-1" style={{ color: '#94a3b8' }}>Time</label>
+              <input
+                type="time"
+                value={editedData.event_time}
+                onChange={(e) => setEditedData({ ...editedData, event_time: e.target.value })}
+                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 text-white"
+                style={{ background: '#1e3a48', borderColor: '#2a4551', '--tw-ring-color': '#4ade80' } as React.CSSProperties}
+              />
+            </div>
+          </div>
 
-        {/* Date and Time */}
-        <div className="grid grid-cols-2 gap-4">
+          {/* Venue */}
           <div>
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-gray-500">Date</label>
-              {editingField !== 'event_date' && (
-                <button onClick={() => handleEdit('event_date', localData.event_date)} className="text-blue-600 hover:text-blue-700">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                  </svg>
-                </button>
-              )}
-            </div>
-            {editingField === 'event_date' ? (
-              <div className="flex gap-1 mt-1">
-                <input type="date" value={editValue} onChange={(e) => setEditValue(e.target.value)} className="flex-1 rounded border border-gray-300 px-2 py-1 text-sm" autoFocus />
-                <button onClick={() => handleSave('event_date')} className="text-green-600">✓</button>
-                <button onClick={handleCancel} className="text-red-600">✕</button>
-              </div>
-            ) : (
-              <p className="text-sm text-gray-900">{localData.event_date}</p>
-            )}
+            <label className="text-xs font-medium block mb-1" style={{ color: '#94a3b8' }}>Venue Address</label>
+            <input
+              type="text"
+              value={editedData.venue}
+              onChange={(e) => setEditedData({ ...editedData, venue: e.target.value })}
+              className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 text-white"
+              style={{ background: '#1e3a48', borderColor: '#2a4551', '--tw-ring-color': '#4ade80' } as React.CSSProperties}
+            />
           </div>
 
+          {/* Event Type */}
           <div>
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-gray-500">Time</label>
-              {editingField !== 'event_time' && (
-                <button onClick={() => handleEdit('event_time', localData.event_time)} className="text-blue-600 hover:text-blue-700">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                  </svg>
-                </button>
-              )}
-            </div>
-            {editingField === 'event_time' ? (
-              <div className="flex gap-1 mt-1">
-                <input type="time" value={editValue} onChange={(e) => setEditValue(e.target.value)} className="flex-1 rounded border border-gray-300 px-2 py-1 text-sm" autoFocus />
-                <button onClick={() => handleSave('event_time')} className="text-green-600">✓</button>
-                <button onClick={handleCancel} className="text-red-600">✕</button>
-              </div>
-            ) : (
-              <p className="text-sm text-gray-900">{localData.event_time}</p>
-            )}
+            <label className="text-xs font-medium block mb-1" style={{ color: '#94a3b8' }}>Event Type</label>
+            <select
+              value={editedData.event_type}
+              onChange={(e) => setEditedData({ ...editedData, event_type: e.target.value })}
+              className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 text-white"
+              style={{ background: '#1e3a48', borderColor: '#2a4551', '--tw-ring-color': '#4ade80' } as React.CSSProperties}
+            >
+              {eventTypeOptions.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
           </div>
-        </div>
 
-        {/* Venue */}
-        <div>
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-gray-500">Venue</label>
-            {editingField !== 'venue' && (
-              <button onClick={() => handleEdit('venue', localData.venue)} className="text-blue-600 hover:text-blue-700">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                </svg>
-              </button>
-            )}
-          </div>
-          {editingField === 'venue' ? (
-            <div className="flex gap-2 mt-1">
-              <input type="text" value={editValue} onChange={(e) => setEditValue(e.target.value)} className="flex-1 rounded border border-gray-300 px-2 py-1 text-sm" autoFocus />
-              <button onClick={() => handleSave('venue')} className="text-green-600">✓</button>
-              <button onClick={handleCancel} className="text-red-600">✕</button>
-            </div>
-          ) : (
-            <>
-              <p className="text-sm text-gray-900">{localData.venue}</p>
-              {/* Story 3.6: Display geocoded coordinates */}
-              {isGeocoding && (
-                <p className="mt-1 text-xs text-gray-500">📍 Locating venue...</p>
-              )}
-              {!isGeocoding && localData.latitude && localData.longitude && (
-                <p className="mt-1 text-xs text-green-600">
-                  📍 {localData.latitude.toFixed(4)}, {localData.longitude.toFixed(4)}
-                </p>
-              )}
-              {!isGeocoding && geocodingError && (
-                <p className="mt-1 text-xs text-yellow-600">
-                  ⚠️ {geocodingError}
-                </p>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Target Audience */}
-        <div>
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-gray-500">Target Audience</label>
-            {editingField !== 'target_audience' && (
-              <button onClick={handleEditAudience} className="text-blue-600 hover:text-blue-700">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                </svg>
-              </button>
-            )}
-          </div>
-          {editingField === 'target_audience' ? (
-            <div className="mt-1">
-              {/* Checkbox list */}
-              <div className="space-y-2 max-h-48 overflow-y-auto rounded border border-gray-300 p-3 bg-gray-50">
-                {audienceOptions.map((audience) => (
-                  <label key={audience} className="flex items-center cursor-pointer hover:bg-gray-100 p-1 rounded">
-                    <input
-                      type="checkbox"
-                      checked={editingAudiences.includes(audience)}
-                      onChange={() => handleAudienceToggle(audience)}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">{audience}</span>
-                  </label>
-                ))}
-              </div>
-
-              {/* Save/Cancel buttons */}
-              <div className="flex gap-2 mt-2">
-                <button onClick={handleSaveAudience} className="text-green-600 hover:text-green-700 font-bold">✓</button>
-                <button onClick={handleCancel} className="text-red-600 hover:text-red-700 font-bold">✕</button>
-              </div>
-
-              {/* Validation error */}
-              {editingAudiences.length === 0 && (
-                <p className="text-xs text-red-600 mt-1">⚠️ Select at least one audience</p>
-              )}
-            </div>
-          ) : (
-            <div className="mt-1 flex flex-wrap gap-2">
-              {localData.target_audience.map((audience, index) => (
-                <span key={index} className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
-                  {audience}
-                </span>
+          {/* Target Audience */}
+          <div>
+            <label className="text-xs font-medium block mb-2" style={{ color: '#94a3b8' }}>Target Audience</label>
+            <div className="space-y-2 max-h-40 overflow-y-auto rounded-lg p-3" style={{ background: 'rgba(30, 58, 72, 0.5)' }}>
+              {audienceOptions.map((audience) => (
+                <label key={audience} className="flex items-center cursor-pointer p-2 rounded transition-colors" style={{ '&:hover': { background: 'rgba(74, 222, 128, 0.1)' } }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedAudiences.includes(audience)}
+                    onChange={() => toggleAudience(audience)}
+                    className="h-4 w-4 rounded"
+                    style={{ accentColor: '#4ade80' }}
+                  />
+                  <span className="ml-2 text-sm text-white">{audience}</span>
+                </label>
               ))}
             </div>
+          </div>
+        </div>
+
+        <button
+          onClick={handleSaveEdits}
+          className="w-full mt-6 rounded-lg px-4 py-3 text-base font-semibold transition-colors"
+          style={{ background: '#4ade80', color: '#0f1c24' }}
+          onMouseEnter={(e) => e.currentTarget.style.background = '#22c55e'}
+          onMouseLeave={(e) => e.currentTarget.style.background = '#4ade80'}
+        >
+          Save Changes
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-xl border shadow-2xl backdrop-blur-xl overflow-hidden" style={{ background: 'rgba(26, 47, 58, 0.95)', borderColor: 'rgba(74, 222, 128, 0.2)' }}>
+      {/* Header */}
+      <div className="p-6 border-b" style={{ borderColor: 'rgba(42, 69, 81, 0.5)' }}>
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <h3 className="text-xl font-bold text-white mb-1">
+              {localData.event_name}
+            </h3>
+            <p className="text-sm" style={{ color: '#94a3b8' }}>
+              {new Date(localData.event_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at {localData.event_time}
+            </p>
+          </div>
+          <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{
+            background: localData.confidence.toLowerCase() === 'high' ? '#4ade80' : localData.confidence.toLowerCase() === 'medium' ? '#facc15' : '#fb923c',
+            color: '#0f1c24'
+          }}>
+            AI Extracted
+          </span>
+        </div>
+      </div>
+
+      {/* Event Details */}
+      <div className="p-6 space-y-4">
+        {/* Venue */}
+        <div>
+          <p className="text-xs font-medium mb-1" style={{ color: '#94a3b8' }}>📍 VENUE</p>
+          <p className="text-sm font-medium text-white">{localData.venue}</p>
+          {isGeocoding && (
+            <p className="text-xs mt-1" style={{ color: '#4ade80' }}>Locating on map...</p>
+          )}
+          {!isGeocoding && localData.latitude && (
+            <p className="text-xs mt-1" style={{ color: '#4ade80' }}>✓ Location confirmed</p>
           )}
         </div>
 
         {/* Event Type */}
         <div>
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-gray-500">Event Type</label>
-            {editingField !== 'event_type' && (
-              <button onClick={() => handleEdit('event_type', localData.event_type || 'Community event')} className="text-blue-600 hover:text-blue-700">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                </svg>
-              </button>
-            )}
-          </div>
-          {editingField === 'event_type' ? (
-            <div className="flex gap-2 mt-1">
-              <select
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                className="flex-1 rounded border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                autoFocus
-              >
-                {eventTypeOptions.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-              <button onClick={() => handleSave('event_type')} className="text-green-600 hover:text-green-700">✓</button>
-              <button onClick={handleCancel} className="text-red-600 hover:text-red-700">✕</button>
-            </div>
-          ) : (
-            <div className="mt-1">
-              <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700">
-                {localData.event_type || 'Community event'}
-              </span>
-            </div>
-          )}
+          <p className="text-xs font-medium mb-1" style={{ color: '#94a3b8' }}>🎭 EVENT TYPE</p>
+          <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium" style={{ background: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' }}>
+            {localData.event_type}
+          </span>
         </div>
 
-        {localData.extraction_notes && (
-          <div>
-            <label className="text-xs font-medium text-gray-500">Notes</label>
-            <p className="text-sm italic text-gray-600">{localData.extraction_notes}</p>
+        {/* Target Audience */}
+        <div>
+          <p className="text-xs font-medium mb-2" style={{ color: '#94a3b8' }}>👥 TARGET AUDIENCE</p>
+          <div className="flex flex-wrap gap-2">
+            {localData.target_audience.map((audience, index) => (
+              <span key={index} className="rounded-full px-3 py-1 text-xs font-medium" style={{ background: 'rgba(74, 222, 128, 0.2)', color: '#4ade80' }}>
+                {audience}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {localData.confidence.toLowerCase() === 'low' && (
+          <div className="rounded-lg p-3 text-sm" style={{ background: 'rgba(251, 146, 60, 0.1)', color: '#fb923c', border: '1px solid rgba(251, 146, 60, 0.2)' }}>
+            <p className="font-medium mb-1">⚠️ Low Confidence Extraction</p>
+            <p className="text-xs">Please review the details carefully before proceeding</p>
           </div>
         )}
       </div>
 
-      <button
-        onClick={onGetRecommendations}
-        disabled={!isValid}
-        className={`mt-6 w-full rounded-lg px-4 py-3 text-base font-semibold transition-colors focus:outline-none ${
-          isValid
-            ? 'cursor-pointer'
-            : 'cursor-not-allowed opacity-60'
-        }`}
-        style={{
-          background: isValid ? '#4ade80' : '#2a4551',
-          color: isValid ? '#0f1c24' : '#94a3b8'
-        }}
-        onMouseEnter={(e) => {
-          if (isValid) e.currentTarget.style.background = '#22c55e'
-        }}
-        onMouseLeave={(e) => {
-          if (isValid) e.currentTarget.style.background = '#4ade80'
-        }}
-      >
-        Get Recommendations →
-      </button>
+      {/* Actions */}
+      <div className="p-6 pt-0 space-y-3">
+        <button
+          onClick={handleConfirm}
+          disabled={!localData.latitude || isGeocoding}
+          className={`w-full rounded-lg px-4 py-3 text-base font-semibold transition-colors ${
+            !localData.latitude || isGeocoding ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          style={{ background: '#4ade80', color: '#0f1c24' }}
+          onMouseEnter={(e) => {
+            if (localData.latitude && !isGeocoding) e.currentTarget.style.background = '#22c55e'
+          }}
+          onMouseLeave={(e) => {
+            if (localData.latitude && !isGeocoding) e.currentTarget.style.background = '#4ade80'
+          }}
+        >
+          {isGeocoding ? 'Locating venue...' : 'Looks perfect! Find OpenPlaces →'}
+        </button>
 
-      {/* Story 3.9: Validation error message */}
-      {!isValid && missingFields.length > 0 && (
-        <p className="mt-2 text-sm text-center" role="alert" style={{ color: '#ef4444' }}>
-          ⚠️ Complete all required fields: {missingFields.join(', ')}
-        </p>
-      )}
+        <button
+          onClick={handleEdit}
+          className="w-full rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+          style={{ background: 'rgba(74, 222, 128, 0.1)', color: '#4ade80' }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(74, 222, 128, 0.2)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(74, 222, 128, 0.1)'}
+        >
+          Make changes
+        </button>
+      </div>
     </div>
   )
 }

@@ -1,363 +1,452 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
-import Link from 'next/link'
+import { useState, useEffect, useRef } from 'react'
+import { useUser } from '@clerk/nextjs'
 import toast, { Toaster } from 'react-hot-toast'
+import MapComponent from '@/components/Map'
 import UploadZone from '@/components/UploadZone'
-import FilePreview from '@/components/FilePreview'
 import EventConfirmation from '@/components/EventConfirmation'
-import LoadingSpinner from '@/components/LoadingSpinner'
-import { analyzeFlyer } from '@/lib/api'
-import dynamic from 'next/dynamic'
+import RecommendationCard from '@/components/RecommendationCard'
+import ZoneDetailsPanel from '@/components/ZoneDetailsPanel'
+import TimePeriodToggle, { type TimePeriod } from '@/components/TimePeriodToggle'
+import { analyzeFlyer, geocodeVenue, getRecommendations, getSavedRecommendations, type EventDataForRecommendations, type ZoneRecommendation, type SavedRecommendation } from '@/lib/api'
+import { getDefaultTimePeriod } from '@/lib/timeUtils'
 
-const MapComponent = dynamic(() => import('@/components/Map'), { ssr: false })
+type UploadState = 'idle' | 'uploading' | 'analyzing' | 'confirming' | 'geocoding' | 'complete'
 
-export default function Home() {
-  const router = useRouter()
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string>('')
-  const [isUploading, setIsUploading] = useState(false)
+export default function UnifiedHomePage() {
+  const { user, isLoaded, isSignedIn } = useUser()
+
+  // Upload state
+  const [uploadState, setUploadState] = useState<UploadState>('idle')
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [extractedData, setExtractedData] = useState<any>(null)
+  const [editableEventData, setEditableEventData] = useState<any>(null)
 
-  const handleFileSelect = async (file: File) => {
-    const maxSize = 10 * 1024 * 1024 // 10MB
-    if (file.size > maxSize) {
-      toast.error('File too large (max 10MB). Compress image or enter details manually.')
-      return
+  // Recommendations state
+  const [recommendations, setRecommendations] = useState<ZoneRecommendation[]>([])
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false)
+  const [eventData, setEventData] = useState<EventDataForRecommendations | null>(null)
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState<TimePeriod>('evening')
+
+  // Map state
+  const [hoveredZoneId, setHoveredZoneId] = useState<string | null>(null)
+  const [selectedZone, setSelectedZone] = useState<{ zone: ZoneRecommendation; rank: number } | null>(null)
+  const recommendationRefs = useRef(new Map<string, HTMLDivElement>())
+
+  // History state
+  const [savedRecommendations, setSavedRecommendations] = useState<SavedRecommendation[]>([])
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+
+  // Load saved recommendations history
+  useEffect(() => {
+    if (isSignedIn && user) {
+      loadHistory()
     }
+  }, [isSignedIn, user])
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf']
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('File type not supported. Upload JPG, PNG, or PDF instead.')
-      return
+  const loadHistory = async () => {
+    if (!user) return
+    setIsLoadingHistory(true)
+    try {
+      const history = await getSavedRecommendations(user.id)
+      setSavedRecommendations(history)
+    } catch (error) {
+      console.error('Error loading history:', error)
+    } finally {
+      setIsLoadingHistory(false)
     }
-
-    setSelectedFile(file)
-
-    if (file.type !== 'application/pdf') {
-      const url = URL.createObjectURL(file)
-      setPreviewUrl(url)
-    }
-
-    await uploadFile(file)
   }
 
-  const uploadFile = async (file: File) => {
-    setIsUploading(true)
-    setExtractedData(null)
+  // Handle file upload
+  const handleFileUpload = async (file: File) => {
+    setUploadedFile(file)
+    setUploadState('analyzing')
 
     try {
-      toast.loading('Analyzing flyer...', { id: 'upload' })
-
+      toast.loading('Analyzing flyer...', { id: 'analyze' })
       const response = await analyzeFlyer(file)
 
       if (response.success && response.data) {
-        toast.success('Event details extracted successfully!', { id: 'upload' })
         setExtractedData(response.data)
+        setEditableEventData(response.data)
+        setUploadState('confirming')
+        toast.success('Flyer analyzed!', { id: 'analyze' })
       } else {
-        throw new Error('Unexpected API response format')
+        throw new Error('Failed to extract data')
       }
     } catch (error: any) {
-      console.error('Upload error:', error)
+      console.error('Error analyzing flyer:', error)
+      toast.error('Failed to analyze flyer', { id: 'analyze' })
+      setUploadState('idle')
+    }
+  }
 
-      if (error.response?.status === 400) {
-        toast.error('File cannot be read. Try different file or enter manually.', { id: 'upload' })
-      } else if (error.response?.status === 504) {
-        toast.error('Analysis timed out. Use clearer image or enter manually.', { id: 'upload' })
-      } else if (error.code === 'ECONNABORTED') {
-        toast.error('Upload timed out. Check connection and try again.', { id: 'upload' })
-      } else {
-        toast.error('AI extraction unavailable. Enter event details manually instead.', { id: 'upload' })
+  // Handle event confirmation
+  const handleEventConfirm = async (confirmedData: any) => {
+    setUploadState('geocoding')
+
+    try {
+      // Geocode venue
+      toast.loading('Finding venue location...', { id: 'geocode' })
+      const geocodeResult = await geocodeVenue(confirmedData.venue_address)
+
+      const eventDataForRecommendations: EventDataForRecommendations = {
+        name: confirmedData.event_name,
+        date: confirmedData.event_date,
+        time: confirmedData.event_time,
+        venue_lat: geocodeResult.latitude,
+        venue_lon: geocodeResult.longitude,
+        target_audience: confirmedData.target_audience,
+        event_type: confirmedData.event_type
       }
+
+      setEventData(eventDataForRecommendations)
+
+      // Get default time period
+      const defaultPeriod = getDefaultTimePeriod(confirmedData.event_date, confirmedData.event_time)
+      setSelectedTimePeriod(defaultPeriod)
+
+      // Get recommendations (this will show success toast)
+      await fetchRecommendations(eventDataForRecommendations)
+      setUploadState('complete')
+    } catch (error: any) {
+      console.error('Error processing event:', error)
+      toast.error('Failed to process event', { id: 'geocode' })
+      setUploadState('confirming')
+    }
+  }
+
+  // Fetch recommendations
+  const fetchRecommendations = async (eventDataParam: EventDataForRecommendations) => {
+    setIsLoadingRecommendations(true)
+    try {
+      // Dismiss any lingering toasts
+      toast.dismiss('geocode')
+      toast.loading('Generating recommendations...', { id: 'recommendations' })
+      const results = await getRecommendations(eventDataParam)
+      setRecommendations(results)
+      toast.success(`Found ${results.length} OpenPlaces!`, { id: 'recommendations' })
+    } catch (error: any) {
+      console.error('Error fetching recommendations:', error)
+      toast.error('Failed to generate recommendations', { id: 'recommendations' })
     } finally {
-      setIsUploading(false)
+      setIsLoadingRecommendations(false)
     }
   }
 
-  const handleRemoveFile = () => {
-    setSelectedFile(null)
-    setPreviewUrl('')
+  // Handle time period change
+  const handleTimePeriodChange = async (period: TimePeriod) => {
+    if (!eventData) return
+
+    setSelectedTimePeriod(period)
+    setIsLoadingRecommendations(true)
+
+    try {
+      toast.loading(`Re-ranking for ${period}...`, { id: 'rerank' })
+
+      const eventDataWithPeriod: EventDataForRecommendations = {
+        ...eventData,
+        time_period: period
+      }
+
+      const results = await getRecommendations(eventDataWithPeriod)
+      setRecommendations(results)
+
+      toast.success(`Optimized for ${period}!`, { id: 'rerank' })
+    } catch (error: any) {
+      console.error('Error re-ranking:', error)
+      toast.error('Failed to re-rank recommendations', { id: 'rerank' })
+    } finally {
+      setIsLoadingRecommendations(false)
+    }
+  }
+
+  // Handle zone click
+  const handleZoneClick = (zone: ZoneRecommendation, rank: number) => {
+    setSelectedZone({ zone, rank })
+  }
+
+  // Reset to upload new flyer
+  const handleNewUpload = () => {
+    setUploadState('idle')
+    setUploadedFile(null)
     setExtractedData(null)
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl)
-    }
+    setEditableEventData(null)
+    setRecommendations([])
+    setEventData(null)
+    setSelectedZone(null)
   }
 
-  const handleGetRecommendations = () => {
-    if (!extractedData) {
-      toast.error('No event data available')
-      return
+  // Scroll to recommendation on hover
+  useEffect(() => {
+    if (!hoveredZoneId) return
+
+    const cardElement = recommendationRefs.current.get(hoveredZoneId)
+    if (cardElement) {
+      cardElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest'
+      })
     }
-
-    if (!extractedData.latitude || !extractedData.longitude) {
-      toast.error('Venue must be geocoded first')
-      return
-    }
-
-    const eventData = {
-      name: extractedData.event_name,
-      date: extractedData.event_date,
-      time: extractedData.event_time,
-      venue_lat: extractedData.latitude,
-      venue_lon: extractedData.longitude,
-      target_audience: extractedData.target_audience,
-      event_type: extractedData.event_type || 'Community event'
-    }
-
-    const params = new URLSearchParams({
-      eventData: JSON.stringify(eventData)
-    })
-    router.push(`/recommendations?${params.toString()}`)
-  }
-
-  const handleEventUpdate = (updatedData: any) => {
-    setExtractedData(updatedData)
-  }
+  }, [hoveredZoneId])
 
   return (
-    <div
-      className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{
-        background: 'linear-gradient(135deg, #0a1628 0%, #1a2f3a 50%, #0f3d3e 100%)'
-      }}
-    >
-      {/* Animated background orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-          className="absolute w-96 h-96 rounded-full opacity-20 blur-3xl animate-pulse"
-          style={{
-            background: 'radial-gradient(circle, #4ade80 0%, transparent 70%)',
-            top: '-10%',
-            right: '-5%',
-            animationDuration: '4s'
-          }}
-        />
-        <div
-          className="absolute w-96 h-96 rounded-full opacity-20 blur-3xl animate-pulse"
-          style={{
-            background: 'radial-gradient(circle, #22d3ee 0%, transparent 70%)',
-            bottom: '-10%',
-            left: '-5%',
-            animationDuration: '6s',
-            animationDelay: '2s'
-          }}
+    <div className="flex h-screen overflow-hidden relative" style={{ background: '#0f1c24' }}>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            background: '#1a2f3a',
+            color: '#fff',
+            border: '1px solid rgba(74, 222, 128, 0.2)',
+          },
+          success: {
+            iconTheme: {
+              primary: '#4ade80',
+              secondary: '#1a2f3a',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#1a2f3a',
+            },
+          },
+          loading: {
+            iconTheme: {
+              primary: '#4ade80',
+              secondary: '#1a2f3a',
+            },
+          },
+        }}
+      />
+
+      {/* Full-Screen Map */}
+      <div className="absolute inset-0">
+        <MapComponent
+          className="h-full w-full"
+          recommendations={recommendations}
+          eventData={eventData}
+          hoveredZoneId={hoveredZoneId}
+          onZoneHover={(zoneId) => setHoveredZoneId(zoneId)}
+          onZoneLeave={() => setHoveredZoneId(null)}
+          onZoneClick={handleZoneClick}
         />
       </div>
 
-      <Toaster position="top-center" />
-
-      {/* Navbar */}
-      <nav
-        className="border-b backdrop-blur-xl relative z-10"
-        style={{
-          background: 'rgba(26, 47, 58, 0.7)',
-          borderColor: 'rgba(42, 69, 81, 0.5)'
-        }}
+      {/* Left Sidebar - Upload & Recommendations */}
+      <div
+        className="absolute left-6 top-6 bottom-6 w-[480px] rounded-xl shadow-2xl backdrop-blur-xl overflow-hidden animate-in slide-in-from-left duration-300 flex flex-col"
+        style={{ background: 'rgba(26, 47, 58, 0.95)', border: '1px solid rgba(74, 222, 128, 0.2)' }}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <h1 className="text-2xl font-bold text-white">OpenPlaces</h1>
+        {/* Sidebar Header */}
+        <div className="p-6 border-b" style={{ borderColor: 'rgba(42, 69, 81, 0.5)' }}>
+          <h1 className="text-2xl font-bold text-white mb-2">
+            Find OpenPlaces.
+          </h1>
+          <p className="text-sm" style={{ color: '#94a3b8' }}>
+            Upload a flyer to discover the best billboard locations
+          </p>
+        </div>
 
-          <div className="flex items-center gap-4">
-            <SignedIn>
-              <Link
-                href="/saved-recommendations"
-                className="text-sm font-semibold hover:text-white transition-colors"
-                style={{ color: '#94a3b8' }}
-              >
-                Saved
-              </Link>
-              <UserButton afterSignOutUrl="/" />
-            </SignedIn>
-
-            <SignedOut>
-              <Link
-                href="/sign-in"
-                className="text-sm font-semibold hover:text-white transition-colors"
-                style={{ color: '#94a3b8' }}
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/sign-up"
-                className="rounded-md px-4 py-2 text-sm font-semibold transition-colors"
-                style={{ background: '#4ade80', color: '#0f1c24' }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = '#22c55e' }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = '#4ade80' }}
-              >
-                Sign Up
-              </Link>
-            </SignedOut>
+        {/* Upload Section */}
+        {uploadState === 'idle' && (
+          <div className="p-6">
+            <UploadZone onFileSelect={handleFileUpload} />
           </div>
-        </div>
-      </nav>
+        )}
 
-      {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center relative z-10">
-        <div className="mx-auto max-w-4xl px-6 py-16 w-full">
-          {!selectedFile && !extractedData ? (
-            // Hero Section with Upload
-            <div className="text-center mb-12">
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <h2 className="text-5xl font-bold tracking-tight text-white sm:text-6xl mb-6 leading-tight">
-                  Strategic Ad Placement<br />
-                  <span
-                    className="inline-block bg-clip-text text-transparent animate-in fade-in duration-1000"
-                    style={{
-                      backgroundImage: 'linear-gradient(135deg, #4ade80 0%, #22d3ee 100%)'
-                    }}
-                  >
-                    for Arlington, VA
-                  </span>
-                </h2>
-              </div>
-              <p
-                className="mt-6 text-lg leading-8 max-w-2xl mx-auto mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700"
-                style={{ color: '#94a3b8', animationDelay: '150ms' }}
-              >
-                AI-powered recommendations for physical ad placement. Upload your event flyer and discover the best locations to reach your audience.
+        {/* Event Confirmation */}
+        {uploadState === 'confirming' && extractedData && (
+          <div className="p-6 overflow-y-auto flex-1">
+            <EventConfirmation
+              data={extractedData}
+              onGetRecommendations={handleEventConfirm}
+              onUpdate={(updatedData) => {
+                setExtractedData(updatedData)
+                // Update map preview when venue is geocoded
+                if (updatedData.latitude && updatedData.longitude) {
+                  setEventData({
+                    name: updatedData.event_name,
+                    date: updatedData.event_date,
+                    time: updatedData.event_time,
+                    venue_lat: updatedData.latitude,
+                    venue_lon: updatedData.longitude,
+                    target_audience: updatedData.target_audience,
+                    event_type: updatedData.event_type || 'Community event'
+                  })
+                }
+              }}
+            />
+          </div>
+        )}
+
+        {/* Loading State */}
+        {(uploadState === 'analyzing' || uploadState === 'geocoding' || (isLoadingRecommendations && recommendations.length === 0)) && (
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 mx-auto mb-4" style={{ borderColor: 'rgba(74, 222, 128, 0.2)', borderTopColor: '#4ade80' }}></div>
+              <p className="text-sm text-white">
+                {uploadState === 'analyzing' ? 'Analyzing flyer...' : uploadState === 'geocoding' ? 'Finding venue...' : 'Generating recommendations...'}
               </p>
-
-              <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: '300ms' }}>
-                <UploadZone onFileSelect={handleFileSelect} isUploading={isUploading} />
-              </div>
-
-              {/* Feature Cards */}
-              <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div
-                  className="rounded-xl p-6 backdrop-blur-sm border transition-all duration-300 hover:scale-105 hover:shadow-2xl"
-                  style={{
-                    background: 'rgba(26, 47, 58, 0.5)',
-                    borderColor: 'rgba(74, 222, 128, 0.2)'
-                  }}
-                >
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4" style={{ background: '#2a4551' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#4ade80" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">AI-Powered Analysis</h3>
-                  <p className="text-sm" style={{ color: '#94a3b8' }}>
-                    Upload your flyer and let AI extract event details automatically
-                  </p>
-                </div>
-
-                <div
-                  className="rounded-xl p-6 backdrop-blur-sm border transition-all duration-300 hover:scale-105 hover:shadow-2xl"
-                  style={{
-                    background: 'rgba(26, 47, 58, 0.5)',
-                    borderColor: 'rgba(74, 222, 128, 0.2)'
-                  }}
-                >
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4" style={{ background: '#2a4551' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#4ade80" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">Smart Recommendations</h3>
-                  <p className="text-sm" style={{ color: '#94a3b8' }}>
-                    Get top 10 ranked zones based on audience match and timing
-                  </p>
-                </div>
-
-                <div
-                  className="rounded-xl p-6 backdrop-blur-sm border transition-all duration-300 hover:scale-105 hover:shadow-2xl"
-                  style={{
-                    background: 'rgba(26, 47, 58, 0.5)',
-                    borderColor: 'rgba(74, 222, 128, 0.2)'
-                  }}
-                >
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4" style={{ background: '#2a4551' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#4ade80" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">Risk Warnings</h3>
-                  <p className="text-sm" style={{ color: '#94a3b8' }}>
-                    Get alerted about deceptive hotspots and better alternatives
-                  </p>
-                </div>
-              </div>
             </div>
-          ) : null}
-        </div>
-      </main>
+          </div>
+        )}
 
-      {/* Map View with Floating Panels (after upload) */}
-      {(selectedFile || extractedData) && (
-        <div className="fixed inset-0 z-50 flex">
-          {/* Map Background */}
-          <div className="absolute inset-0">
-            {extractedData?.latitude && extractedData?.longitude ? (
-              <MapComponent
-                className="h-full w-full"
-                recommendations={[]}
-                eventData={{
-                  name: extractedData.event_name,
-                  date: extractedData.event_date,
-                  time: extractedData.event_time,
-                  venue_lat: extractedData.latitude,
-                  venue_lon: extractedData.longitude,
-                  target_audience: extractedData.target_audience,
-                  event_type: extractedData.event_type
-                }}
-                hoveredZoneId={null}
-                onZoneHover={() => {}}
-                onZoneLeave={() => {}}
+        {/* Recommendations List */}
+        {uploadState === 'complete' && recommendations.length > 0 && (
+          <>
+            {/* Time Period Filter */}
+            <div className="px-6 py-4 border-b" style={{ borderColor: 'rgba(42, 69, 81, 0.5)' }}>
+              <TimePeriodToggle
+                selectedPeriod={selectedTimePeriod}
+                onPeriodChange={handleTimePeriodChange}
               />
+            </div>
+
+            {/* Results Header */}
+            <div className="px-6 py-3 border-b flex items-center justify-between" style={{ borderColor: 'rgba(42, 69, 81, 0.5)' }}>
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  {recommendations.length} OpenPlaces found
+                </p>
+                {eventData && (
+                  <p className="text-xs" style={{ color: '#94a3b8' }}>
+                    For {eventData.name}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={handleNewUpload}
+                className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+                style={{ background: 'rgba(74, 222, 128, 0.1)', color: '#4ade80' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(74, 222, 128, 0.2)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(74, 222, 128, 0.1)'}
+              >
+                New Search
+              </button>
+            </div>
+
+            {/* Zones List */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-3">
+              {recommendations.map((recommendation, index) => (
+                <div
+                  key={`${recommendation.zone_id}-${selectedTimePeriod}`}
+                  ref={(el) => {
+                    if (el) {
+                      recommendationRefs.current.set(recommendation.zone_id, el)
+                    } else {
+                      recommendationRefs.current.delete(recommendation.zone_id)
+                    }
+                  }}
+                  onMouseEnter={() => setHoveredZoneId(recommendation.zone_id)}
+                  onMouseLeave={() => setHoveredZoneId(null)}
+                  onClick={() => handleZoneClick(recommendation, index + 1)}
+                  className={`transition-all duration-200 cursor-pointer ${
+                    hoveredZoneId === recommendation.zone_id ? 'scale-[1.02]' : ''
+                  }`}
+                >
+                  <RecommendationCard
+                    recommendation={recommendation}
+                    rank={index + 1}
+                    eventName={eventData?.name || ''}
+                    eventDate={eventData?.date || ''}
+                    onHover={(zoneId) => setHoveredZoneId(zoneId)}
+                    onLeave={() => setHoveredZoneId(null)}
+                    isHighlighted={hoveredZoneId === recommendation.zone_id}
+                  />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* History Section */}
+        {uploadState === 'idle' && isSignedIn && (
+          <div className="flex-1 overflow-y-auto p-6">
+            <h2 className="text-lg font-bold text-white mb-4">Recent Searches</h2>
+            {isLoadingHistory ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-4 mx-auto" style={{ borderColor: 'rgba(74, 222, 128, 0.2)', borderTopColor: '#4ade80' }}></div>
+              </div>
+            ) : savedRecommendations.length > 0 ? (
+              <div className="space-y-3">
+                {savedRecommendations.slice(0, 10).map((saved) => (
+                  <div
+                    key={saved.id}
+                    className="rounded-lg p-3 cursor-pointer transition-colors"
+                    style={{ background: 'rgba(30, 58, 72, 0.5)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(30, 58, 72, 0.7)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(30, 58, 72, 0.5)'}
+                  >
+                    <p className="text-sm font-semibold text-white">{saved.zone_name}</p>
+                    <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>
+                      {saved.event_name} • {saved.event_date}
+                    </p>
+                    {saved.notes && (
+                      <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>
+                        {saved.notes}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
             ) : (
-              <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, #0a1628 0%, #1a2f3a 50%, #0f3d3e 100%)' }} />
+              <p className="text-sm text-center py-8" style={{ color: '#94a3b8' }}>
+                No saved places yet. Upload a flyer to get started!
+              </p>
             )}
           </div>
+        )}
+      </div>
 
-          {/* Floating Panels Container */}
-          <div className="relative z-10 w-full h-full overflow-y-auto p-6">
-            <div className="max-w-2xl">
-              {/* Back Button */}
-              <button
-                onClick={handleRemoveFile}
-                className="mb-4 px-4 py-2 rounded-lg backdrop-blur-xl text-sm font-semibold hover:text-white transition-all flex items-center gap-2 shadow-lg"
-                style={{
-                  background: 'rgba(26, 47, 58, 0.9)',
-                  color: '#94a3b8',
-                  border: '1px solid rgba(74, 222, 128, 0.2)'
-                }}
+      {/* Right Sidebar - Zone Details */}
+      {selectedZone && (
+        <div
+          className="absolute right-0 top-0 bottom-0 w-96 shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300"
+          style={{ background: '#1a2f3a', borderLeft: '1px solid #2a4551' }}
+        >
+          <div className="p-6">
+            <ZoneDetailsPanel
+              zone={selectedZone.zone}
+              rank={selectedZone.rank}
+              onClose={() => setSelectedZone(null)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Auth Bar - Only if not signed in */}
+      {isLoaded && !isSignedIn && (
+        <div
+          className="absolute bottom-0 left-0 right-0 p-4 backdrop-blur-xl border-t animate-in slide-in-from-bottom duration-300"
+          style={{ background: 'rgba(26, 47, 58, 0.95)', borderColor: 'rgba(74, 222, 128, 0.2)' }}
+        >
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <p className="text-sm" style={{ color: '#94a3b8' }}>
+              Sign in to save your favorite places and access your history
+            </p>
+            <div className="flex gap-3">
+              <a
+                href="/sign-in"
+                className="px-6 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ background: 'rgba(74, 222, 128, 0.1)', color: '#4ade80' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(74, 222, 128, 0.2)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(74, 222, 128, 0.1)'}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                  <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
-                </svg>
-                Upload different flyer
-              </button>
-
-              {/* Loading State */}
-              {isUploading && (
-                <div className="backdrop-blur-xl rounded-xl p-8 shadow-2xl" style={{ background: 'rgba(26, 47, 58, 0.9)' }}>
-                  <LoadingSpinner />
-                </div>
-              )}
-
-              {/* File Preview */}
-              {selectedFile && !isUploading && !extractedData && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <FilePreview
-                    file={selectedFile}
-                    previewUrl={previewUrl}
-                    onRemove={handleRemoveFile}
-                  />
-                </div>
-              )}
-
-              {/* Event Confirmation */}
-              {extractedData && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <EventConfirmation
-                    data={extractedData}
-                    onGetRecommendations={handleGetRecommendations}
-                    onUpdate={handleEventUpdate}
-                  />
-                </div>
-              )}
+                Log In
+              </a>
+              <a
+                href="/sign-up"
+                className="px-6 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ background: '#4ade80', color: '#0f1c24' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#22c55e'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#4ade80'}
+              >
+                Sign Up
+              </a>
             </div>
           </div>
         </div>

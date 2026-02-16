@@ -20,7 +20,13 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
   const [isWarningPanelOpen, setIsWarningPanelOpen] = useState(false)
   const [panelOpenedAt, setPanelOpenedAt] = useState<Date | null>(null)
 
+  // Calculate percentages correctly
+  const overallPercent = Math.round(recommendation.total_score) // Already 0-100 scale
   const audienceMatchPercent = Math.round((recommendation.audience_match_score / 40) * 100)
+
+  // Generate Google Street View image URL for actual location photos
+  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
+  const thumbnailUrl = `https://maps.googleapis.com/maps/api/streetview?size=192x160&location=${recommendation.latitude},${recommendation.longitude}&fov=90&heading=0&pitch=0&key=${googleMapsApiKey}`
 
   const handleWarningClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -67,17 +73,28 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
       onMouseLeave={() => onLeave?.()}
     >
       <div className="flex gap-3 p-3">
-        {/* Thumbnail Placeholder */}
+        {/* Map Thumbnail */}
         <div
           className="flex-shrink-0 w-24 h-20 rounded-lg overflow-hidden"
           style={{ background: '#2a4551' }}
         >
-          <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-            </svg>
-          </div>
+          <img
+            src={thumbnailUrl}
+            alt={`Map of ${recommendation.zone_name}`}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              // Fallback to placeholder on error
+              e.currentTarget.style.display = 'none'
+              e.currentTarget.parentElement!.innerHTML = `
+                <div class="w-full h-full flex items-center justify-center text-gray-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                  </svg>
+                </div>
+              `
+            }}
+          />
         </div>
 
         {/* Content */}
@@ -91,12 +108,12 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
               >
                 {rank}
               </div>
-              {/* Score */}
+              {/* Overall Score */}
               <span className="text-base font-bold" style={{ color: '#4ade80' }}>
-                {audienceMatchPercent}%
+                {overallPercent}%
               </span>
               <span className="text-xs" style={{ color: '#94a3b8' }}>
-                / {Math.round(recommendation.overall_score)}
+                match
               </span>
             </div>
 
@@ -166,20 +183,20 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
                 {recommendation.risk_warning.warning_type}
               </h4>
               <p className="text-xs" style={{ color: '#94a3b8' }}>
-                {recommendation.risk_warning.explanation}
+                {recommendation.risk_warning.reason}
               </p>
             </div>
           </div>
 
           {/* Better Alternatives */}
-          {recommendation.risk_warning.better_alternatives &&
-           recommendation.risk_warning.better_alternatives.length > 0 && (
+          {recommendation.risk_warning.alternative_zones &&
+           recommendation.risk_warning.alternative_zones.length > 0 && (
             <div className="mt-3 pt-3" style={{ borderTop: '1px solid #2a4551' }}>
               <p className="text-xs font-medium mb-2" style={{ color: '#4ade80' }}>
                 ✓ Better alternatives:
               </p>
               <div className="space-y-1.5">
-                {recommendation.risk_warning.better_alternatives.map((alt) => (
+                {recommendation.risk_warning.alternative_zones.map((alt) => (
                   <button
                     key={alt.zone_id}
                     onClick={() => {
@@ -210,7 +227,7 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
                       <span className="text-white">{alt.zone_name}</span>
                     </div>
                     <div className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>
-                      {alt.why_better}
+                      {alt.reason}
                     </div>
                   </button>
                 ))}
@@ -235,7 +252,6 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
           zoneName={recommendation.zone_name}
           eventName={eventName}
           eventDate={eventDate}
-          audienceMatch={audienceMatchPercent}
         />
       </div>
     </div>

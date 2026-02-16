@@ -12,10 +12,11 @@ export default function FilePreview({ file, previewUrl, onRemove }: FilePreviewP
   const isPDF = file.type === 'application/pdf'
 
   return (
-    <div className="relative rounded-lg border p-4 shadow-lg" style={{ background: '#1a2f3a', borderColor: '#2a4551' }}>
+    <div className="relative rounded-xl border p-4 shadow-2xl backdrop-blur-xl" style={{ background: 'rgba(26, 47, 58, 0.85)', borderColor: 'rgba(74, 222, 128, 0.2)' }}>
       <button
         onClick={onRemove}
-        className="absolute right-2 top-2 z-10 rounded-full bg-red-500 p-1.5 text-white hover:bg-red-600 transition-colors"
+        className="absolute right-2 top-2 z-10 rounded-full p-1.5 text-white transition-colors hover:opacity-80"
+        style={{ background: '#ef4444' }}
         aria-label="Remove file"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-4 w-4">
