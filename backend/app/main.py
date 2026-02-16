@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
 from dotenv import load_dotenv
-from app.routes import webhooks, saved_recommendations, flyer_uploads, recommendations_cache, analyze, geocoding, recommendations
+from app.routes import webhooks, saved_recommendations, flyer_uploads, recommendations_cache, analyze, geocoding, recommendations, data_ingestion
 
 # Load environment variables
 load_dotenv()
@@ -51,6 +51,8 @@ app.include_router(analyze.router)
 app.include_router(geocoding.router, prefix="/api")
 # Story 4.2-4.3: Zone recommendations
 app.include_router(recommendations.router)
+# Real data ingestion from Arlington + Google APIs
+app.include_router(data_ingestion.router)
 
 
 @app.get("/")
