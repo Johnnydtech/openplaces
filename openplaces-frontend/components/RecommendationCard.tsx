@@ -3,6 +3,7 @@
 import { forwardRef, useState } from 'react'
 import { type ZoneRecommendation } from '@/lib/api'
 import SaveButton from './SaveButton'
+import { trackWarningOpened, trackAlternativeClicked, trackWarningClosed } from '@/lib/analytics'
 
 interface RecommendationCardProps {
   recommendation: ZoneRecommendation
@@ -18,6 +19,9 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
   ({ recommendation, rank, eventName, eventDate, onHover, onLeave, isHighlighted }, ref) => {
   // Story 7.3: Track warning panel open state
   const [isWarningPanelOpen, setIsWarningPanelOpen] = useState(false)
+
+  // Story 7.8: Track when panel was opened for time spent calculation
+  const [panelOpenedAt, setPanelOpenedAt] = useState<Date | null>(null)
 
   // Story 4.4: Calculate percentage for audience match (out of 40 possible points)
   const audienceMatchPercent = Math.round((recommendation.audience_match_score / 40) * 100)
@@ -45,7 +49,27 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
           className="absolute top-4 right-4 group cursor-pointer"
           onClick={(e) => {
             e.stopPropagation()
-            setIsWarningPanelOpen(!isWarningPanelOpen)
+            const willOpen = !isWarningPanelOpen
+            setIsWarningPanelOpen(willOpen)
+
+            // Story 7.8: Track warning panel opened
+            if (willOpen) {
+              setPanelOpenedAt(new Date())
+
+              // Get category names for tracking
+              const categoryNames = recommendation.risk_warning.warning_categories?.map(
+                cat => cat.category_type
+              ) || []
+
+              trackWarningOpened(
+                recommendation.zone_id,
+                recommendation.zone_name,
+                recommendation.risk_warning.warning_type,
+                categoryNames,
+                // TODO: Get user_id from Clerk auth context
+                undefined
+              )
+            }
           }}
           title="Risk Warning - Click for details"
         >
@@ -454,6 +478,17 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
                   <button
                     key={alt.zone_id}
                     onClick={() => {
+                      // Story 7.8: Track alternative clicked
+                      trackAlternativeClicked(
+                        recommendation.zone_id,
+                        recommendation.zone_name,
+                        alt.zone_id,
+                        alt.zone_name,
+                        alt.rank,
+                        // TODO: Get user_id from Clerk auth context
+                        undefined
+                      )
+
                       // Story 7.4: Scroll to alternative zone card
                       const altCard = document.querySelector(`[data-zone-id="${alt.zone_id}"]`)
                       if (altCard) {
@@ -505,8 +540,24 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
           )}
 
           {/* Story 7.6: Enhanced close button with satisfying action language */}
+          {/* Story 7.7: Acknowledge user authority */}
           <button
-            onClick={() => setIsWarningPanelOpen(false)}
+            onClick={() => {
+              // Story 7.8: Track panel closed with time spent
+              if (panelOpenedAt) {
+                const timeSpent = (new Date().getTime() - panelOpenedAt.getTime()) / 1000
+                trackWarningClosed(
+                  recommendation.zone_id,
+                  recommendation.zone_name,
+                  timeSpent,
+                  // TODO: Get user_id from Clerk auth context
+                  undefined
+                )
+                setPanelOpenedAt(null)
+              }
+
+              setIsWarningPanelOpen(false)
+            }}
             className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-[1.02]"
           >
             ✓ Got it - I'll avoid this zone
