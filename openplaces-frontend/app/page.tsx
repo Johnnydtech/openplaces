@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useUser, useClerk } from '@clerk/nextjs'
+import { useUser, useClerk, SignInButton, SignUpButton } from '@clerk/nextjs'
 import toast, { Toaster } from 'react-hot-toast'
 import MapComponent from '@/components/Map'
 import UploadZone from '@/components/UploadZone'
@@ -480,46 +480,48 @@ export default function UnifiedHomePage() {
               </div>
             </div>
             <div className="flex gap-3 flex-shrink-0">
-              <a
-                href="/sign-in"
-                className="px-6 py-2.5 rounded-lg text-sm font-semibold transition-all border-2"
-                style={{
-                  background: 'transparent',
-                  color: '#4ade80',
-                  borderColor: '#4ade80'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(74, 222, 128, 0.1)'
-                  e.currentTarget.style.transform = 'translateY(-1px)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.transform = 'translateY(0)'
-                }}
-              >
-                Log In
-              </a>
-              <a
-                href="/sign-up"
-                className="px-6 py-2.5 rounded-lg text-sm font-semibold transition-all"
-                style={{
-                  background: '#4ade80',
-                  color: '#0f1c24',
-                  boxShadow: '0 4px 12px rgba(74, 222, 128, 0.3)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#22c55e'
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(74, 222, 128, 0.4)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#4ade80'
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(74, 222, 128, 0.3)'
-                }}
-              >
-                Sign Up Free
-              </a>
+              <SignInButton mode="modal">
+                <button
+                  className="px-6 py-2.5 rounded-lg text-sm font-semibold transition-all border-2"
+                  style={{
+                    background: 'transparent',
+                    color: '#4ade80',
+                    borderColor: '#4ade80'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(74, 222, 128, 0.1)'
+                    e.currentTarget.style.transform = 'translateY(-1px)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                  }}
+                >
+                  Log In
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button
+                  className="px-6 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                  style={{
+                    background: '#4ade80',
+                    color: '#0f1c24',
+                    boxShadow: '0 4px 12px rgba(74, 222, 128, 0.3)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#22c55e'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(74, 222, 128, 0.4)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#4ade80'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(74, 222, 128, 0.3)'
+                  }}
+                >
+                  Sign Up Free
+                </button>
+              </SignUpButton>
             </div>
           </div>
         </div>
