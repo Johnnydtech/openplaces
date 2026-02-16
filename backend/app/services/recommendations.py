@@ -1,18 +1,23 @@
 """
 Recommendations Service - Story 4.2
 Implements the scoring algorithm for ranking placement zones based on event data
-Enhanced with OpenAI embeddings for semantic audience matching
+Enhanced with Claude Opus 4.6 for intelligent semantic audience matching
 """
 
 import math
 import os
+import json
+import logging
+import asyncio
 import numpy as np
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 from pydantic import BaseModel, Field
-from openai import OpenAI
+import anthropic
 
 from app.services.zones import Zone, zones_service
+
+logger = logging.getLogger(__name__)
 
 
 class EventData(BaseModel):
@@ -94,17 +99,22 @@ class RecommendationsService:
 
     def __init__(self):
         self.zones_service = zones_service
-        self.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        # Cache for zone audience embeddings (to avoid repeated API calls)
-        self._zone_embeddings_cache: Dict[str, np.ndarray] = {}
+        # Use Claude Opus 4.6 for semantic audience matching
+        anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+        if not anthropic_key:
+            raise ValueError("ANTHROPIC_API_KEY environment variable is not set")
+        self.claude_client = anthropic.AsyncAnthropic(api_key=anthropic_key)
+        # Cache for Claude audience match scores (to avoid repeated API calls)
+        self._audience_match_cache: Dict[str, tuple[float, str]] = {}
+        logger.info("Using Claude Opus 4.6 for intelligent semantic audience matching")
 
-    def score_zones(self, event_data: EventData) -> List[ZoneScore]:
+    async def score_zones(self, event_data: EventData) -> List[ZoneScore]:
         """
-        Score all zones based on event data
+        Score all zones based on event data using Claude Opus 4.6
         Returns list of ZoneScore objects sorted by total_score (highest first)
 
         Scoring Formula (Story 4.2 AC):
-        - audience_match: 40% - does the zone attract target audience?
+        - audience_match: 40% - uses Claude for intelligent semantic matching
         - temporal_alignment: 30% - are people there when you need them?
         - distance: 20% - how close to venue?
         - dwell_time: 10% - do people stop and look?
@@ -116,7 +126,8 @@ class RecommendationsService:
 
         for zone in zones:
             # Calculate individual components
-            audience_match = self._calculate_audience_match(
+            # Use Claude Opus 4.6 for intelligent audience matching
+            audience_match, match_reasoning = await self._calculate_audience_match_with_claude(
                 event_data.target_audience, zone.audience_signals
             )
             temporal_alignment = self._calculate_temporal_alignment(
@@ -180,82 +191,108 @@ class RecommendationsService:
 
         return scored_zones
 
-    def _get_embedding(self, text: str) -> np.ndarray:
-        """
-        Get OpenAI embedding for a text string
-        Uses text-embedding-3-small model for cost efficiency
-        """
-        try:
-            response = self.openai_client.embeddings.create(
-                model="text-embedding-3-small",
-                input=text
-            )
-            return np.array(response.data[0].embedding)
-        except Exception as e:
-            print(f"Error getting embedding: {e}")
-            # Return zero vector on error
-            return np.zeros(1536)  # text-embedding-3-small dimension
-
-    def _cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
-        """
-        Calculate cosine similarity between two vectors
-        Returns value between -1 and 1 (we'll normalize to 0-1)
-        """
-        dot_product = np.dot(vec1, vec2)
-        norm1 = np.linalg.norm(vec1)
-        norm2 = np.linalg.norm(vec2)
-
-        if norm1 == 0 or norm2 == 0:
-            return 0.0
-
-        similarity = dot_product / (norm1 * norm2)
-        # Normalize to 0-1 range
-        return (similarity + 1) / 2
-
-    def _calculate_audience_match(
+    async def _calculate_audience_match_with_claude(
         self, target_audience: List[str], zone_audience_signals: Dict[str, Any]
-    ) -> float:
+    ) -> Tuple[float, str]:
         """
-        Calculate audience match score (0-40 points)
-        Uses OpenAI embeddings for semantic similarity matching
-        """
-        if not target_audience:
-            return 0.0
+        Use Claude Opus 4.6 to intelligently match event audience with zone audience
+        Returns (score 0-40, reasoning)
 
-        # Extract zone audience characteristics
+        Claude's semantic understanding provides more nuanced matching than embeddings:
+        - Understands lifestyle compatibility
+        - Infers likely overlapping interests
+        - Considers demographic alignment
+        """
+        # Extract zone characteristics
         zone_demographics = zone_audience_signals.get("demographics", [])
         zone_interests = zone_audience_signals.get("interests", [])
         zone_behaviors = zone_audience_signals.get("behaviors", [])
 
+        # Create cache key
+        cache_key = f"{','.join(sorted(target_audience))}::{','.join(sorted(zone_demographics + zone_interests + zone_behaviors))}"
+
+        # Check cache first
+        if cache_key in self._audience_match_cache:
+            return self._audience_match_cache[cache_key]
+
+        prompt = f"""You are an expert in audience targeting and demographics.
+
+Event Target Audience: {', '.join(target_audience)}
+
+Zone Audience Profile:
+- Demographics: {', '.join(zone_demographics) if zone_demographics else 'None specified'}
+- Interests: {', '.join(zone_interests) if zone_interests else 'None specified'}
+- Behaviors: {', '.join(zone_behaviors) if zone_behaviors else 'None specified'}
+
+Score how well this zone's audience matches the event's target audience on a scale of 0-40 points.
+Consider:
+- Semantic overlap (e.g., "young professionals" matches "coffee enthusiasts")
+- Lifestyle compatibility (e.g., "families" matches "kid-friendly")
+- Demographic alignment
+- Likely shared interests
+
+Respond with ONLY a JSON object (no markdown, no explanation):
+{{"score": <number 0-40>, "reasoning": "<brief 1-sentence explanation>"}}"""
+
+        try:
+            response = await self.claude_client.messages.create(
+                model="claude-opus-4-20250514",  # Claude Opus 4.6
+                max_tokens=150,
+                messages=[{"role": "user", "content": prompt}]
+            )
+
+            # Parse response
+            result_text = response.content[0].text if response.content else ""
+
+            # Extract JSON
+            json_start = result_text.find("{")
+            json_end = result_text.rfind("}") + 1
+            if json_start >= 0 and json_end > json_start:
+                result = json.loads(result_text[json_start:json_end])
+                score = float(result.get("score", 0))
+                reasoning = result.get("reasoning", "")
+
+                # Clamp score to valid range
+                score = max(0.0, min(40.0, score))
+
+                # Cache result
+                self._audience_match_cache[cache_key] = (score, reasoning)
+
+                return score, reasoning
+            else:
+                raise ValueError("No valid JSON in response")
+
+        except Exception as e:
+            logger.error(f"Claude audience matching failed: {e}")
+            # Fallback to keyword matching
+            return self._keyword_based_audience_match(target_audience, zone_audience_signals), "Fallback: keyword matching"
+
+    def _keyword_based_audience_match(
+        self, target_audience: List[str], zone_audience_signals: Dict[str, Any]
+    ) -> float:
+        """
+        Simple keyword-based fallback for audience matching
+        Used only if Claude API fails
+        """
+        zone_demographics = zone_audience_signals.get("demographics", [])
+        zone_interests = zone_audience_signals.get("interests", [])
+        zone_behaviors = zone_audience_signals.get("behaviors", [])
         all_zone_signals = zone_demographics + zone_interests + zone_behaviors
 
-        if not all_zone_signals:
+        if not all_zone_signals or not target_audience:
             return 0.0
 
-        # Create text representations for embedding
-        event_audience_text = ", ".join(target_audience)
-        zone_audience_text = ", ".join(all_zone_signals)
+        # Normalize to lowercase
+        target_keywords = set(word.lower() for audience in target_audience for word in audience.split())
+        zone_keywords = set(word.lower() for signal in all_zone_signals for word in signal.split())
 
-        # Generate cache key for zone signals
-        cache_key = zone_audience_text
+        # Calculate overlap
+        matches = target_keywords.intersection(zone_keywords)
+        overlap_ratio = len(matches) / max(len(zone_keywords), 1)
 
-        # Get or generate zone embedding (cached to avoid repeated API calls)
-        if cache_key not in self._zone_embeddings_cache:
-            self._zone_embeddings_cache[cache_key] = self._get_embedding(zone_audience_text)
+        # Scale to 0-40 points
+        return min(overlap_ratio * 50.0, 40.0)
 
-        zone_embedding = self._zone_embeddings_cache[cache_key]
-
-        # Generate event audience embedding (not cached as it changes per request)
-        event_embedding = self._get_embedding(event_audience_text)
-
-        # Calculate semantic similarity
-        similarity = self._cosine_similarity(event_embedding, zone_embedding)
-
-        # Scale similarity (0-1) to score (0-40 points)
-        # Apply a slight boost to account for partial matches being valuable
-        score = similarity * 40.0
-
-        return score
 
     def _calculate_temporal_alignment(
         self, event_date: str, event_time: str, event_type: str,

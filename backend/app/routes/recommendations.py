@@ -238,8 +238,8 @@ async def score_zones(event_data: EventData):
             f"at ({event_data.venue_lat}, {event_data.venue_lon})"
         )
 
-        # Score all zones
-        scored_zones = recommendations_service.score_zones(event_data)
+        # Score all zones using Claude Opus 4.6 for semantic matching
+        scored_zones = await recommendations_service.score_zones(event_data)
 
         logger.info(
             f"Scored {len(scored_zones)} zones. "
@@ -281,8 +281,8 @@ async def get_top_recommendations(
             f"Getting top {limit} recommendations for event: {event_data.name}"
         )
 
-        # Score all zones
-        scored_zones = recommendations_service.score_zones(event_data)
+        # Score all zones using Claude Opus 4.6 for semantic matching
+        scored_zones = await recommendations_service.score_zones(event_data)
 
         # Return top N
         top_zones = scored_zones[:limit]

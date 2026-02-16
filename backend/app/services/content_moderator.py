@@ -1,26 +1,29 @@
 """
 Content Moderation Service
-Use OpenAI Moderation API to flag inappropriate content in uploaded images
+Use Claude Opus 4.6 Vision API to flag inappropriate content in uploaded images
 """
 
 import logging
 import base64
 from typing import Dict, Any, Tuple
-import openai
+import anthropic
 import os
 
 logger = logging.getLogger(__name__)
 
 
 class ContentModerator:
-    """Moderate uploaded content using OpenAI Moderation API"""
+    """Moderate uploaded content using Claude Opus 4.6"""
 
     def __init__(self):
-        self.client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise ValueError("ANTHROPIC_API_KEY environment variable is not set")
+        self.client = anthropic.AsyncAnthropic(api_key=api_key)
 
     async def moderate_image(self, image_content: bytes) -> Tuple[bool, Dict[str, Any]]:
         """
-        Moderate image content for inappropriate material
+        Moderate image content for inappropriate material using Claude Opus 4.6
 
         Args:
             image_content: Raw image bytes
@@ -29,49 +32,43 @@ class ContentModerator:
             (is_safe: bool, moderation_result: dict)
         """
         try:
-            # Convert image to base64
+            # Convert image to base64 for Claude
             base64_image = base64.b64encode(image_content).decode("utf-8")
-            data_uri = f"data:image/jpeg;base64,{base64_image}"
 
-            # Use GPT-4 Vision for content moderation
-            # OpenAI's dedicated moderation API doesn't support images yet,
-            # so we use Vision API with a moderation prompt
-            response = await self.client.chat.completions.create(
-                model="gpt-4o-mini",
+            # Use Claude Opus 4.6 Vision for content moderation
+            prompt = """Analyze this image and determine if it contains inappropriate content:
+- Explicit sexual content
+- Violence or gore
+- Hate symbols or extremist content
+- Illegal activities
+- Spam or scam content
+
+Respond with ONLY a JSON object (no markdown, no explanation):
+{"safe": true/false, "reason": "brief explanation", "categories": ["list of flagged categories"]}"""
+
+            response = await self.client.messages.create(
+                model="claude-opus-4-20250514",  # Claude Opus 4.6
+                max_tokens=200,
                 messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are a content moderation AI. Analyze this image and determine if it contains:\n"
-                            "- Explicit sexual content\n"
-                            "- Violence or gore\n"
-                            "- Hate symbols or extremist content\n"
-                            "- Illegal activities\n"
-                            "- Spam or scam content\n\n"
-                            "Respond with JSON: {\"safe\": true/false, \"reason\": \"brief explanation\", "
-                            "\"categories\": [\"list of flagged categories\"]}"
-                        )
-                    },
                     {
                         "role": "user",
                         "content": [
                             {
-                                "type": "text",
-                                "text": "Analyze this image for inappropriate content:"
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": "image/jpeg",
+                                    "data": base64_image,
+                                },
                             },
-                            {
-                                "type": "image_url",
-                                "image_url": {"url": data_uri}
-                            }
-                        ]
+                            {"type": "text", "text": prompt}
+                        ],
                     }
                 ],
-                max_tokens=200,
-                temperature=0.0
             )
 
             # Parse response
-            result_text = response.choices[0].message.content
+            result_text = response.content[0].text if response.content else ""
 
             # Try to parse as JSON
             import json
@@ -110,7 +107,7 @@ class ContentModerator:
 
     async def moderate_text(self, text: str) -> Tuple[bool, Dict[str, Any]]:
         """
-        Moderate text content using OpenAI Moderation API
+        Moderate text content using Claude Opus 4.6
 
         Args:
             text: Text to moderate
@@ -119,29 +116,64 @@ class ContentModerator:
             (is_safe: bool, moderation_result: dict)
         """
         try:
-            # Use OpenAI's dedicated moderation endpoint for text
-            response = await self.client.moderations.create(input=text)
+            # Use Claude for text moderation
+            prompt = f"""Analyze this text and determine if it contains inappropriate content:
+- Hate speech or discrimination
+- Explicit sexual content
+- Violence or threats
+- Illegal activities
+- Spam or scam content
+- Self-harm content
 
-            result = response.results[0]
-            is_safe = not result.flagged
+Text to analyze: "{text}"
+
+Respond with ONLY a JSON object (no markdown, no explanation):
+{{"safe": true/false, "reason": "brief explanation", "categories": ["list of flagged categories"]}}"""
+
+            response = await self.client.messages.create(
+                model="claude-opus-4-20250514",  # Claude Opus 4.6
+                max_tokens=200,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+            )
+
+            # Parse response
+            result_text = response.content[0].text if response.content else ""
+
+            # Try to parse as JSON
+            import json
+            try:
+                # Find JSON in response
+                json_start = result_text.find("{")
+                json_end = result_text.rfind("}") + 1
+                if json_start >= 0 and json_end > json_start:
+                    json_str = result_text[json_start:json_end]
+                    result = json.loads(json_str)
+                else:
+                    raise ValueError("No JSON found in response")
+
+                is_safe = result.get("safe", True)
+                reason = result.get("reason", "")
+                categories = result.get("categories", [])
+            except (json.JSONDecodeError, ValueError):
+                # Fallback: simple keyword detection
+                is_safe = "safe" in result_text.lower()
+                reason = result_text
+                categories = []
 
             moderation_result = {
                 "is_safe": is_safe,
-                "flagged": result.flagged,
-                "categories": {
-                    category: score
-                    for category, score in result.category_scores.model_dump().items()
-                    if score > 0.5  # Only include high-confidence flags
-                },
-                "category_scores": result.category_scores.model_dump()
+                "reason": reason,
+                "flagged_categories": categories,
+                "raw_response": result_text
             }
 
-            if result.flagged:
-                flagged_cats = [
-                    cat for cat, flagged in result.categories.model_dump().items()
-                    if flagged
-                ]
-                logger.warning(f"Text content flagged: {flagged_cats}")
+            if not is_safe:
+                logger.warning(f"Text content flagged: {categories}")
 
             return is_safe, moderation_result
 
