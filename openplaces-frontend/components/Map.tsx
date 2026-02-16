@@ -20,9 +20,11 @@ interface MapProps {
   recommendations?: ZoneRecommendation[]  // Story 5.3: Zone markers
   eventData?: EventDataForRecommendations | null  // Story 5.4: Venue marker
   hoveredZoneId?: string | null  // Story 5.7: Highlight support
+  onZoneHover?: (zoneId: string) => void  // Story 5.8: Map hover callback
+  onZoneLeave?: () => void  // Story 5.8: Map hover callback
 }
 
-export default function Map({ className = '', recommendations = [], eventData = null, hoveredZoneId = null }: MapProps) {
+export default function Map({ className = '', recommendations = [], eventData = null, hoveredZoneId = null, onZoneHover, onZoneLeave }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
   const markersRef = useRef<mapboxgl.Marker[]>([])  // Story 5.3: Track markers for cleanup
@@ -80,10 +82,12 @@ export default function Map({ className = '', recommendations = [], eventData = 
       el.addEventListener('mouseenter', () => {
         const innerDiv = el.querySelector('div') as HTMLElement
         if (innerDiv) innerDiv.style.transform = 'scale(1.1)'
+        onZoneHover?.(zone.zone_id)  // Story 5.8: Notify parent on hover
       })
       el.addEventListener('mouseleave', () => {
         const innerDiv = el.querySelector('div') as HTMLElement
         if (innerDiv) innerDiv.style.transform = 'scale(1)'
+        onZoneLeave?.()  // Story 5.8: Notify parent on leave
       })
 
       // Story 5.5: Click handler to open details panel

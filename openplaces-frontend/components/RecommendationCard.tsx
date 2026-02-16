@@ -1,5 +1,6 @@
 'use client'
 
+import { forwardRef } from 'react'
 import { type ZoneRecommendation } from '@/lib/api'
 import SaveButton from './SaveButton'
 
@@ -10,9 +11,11 @@ interface RecommendationCardProps {
   eventDate: string
   onHover?: (zoneId: string) => void  // Story 5.7: Hover to highlight map
   onLeave?: () => void                 // Story 5.7: Unhover
+  isHighlighted?: boolean              // Story 5.8: Highlight when map marker hovered
 }
 
-export default function RecommendationCard({ recommendation, rank, eventName, eventDate, onHover, onLeave }: RecommendationCardProps) {
+const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
+  ({ recommendation, rank, eventName, eventDate, onHover, onLeave, isHighlighted }, ref) => {
   // Story 4.4: Calculate percentage for audience match (out of 40 possible points)
   const audienceMatchPercent = Math.round((recommendation.audience_match_score / 40) * 100)
   // Story 4.11: Calculate percentages for all scoring components
@@ -22,7 +25,12 @@ export default function RecommendationCard({ recommendation, rank, eventName, ev
 
   return (
     <div
-      className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
+      ref={ref}
+      className={`rounded-lg border p-6 shadow-sm hover:shadow-md transition-all duration-100 ${
+        isHighlighted
+          ? 'border-blue-500 border-2 bg-blue-50 scale-[1.02]'
+          : 'border-gray-200 bg-white'
+      }`}
       onMouseEnter={() => onHover?.(recommendation.zone_id)}
       onMouseLeave={() => onLeave?.()}
     >
@@ -221,4 +229,8 @@ export default function RecommendationCard({ recommendation, rank, eventName, ev
       </div>
     </div>
   )
-}
+})
+
+RecommendationCard.displayName = 'RecommendationCard'
+
+export default RecommendationCard

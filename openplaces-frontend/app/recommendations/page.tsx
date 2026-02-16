@@ -18,6 +18,22 @@ function RecommendationsContent() {
   const [isEditing, setIsEditing] = useState(false)
   // Story 5.7: Track hovered zone for map highlighting
   const [hoveredZoneId, setHoveredZoneId] = useState<string | null>(null)
+  // Story 5.8: Track recommendation card refs for scroll-into-view
+  const recommendationRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  // Story 5.8: Scroll to highlighted recommendation when hoveredZoneId changes
+  useEffect(() => {
+    if (!hoveredZoneId) return
+
+    const cardElement = recommendationRefs.current.get(hoveredZoneId)
+    if (cardElement) {
+      cardElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',  // Don't scroll if already visible
+        inline: 'nearest'
+      })
+    }
+  }, [hoveredZoneId])
 
   useEffect(() => {
     const eventDataParam = searchParams.get('eventData')
@@ -284,7 +300,14 @@ function RecommendationsContent() {
         {/* Story 5.4: Venue marker with blue star */}
         {/* Story 5.7: Hover list → highlight map */}
         <div className="mb-8">
-          <Map className="h-[500px] w-full" recommendations={recommendations} eventData={eventData} hoveredZoneId={hoveredZoneId} />
+          <Map
+            className="h-[500px] w-full"
+            recommendations={recommendations}
+            eventData={eventData}
+            hoveredZoneId={hoveredZoneId}
+            onZoneHover={(zoneId) => setHoveredZoneId(zoneId)}
+            onZoneLeave={() => setHoveredZoneId(null)}
+          />
         </div>
 
         {/* Loading State */}
@@ -304,12 +327,20 @@ function RecommendationsContent() {
             {recommendations.map((recommendation, index) => (
               <RecommendationCard
                 key={recommendation.zone_id}
+                ref={(el) => {
+                  if (el) {
+                    recommendationRefs.current.set(recommendation.zone_id, el)
+                  } else {
+                    recommendationRefs.current.delete(recommendation.zone_id)
+                  }
+                }}
                 recommendation={recommendation}
                 rank={index + 1}
                 eventName={eventData.name}
                 eventDate={eventData.date}
                 onHover={(zoneId) => setHoveredZoneId(zoneId)}
                 onLeave={() => setHoveredZoneId(null)}
+                isHighlighted={hoveredZoneId === recommendation.zone_id}
               />
             ))}
           </div>
