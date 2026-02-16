@@ -10,7 +10,7 @@ import EventConfirmation from '@/components/EventConfirmation'
 import RecommendationCard from '@/components/RecommendationCard'
 import ZoneDetailsPanel from '@/components/ZoneDetailsPanel'
 import TimePeriodToggle, { type TimePeriod } from '@/components/TimePeriodToggle'
-import { analyzeFlyer, geocodeVenue, getRecommendations, getSavedRecommendations, type EventDataForRecommendations, type ZoneRecommendation, type SavedRecommendation } from '@/lib/api'
+import { analyzeFlyer, geocodeVenue, getRecommendations, getSavedRecommendations, setApiUserId, type EventDataForRecommendations, type ZoneRecommendation, type SavedRecommendation } from '@/lib/api'
 import { getDefaultTimePeriod } from '@/lib/timeUtils'
 
 type UploadState = 'idle' | 'uploading' | 'analyzing' | 'confirming' | 'geocoding' | 'complete'
@@ -19,6 +19,15 @@ export default function UnifiedHomePage() {
   const { user, isLoaded, isSignedIn } = useUser()
   const { signOut } = useClerk()
   const router = useRouter()
+
+  // 🔒 ABUSE PREVENTION: Set user ID for API requests when user signs in
+  useEffect(() => {
+    if (isSignedIn && user) {
+      setApiUserId(user.id)
+    } else {
+      setApiUserId(null)
+    }
+  }, [isSignedIn, user])
 
   // Upload state
   const [uploadState, setUploadState] = useState<UploadState>('idle')
@@ -63,12 +72,18 @@ export default function UnifiedHomePage() {
 
   // Handle file upload
   const handleFileUpload = async (file: File) => {
+    // 🔒 ABUSE PREVENTION: Require sign-in for AI analysis
+    if (!isSignedIn || !user) {
+      toast.error('Please sign in to analyze flyers')
+      return
+    }
+
     setUploadedFile(file)
     setUploadState('analyzing')
 
     try {
       toast.loading('Analyzing flyer...', { id: 'analyze' })
-      const response = await analyzeFlyer(file)
+      const response = await analyzeFlyer(file, user.id)
 
       if (response.success && response.data) {
         setExtractedData(response.data)
@@ -80,7 +95,35 @@ export default function UnifiedHomePage() {
       }
     } catch (error: any) {
       console.error('Error analyzing flyer:', error)
-      toast.error('Failed to analyze flyer', { id: 'analyze' })
+
+      // 🔒 ABUSE PREVENTION: Show user-friendly error messages
+      if (error.response?.status === 429) {
+        const detail = error.response.data?.detail
+        if (typeof detail === 'object' && detail.error) {
+          // Rate limit or daily limit exceeded
+          toast.error(detail.message || 'Too many requests. Please try again later.', {
+            id: 'analyze',
+            duration: 5000
+          })
+        } else {
+          toast.error('Rate limit exceeded. Please try again later.', { id: 'analyze' })
+        }
+      } else if (error.response?.status === 401) {
+        toast.error('Please sign in to analyze flyers', { id: 'analyze' })
+      } else if (error.response?.status === 400) {
+        const detail = error.response.data?.detail
+        if (typeof detail === 'object' && detail.error === 'Content policy violation') {
+          toast.error(detail.message || 'This image contains inappropriate content.', {
+            id: 'analyze',
+            duration: 5000
+          })
+        } else {
+          toast.error('Invalid file. Please upload a JPG, PNG, or PDF.', { id: 'analyze' })
+        }
+      } else {
+        toast.error('Failed to analyze flyer. Please try again.', { id: 'analyze' })
+      }
+
       setUploadState('idle')
     }
   }

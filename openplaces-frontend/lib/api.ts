@@ -10,10 +10,29 @@ export const apiClient = axios.create({
   },
 })
 
-// Request interceptor (optional - add auth headers later)
+// 🔒 ABUSE PREVENTION: Store user ID for automatic header injection
+let currentUserId: string | null = null
+
+/**
+ * Set the current user ID for API requests
+ * Call this when user signs in or on app init
+ * 🔒 Required for abuse prevention (rate limiting, usage tracking)
+ */
+export function setApiUserId(userId: string | null) {
+  currentUserId = userId
+}
+
+// Request interceptor - add auth headers and user ID
 apiClient.interceptors.request.use(
   (config) => {
     console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`)
+
+    // 🔒 ABUSE PREVENTION: Add Clerk user ID header to all requests
+    // This enables per-user rate limiting and usage tracking
+    if (currentUserId && !config.headers['x-clerk-user-id']) {
+      config.headers['x-clerk-user-id'] = currentUserId
+    }
+
     return config
   },
   (error) => {
@@ -35,18 +54,30 @@ apiClient.interceptors.response.use(
 /**
  * Upload flyer image to backend for AI analysis
  * POST /api/analyze
+ * 🔒 REQUIRES AUTHENTICATION: User must be signed in (abuse prevention)
  *
  * @param file - Image file (JPG, PNG, PDF)
+ * @param userId - Clerk user ID (required for rate limiting and usage tracking)
  * @returns Extracted event details
+ * @throws 401 if not authenticated
+ * @throws 429 if rate limit or daily limit exceeded
+ * @throws 400 if content violates policy
  */
-export async function analyzeFlyer(file: File) {
+export async function analyzeFlyer(file: File, userId?: string) {
   const formData = new FormData()
   formData.append('file', file)
 
+  const headers: Record<string, string> = {
+    'Content-Type': 'multipart/form-data',
+  }
+
+  // Add user ID if provided (overrides global)
+  if (userId) {
+    headers['x-clerk-user-id'] = userId
+  }
+
   const response = await apiClient.post('/api/analyze', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+    headers,
   })
 
   return response.data

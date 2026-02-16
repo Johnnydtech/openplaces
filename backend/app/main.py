@@ -1,6 +1,7 @@
 """
 OpenPlaces Backend API
 Strategic Ad Placement Recommender for Arlington, VA
+UPDATED: Added abuse prevention middleware (rate limiting)
 """
 
 from fastapi import FastAPI
@@ -9,6 +10,7 @@ from fastapi.responses import JSONResponse
 import os
 from dotenv import load_dotenv
 from app.routes import webhooks, saved_recommendations, flyer_uploads, recommendations_cache, analyze, geocoding, recommendations, data_ingestion
+from app.middleware import RateLimitMiddleware
 
 # Load environment variables
 load_dotenv()
@@ -21,6 +23,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+# 🔒 ABUSE PREVENTION: Rate limiting middleware (must be added first)
+app.add_middleware(RateLimitMiddleware)
 
 # CORS configuration - will be configured in Story 1.3
 # Placeholder for now
