@@ -67,9 +67,9 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
               />
             </svg>
 
-            {/* Story 7.5 + 7.6: Enhanced tooltip with categories and better styling */}
+            {/* Story 7.5 + 7.6 + 7.7: Enhanced tooltip with protective framing */}
             <div className="absolute top-full right-0 mt-2 px-4 py-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 border border-gray-700">
-              <div className="font-bold mb-1.5 text-red-400">⚠️ Risk Warning</div>
+              <div className="font-bold mb-1.5 text-red-400">⚠️ Worth Knowing</div>
               {recommendation.risk_warning.warning_categories &&
                recommendation.risk_warning.warning_categories.length > 0 && (
                 <div className="text-xs space-y-1">
@@ -81,7 +81,7 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
                   ))}
                 </div>
               )}
-              <div className="text-xs mt-2 opacity-75 text-gray-300">Click to see why</div>
+              <div className="text-xs mt-2 opacity-75 text-gray-300">Click to learn more</div>
               <div className="absolute bottom-full right-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"></div>
             </div>
           </div>
@@ -306,9 +306,10 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
               </div>
             </div>
             <div className="flex-1">
-              {/* Bold, attention-grabbing title */}
+              {/* Story 7.6: Bold, attention-grabbing title */}
+              {/* Story 7.7: Protective framing - advisory not prescriptive */}
               <h4 className="text-xl font-black text-red-900 mb-2 tracking-tight">
-                ⚠️ Warning: Avoid This Zone
+                ⚠️ Worth Knowing: Low ROI Expected
               </h4>
 
               {/* Story 7.5: Category badges with enhanced styling */}
@@ -331,9 +332,10 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
                 </div>
               )}
 
-              {/* Scannable bullet-point format with bold key phrases */}
+              {/* Story 7.6: Scannable bullet-point format with bold key phrases */}
+              {/* Story 7.7: Softer, collaborative framing */}
               <div className="text-sm text-gray-800 leading-relaxed space-y-2 bg-white/50 rounded-md p-3 backdrop-blur-sm">
-                <p className="font-semibold text-red-900">Why this zone is problematic:</p>
+                <p className="font-semibold text-red-900">We noticed some challenges with this zone:</p>
                 <ul className="list-disc list-inside space-y-1 ml-2">
                   {recommendation.risk_warning.warning_categories && recommendation.risk_warning.warning_categories.length > 0 ? (
                     recommendation.risk_warning.warning_categories.map((cat) => (
@@ -351,7 +353,7 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
                   )}
                 </ul>
                 <p className="text-red-900 font-semibold mt-2">
-                  💡 Bottom line: Your ads likely won't be seen here.
+                  💡 Our recommendation: Consider the alternatives below for better results.
                 </p>
               </div>
             </div>
@@ -402,7 +404,7 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
             <div className="bg-white rounded-lg p-4 mb-3 border-2 border-red-200 shadow-sm">
               <h5 className="text-sm font-black text-red-900 mb-3 uppercase tracking-wide flex items-center gap-2">
                 <span className="text-red-500">⚡</span>
-                Risk Factors Detected
+                What We Found:
               </h5>
               <div className="space-y-3">
                 {recommendation.risk_warning.warning_categories.map((cat) => (
@@ -444,7 +446,7 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
                   />
                 </svg>
                 <h5 className="text-sm font-black text-green-900 uppercase tracking-wide">
-                  ✨ Smart Alternatives (Better ROI):
+                  ✨ We Recommend These Alternatives (Better ROI):
                 </h5>
               </div>
               <div className="space-y-2">
@@ -497,7 +499,7 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
                 ))}
               </div>
               <p className="text-xs text-green-800 mt-3 font-semibold text-center bg-white/50 rounded-md py-2">
-                💰 Click any alternative to see details - save money by choosing wisely!
+                💰 These zones may perform better for your event - click to explore details!
               </p>
             </div>
           )}

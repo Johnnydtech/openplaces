@@ -530,7 +530,7 @@ class RecommendationsService:
                 category_type="low_dwell_time",
                 display_name="Low Dwell Time",
                 icon="⏱️",
-                description=f"People spend only {dwell_time_seconds}s here - not enough time to notice ads",
+                description=f"People spend only {dwell_time_seconds}s here - may not be enough time to notice ads",
                 severity="high",
                 metric_value=float(dwell_time_seconds)
             ))
@@ -541,7 +541,7 @@ class RecommendationsService:
                 category_type="poor_audience_match",
                 display_name="Poor Audience Match",
                 icon="🎯",
-                description=f"Only {audience_match_percent}% audience match - your target audience doesn't frequent this zone",
+                description=f"Only {audience_match_percent}% audience match - your target audience doesn't often frequent this zone",
                 severity="high",
                 metric_value=float(audience_match_percent)
             ))
@@ -565,7 +565,7 @@ class RecommendationsService:
                 category_type="visual_noise",
                 display_name="Visual Noise Saturation",
                 icon="👁️",
-                description=f"High visual clutter - your ad will compete with {advertising_density} others",
+                description=f"High visual clutter - your ad may compete with {advertising_density} others",
                 severity="medium",
                 metric_value=float(advertising_density) if advertising_density > 0 else None
             ))
