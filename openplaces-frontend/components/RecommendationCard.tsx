@@ -29,6 +29,7 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
   return (
     <div
       ref={ref}
+      data-zone-id={recommendation.zone_id}  // Story 7.4: For alternative scrolling
       className={`relative rounded-lg border p-6 shadow-sm hover:shadow-md transition-all duration-100 ${
         isHighlighted
           ? 'border-blue-500 border-2 bg-blue-50 scale-[1.02]'
@@ -328,6 +329,79 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
                     )}
                   </span>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Story 7.4: Better Alternatives Section */}
+          {recommendation.risk_warning.alternative_zones &&
+           recommendation.risk_warning.alternative_zones.length > 0 && (
+            <div className="bg-green-50 rounded-md p-3 mb-3 border border-green-200">
+              <div className="flex items-start gap-2 mb-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <h5 className="text-sm font-bold text-green-900">
+                  Better Alternatives:
+                </h5>
+              </div>
+              <div className="space-y-2 ml-7">
+                {recommendation.risk_warning.alternative_zones.map((alt) => (
+                  <button
+                    key={alt.zone_id}
+                    onClick={() => {
+                      // Story 7.4: Scroll to alternative zone card
+                      const altCard = document.querySelector(`[data-zone-id="${alt.zone_id}"]`)
+                      if (altCard) {
+                        altCard.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        // Optional: Flash the card to draw attention
+                        altCard.classList.add('ring-2', 'ring-green-500', 'ring-offset-2')
+                        setTimeout(() => {
+                          altCard.classList.remove('ring-2', 'ring-green-500', 'ring-offset-2')
+                        }, 2000)
+                      }
+                      setIsWarningPanelOpen(false)  // Close panel after clicking
+                    }}
+                    className="w-full text-left p-2 rounded-md bg-white hover:bg-green-100 transition-colors border border-green-200 hover:border-green-400"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-green-700">
+                            #{alt.rank}
+                          </span>
+                          <span className="text-sm font-semibold text-gray-900">
+                            {alt.zone_name}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {alt.reason}
+                        </p>
+                      </div>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="w-4 h-4 text-green-600 flex-shrink-0 mt-1"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M2 10a.75.75 0 01.75-.75h12.59l-2.1-1.95a.75.75 0 111.02-1.1l3.5 3.25a.75.75 0 010 1.1l-3.5 3.25a.75.75 0 11-1.02-1.1l2.1-1.95H2.75A.75.75 0 012 10z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
           )}

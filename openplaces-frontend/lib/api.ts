@@ -119,6 +119,13 @@ export interface RiskWarning {
     threshold_dwell_time: number
     threshold_audience_match: number
   }
+  alternative_zones?: Array<{  // Story 7.4: Better alternatives
+    zone_id: string
+    zone_name: string
+    rank: number
+    total_score: number
+    reason: string
+  }>
 }
 
 export interface ZoneRecommendation {

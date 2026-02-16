@@ -40,12 +40,14 @@ class RiskWarning(BaseModel):
     """
     Risk warning metadata for deceptive hotspots
     Story 7.1: Protective intelligence for users
+    Story 7.4: Added alternative_zones
     """
     is_flagged: bool  # True if zone is deceptive hotspot
     warning_type: str  # "deceptive_hotspot"
     reason: str  # Plain-language explanation
     severity: str  # "high", "medium", "low"
     details: Dict[str, Any]  # Supporting data
+    alternative_zones: List[Dict[str, Any]] = Field(default_factory=list)  # Story 7.4: Better alternatives
 
 
 class ZoneScore(BaseModel):
@@ -144,6 +146,14 @@ class RecommendationsService:
 
         # Sort by total_score descending (highest first)
         scored_zones.sort(key=lambda x: x.total_score, reverse=True)
+
+        # Story 7.4: Add alternatives to flagged zones
+        for scored_zone in scored_zones:
+            if scored_zone.risk_warning and scored_zone.risk_warning.is_flagged:
+                alternatives = self._select_alternative_zones(
+                    scored_zone.zone, scored_zones, max_alternatives=3
+                )
+                scored_zone.risk_warning.alternative_zones = alternatives
 
         return scored_zones
 
@@ -529,6 +539,74 @@ class RecommendationsService:
 
         # No warning needed
         return None
+
+    def _select_alternative_zones(
+        self, flagged_zone: Zone, all_scored_zones: List[ZoneScore], max_alternatives: int = 3
+    ) -> List[Dict[str, Any]]:
+        """
+        Story 7.4: Select better alternative zones for flagged zone
+
+        Selection criteria:
+        1. Higher total score than flagged zone
+        2. NOT flagged with risk warning
+        3. Better audience match OR better dwell time
+        4. Within reasonable distance from venue (prefer similar distance)
+
+        Returns list of alternatives with reasons why they're better
+        """
+        # Find flagged zone's score
+        flagged_zone_data = next(
+            (sz for sz in all_scored_zones if sz.zone.zone_id == flagged_zone.zone_id),
+            None
+        )
+
+        if not flagged_zone_data:
+            return []
+
+        flagged_score = flagged_zone_data.total_score
+
+        # Filter to unflagged zones with higher scores
+        candidates = [
+            sz for sz in all_scored_zones
+            if (not sz.risk_warning or not sz.risk_warning.is_flagged)
+            and sz.total_score > flagged_score
+            and sz.zone.zone_id != flagged_zone.zone_id
+        ]
+
+        # Sort by total score (best first)
+        candidates.sort(key=lambda x: x.total_score, reverse=True)
+
+        # Take top alternatives
+        alternatives = []
+        for candidate in candidates[:max_alternatives]:
+            # Find rank (1-indexed)
+            rank = next(
+                (i + 1 for i, sz in enumerate(all_scored_zones) if sz.zone.zone_id == candidate.zone.zone_id),
+                0
+            )
+
+            # Generate reason why this is better
+            reasons = []
+            if candidate.audience_match_score > flagged_zone_data.audience_match_score + 5:
+                audience_percent = int((candidate.audience_match_score / 40.0) * 100)
+                reasons.append(f"{audience_percent}% audience match")
+            if candidate.dwell_time_score > flagged_zone_data.dwell_time_score + 2:
+                reasons.append("better dwell time")
+            if candidate.distance_miles < flagged_zone_data.distance_miles:
+                reasons.append("closer to venue")
+
+            if not reasons:
+                reasons.append("higher overall score")
+
+            alternatives.append({
+                "zone_id": candidate.zone.zone_id,
+                "zone_name": candidate.zone.name,
+                "rank": rank,
+                "total_score": round(candidate.total_score, 1),
+                "reason": ", ".join(reasons)
+            })
+
+        return alternatives
 
 
 # Singleton instance
