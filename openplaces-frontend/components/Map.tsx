@@ -57,6 +57,10 @@ export default function Map({ className = '', recommendations = [], eventData = 
       // Create custom HTML marker element
       const el = document.createElement('div')
       el.className = 'zone-marker'
+      // Story 5.9: Make marker keyboard-focusable
+      el.setAttribute('tabindex', '0')
+      el.setAttribute('role', 'button')
+      el.setAttribute('aria-label', `Zone ${rank}: ${zone.zone_name}, ${Math.round((zone.audience_match_score / 40) * 100)}% audience match`)
       el.innerHTML = `
         <div style="
           width: 36px;
@@ -88,6 +92,30 @@ export default function Map({ className = '', recommendations = [], eventData = 
         const innerDiv = el.querySelector('div') as HTMLElement
         if (innerDiv) innerDiv.style.transform = 'scale(1)'
         onZoneLeave?.()  // Story 5.8: Notify parent on leave
+      })
+
+      // Story 5.9: Focus indicator
+      el.addEventListener('focus', () => {
+        const innerDiv = el.querySelector('div') as HTMLElement
+        if (innerDiv) {
+          innerDiv.style.outline = '2px solid #3b82f6'
+          innerDiv.style.outlineOffset = '2px'
+        }
+      })
+
+      el.addEventListener('blur', () => {
+        const innerDiv = el.querySelector('div') as HTMLElement
+        if (innerDiv) {
+          innerDiv.style.outline = 'none'
+        }
+      })
+
+      // Story 5.9: Keyboard activation (Enter/Space)
+      el.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          setSelectedZone({ zone, rank })
+        }
       })
 
       // Story 5.5: Click handler to open details panel
@@ -250,6 +278,10 @@ export default function Map({ className = '', recommendations = [], eventData = 
     // Create custom HTML marker element for venue
     const el = document.createElement('div')
     el.className = 'venue-marker'
+    // Story 5.9: Make venue marker keyboard-focusable
+    el.setAttribute('tabindex', '0')
+    el.setAttribute('role', 'button')
+    el.setAttribute('aria-label', `Event venue: ${event.name}`)
     el.innerHTML = `
       <div style="
         width: 40px;
@@ -295,6 +327,30 @@ export default function Map({ className = '', recommendations = [], eventData = 
       .setLngLat([event.venue_lon, event.venue_lat])
       .setPopup(popup)
       .addTo(map.current!)
+
+    // Story 5.9: Focus indicator for venue marker
+    el.addEventListener('focus', () => {
+      const innerDiv = el.querySelector('div') as HTMLElement
+      if (innerDiv) {
+        innerDiv.style.outline = '2px solid #3b82f6'
+        innerDiv.style.outlineOffset = '2px'
+      }
+    })
+
+    el.addEventListener('blur', () => {
+      const innerDiv = el.querySelector('div') as HTMLElement
+      if (innerDiv) {
+        innerDiv.style.outline = 'none'
+      }
+    })
+
+    // Story 5.9: Keyboard activation for popup
+    el.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        marker.togglePopup()
+      }
+    })
 
     // Show popup on hover
     el.addEventListener('mouseenter', () => {
@@ -461,6 +517,9 @@ export default function Map({ className = '', recommendations = [], eventData = 
       <div
         ref={mapContainer}
         className="absolute inset-0 rounded-lg overflow-hidden"
+        tabIndex={0}
+        role="region"
+        aria-label="Interactive map of Arlington, VA with placement zone recommendations"
       />
 
       {/* Loading indicator */}
