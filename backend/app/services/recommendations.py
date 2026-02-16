@@ -1,12 +1,16 @@
 """
 Recommendations Service - Story 4.2
 Implements the scoring algorithm for ranking placement zones based on event data
+Enhanced with OpenAI embeddings for semantic audience matching
 """
 
 import math
+import os
+import numpy as np
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
+from openai import OpenAI
 
 from app.services.zones import Zone, zones_service
 
@@ -85,10 +89,14 @@ class RecommendationsService:
     """
     Service for scoring and ranking placement zones based on event data
     Story 4.2: Implements the recommendation scoring algorithm
+    Enhanced with OpenAI embeddings for semantic audience matching
     """
 
     def __init__(self):
         self.zones_service = zones_service
+        self.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        # Cache for zone audience embeddings (to avoid repeated API calls)
+        self._zone_embeddings_cache: Dict[str, np.ndarray] = {}
 
     def score_zones(self, event_data: EventData) -> List[ZoneScore]:
         """
@@ -172,12 +180,44 @@ class RecommendationsService:
 
         return scored_zones
 
+    def _get_embedding(self, text: str) -> np.ndarray:
+        """
+        Get OpenAI embedding for a text string
+        Uses text-embedding-3-small model for cost efficiency
+        """
+        try:
+            response = self.openai_client.embeddings.create(
+                model="text-embedding-3-small",
+                input=text
+            )
+            return np.array(response.data[0].embedding)
+        except Exception as e:
+            print(f"Error getting embedding: {e}")
+            # Return zero vector on error
+            return np.zeros(1536)  # text-embedding-3-small dimension
+
+    def _cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
+        """
+        Calculate cosine similarity between two vectors
+        Returns value between -1 and 1 (we'll normalize to 0-1)
+        """
+        dot_product = np.dot(vec1, vec2)
+        norm1 = np.linalg.norm(vec1)
+        norm2 = np.linalg.norm(vec2)
+
+        if norm1 == 0 or norm2 == 0:
+            return 0.0
+
+        similarity = dot_product / (norm1 * norm2)
+        # Normalize to 0-1 range
+        return (similarity + 1) / 2
+
     def _calculate_audience_match(
         self, target_audience: List[str], zone_audience_signals: Dict[str, Any]
     ) -> float:
         """
         Calculate audience match score (0-40 points)
-        Compares event target audience with zone audience_signals
+        Uses OpenAI embeddings for semantic similarity matching
         """
         if not target_audience:
             return 0.0
@@ -192,12 +232,30 @@ class RecommendationsService:
         if not all_zone_signals:
             return 0.0
 
-        # Calculate match percentage
-        matches = sum(1 for audience in target_audience if audience in all_zone_signals)
-        match_percentage = matches / len(target_audience)
+        # Create text representations for embedding
+        event_audience_text = ", ".join(target_audience)
+        zone_audience_text = ", ".join(all_zone_signals)
 
-        # Scale to 0-40 points
-        return match_percentage * 40.0
+        # Generate cache key for zone signals
+        cache_key = zone_audience_text
+
+        # Get or generate zone embedding (cached to avoid repeated API calls)
+        if cache_key not in self._zone_embeddings_cache:
+            self._zone_embeddings_cache[cache_key] = self._get_embedding(zone_audience_text)
+
+        zone_embedding = self._zone_embeddings_cache[cache_key]
+
+        # Generate event audience embedding (not cached as it changes per request)
+        event_embedding = self._get_embedding(event_audience_text)
+
+        # Calculate semantic similarity
+        similarity = self._cosine_similarity(event_embedding, zone_embedding)
+
+        # Scale similarity (0-1) to score (0-40 points)
+        # Apply a slight boost to account for partial matches being valuable
+        score = similarity * 40.0
+
+        return score
 
     def _calculate_temporal_alignment(
         self, event_date: str, event_time: str, event_type: str,
