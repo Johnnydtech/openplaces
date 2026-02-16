@@ -13,10 +13,11 @@ interface RecommendationCardProps {
   onHover?: (zoneId: string) => void
   onLeave?: () => void
   isHighlighted?: boolean
+  onSaveChange?: () => void
 }
 
 const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
-  ({ recommendation, rank, eventName, eventDate, onHover, onLeave, isHighlighted }, ref) => {
+  ({ recommendation, rank, eventName, eventDate, onHover, onLeave, isHighlighted, onSaveChange }, ref) => {
   const [isWarningPanelOpen, setIsWarningPanelOpen] = useState(false)
   const [panelOpenedAt, setPanelOpenedAt] = useState<Date | null>(null)
 
@@ -265,6 +266,7 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
           zoneName={recommendation.zone_name}
           eventName={eventName}
           eventDate={eventDate}
+          onSaveChange={onSaveChange}
         />
       </div>
     </div>

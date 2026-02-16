@@ -1,21 +1,23 @@
 import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: 'swap',
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: "OpenPlaces - Strategic Ad Placement",
-  description: "AI-powered ad placement recommendations for Arlington, VA",
+  title: "OpenPlaces - Smart Placement for Any Message",
+  description: "From event promotions to lost pet posters to emergency notices—discover the most effective locations to reach your audience in Arlington, VA",
 };
 
 export default function RootLayout({
@@ -27,7 +29,8 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${inter.variable} ${jakarta.variable} antialiased font-sans`}
+          style={{ fontFamily: 'var(--font-inter)' }}
         >
           {children}
         </body>

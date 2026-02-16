@@ -10,9 +10,10 @@ interface SaveButtonProps {
   zoneName: string
   eventName: string
   eventDate: string
+  onSaveChange?: () => void
 }
 
-export default function SaveButton({ zoneId, zoneName, eventName, eventDate }: SaveButtonProps) {
+export default function SaveButton({ zoneId, zoneName, eventName, eventDate, onSaveChange }: SaveButtonProps) {
   const { user, isLoaded } = useUser()
   const [isSaved, setIsSaved] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -50,11 +51,13 @@ export default function SaveButton({ zoneId, zoneName, eventName, eventDate }: S
         await unsaveRecommendation(user.id, zoneId)
         setIsSaved(false)
         toast.success('Recommendation removed from saved')
+        onSaveChange?.() // Refresh history list
       } else {
         // Save
         await saveRecommendation(user.id, zoneId, zoneName, eventName, eventDate)
         setIsSaved(true)
         toast.success('Recommendation saved!')
+        onSaveChange?.() // Refresh history list
       }
     } catch (error: any) {
       console.error('Error toggling save:', error)

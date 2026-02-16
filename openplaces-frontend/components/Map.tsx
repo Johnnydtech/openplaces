@@ -65,37 +65,12 @@ export default function Map({ className = '', recommendations = [], eventData = 
       const hasWarning = zone.risk_warning?.is_flagged
 
       el.innerHTML = `
-        <div style="position: relative; cursor: pointer;">
-          <img
-            src="/logo.png"
-            alt="OpenPlace marker"
-            style="
-              width: 48px;
-              height: 48px;
-              filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
-              transition: transform 0.2s;
-            "
-          />
-          <div style="
-            position: absolute;
-            top: 12px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 22px;
-            height: 22px;
-            background-color: ${color};
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 11px;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          ">
-            ${rank}
-          </div>
+        <div style="position: relative; cursor: pointer; width: 32px; height: 40px;">
+          <svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); transition: all 0.2s ease-out;">
+            <path d="M16 0C7.163 0 0 7.163 0 16c0 11 16 24 16 24s16-13 16-24c0-8.837-7.163-16-16-16z" fill="${color}"/>
+            <circle cx="16" cy="15" r="10" fill="white" opacity="0.95"/>
+            <text x="16" y="21" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="700" text-anchor="middle" fill="${color}">${rank}</text>
+          </svg>
           ${hasWarning ? `
             <div style="
               position: absolute;
@@ -121,30 +96,29 @@ export default function Map({ className = '', recommendations = [], eventData = 
 
       // Hover effect
       el.addEventListener('mouseenter', () => {
-        const img = el.querySelector('img') as HTMLElement
-        if (img) img.style.transform = 'scale(1.15)'
+        const svg = el.querySelector('svg') as SVGElement
+        if (svg) svg.style.transform = 'scale(1.2)'
         onZoneHover?.(zone.zone_id)  // Story 5.8: Notify parent on hover
       })
       el.addEventListener('mouseleave', () => {
-        const img = el.querySelector('img') as HTMLElement
-        if (img) img.style.transform = 'scale(1)'
+        const svg = el.querySelector('svg') as SVGElement
+        if (svg) svg.style.transform = 'scale(1)'
         onZoneLeave?.()  // Story 5.8: Notify parent on leave
       })
 
       // Story 5.9: Focus indicator
       el.addEventListener('focus', () => {
-        const img = el.querySelector('img') as HTMLElement
-        if (img) {
-          img.style.outline = '3px solid #3b82f6'
-          img.style.outlineOffset = '2px'
-          img.style.borderRadius = '50%'
+        const svg = el.querySelector('svg') as SVGElement
+        if (svg) {
+          svg.style.outline = '3px solid #3b82f6'
+          svg.style.outlineOffset = '2px'
         }
       })
 
       el.addEventListener('blur', () => {
-        const img = el.querySelector('img') as HTMLElement
-        if (img) {
-          img.style.outline = 'none'
+        const svg = el.querySelector('svg') as SVGElement
+        if (svg) {
+          svg.style.outline = 'none'
         }
       })
 
@@ -285,10 +259,10 @@ export default function Map({ className = '', recommendations = [], eventData = 
     if (!hoveredZoneId) {
       // Remove all highlights
       markerElementsRef.current.forEach(el => {
-        const img = el.querySelector('img') as HTMLElement
-        if (img) {
-          img.style.transform = 'scale(1)'
-          img.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))'
+        const svg = el.querySelector('svg') as SVGElement
+        if (svg) {
+          svg.style.transform = 'scale(1)'
+          svg.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))'
         }
       })
       return
@@ -297,21 +271,21 @@ export default function Map({ className = '', recommendations = [], eventData = 
     // Highlight the hovered marker
     const hoveredEl = markerElementsRef.current.get(hoveredZoneId)
     if (hoveredEl) {
-      const img = hoveredEl.querySelector('img') as HTMLElement
-      if (img) {
-        img.style.transform = 'scale(1.3)'
-        img.style.filter = 'drop-shadow(0 6px 16px rgba(74, 222, 128, 0.8))'
-        img.style.transition = 'all 0.2s ease-out'
+      const svg = hoveredEl.querySelector('svg') as SVGElement
+      if (svg) {
+        svg.style.transform = 'scale(1.4)'
+        svg.style.filter = 'drop-shadow(0 4px 12px rgba(74, 222, 128, 0.8))'
+        svg.style.transition = 'all 0.2s ease-out'
       }
     }
 
     // Remove highlight from other markers
     markerElementsRef.current.forEach((el, zoneId) => {
       if (zoneId !== hoveredZoneId) {
-        const img = el.querySelector('img') as HTMLElement
-        if (img) {
-          img.style.transform = 'scale(1)'
-          img.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))'
+        const svg = el.querySelector('svg') as SVGElement
+        if (svg) {
+          svg.style.transform = 'scale(1)'
+          svg.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))'
         }
       }
     })
@@ -334,31 +308,17 @@ export default function Map({ className = '', recommendations = [], eventData = 
     el.setAttribute('aria-label', `Event venue: ${event.name}`)
     el.innerHTML = `
       <div style="position: relative; z-index: 1000;">
-        <svg width="40" height="52" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));">
-          <path d="M12 0C5.4 0 0 5.4 0 12c0 8.1 10.2 18.5 10.8 19.1.4.4 1 .4 1.4 0C12.8 30.5 24 20.1 24 12c0-6.6-5.4-12-12-12z" fill="#3b82f6"/>
-          <path d="M12 0C5.4 0 0 5.4 0 12c0 8.1 10.2 18.5 10.8 19.1.4.4 1 .4 1.4 0C12.8 30.5 24 20.1 24 12c0-6.6-5.4-12-12-12z" fill="url(#venue-gradient)"/>
-          <circle cx="12" cy="12" r="5" fill="white"/>
-          <circle cx="12" cy="12" r="3" fill="#3b82f6"/>
+        <svg width="36" height="45" viewBox="0 0 36 45" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4)); transition: all 0.2s ease-out;">
           <defs>
-            <linearGradient id="venue-gradient" x1="12" y1="0" x2="12" y2="32" gradientUnits="userSpaceOnUse">
+            <linearGradient id="venue-gradient" x1="18" y1="0" x2="18" y2="40" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stop-color="#3b82f6"/>
-              <stop offset="100%" stop-color="#1e40af"/>
+              <stop offset="100%" stop-color="#1e3a8a"/>
             </linearGradient>
           </defs>
+          <path d="M18 0C8.059 0 0 8.059 0 18c0 13.5 18 27 18 27s18-13.5 18-27c0-9.941-8.059-18-18-18z" fill="url(#venue-gradient)"/>
+          <circle cx="18" cy="17" r="8" fill="white" opacity="0.95"/>
+          <path d="M18 10v7m0 0v7m0-7h-7m7 0h7" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>
         </svg>
-        <div style="
-          position: absolute;
-          top: 8px;
-          left: 50%;
-          transform: translateX(-50%);
-          color: white;
-          font-size: 16px;
-          font-weight: bold;
-          text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-          pointer-events: none;
-        ">
-          📍
-        </div>
       </div>
     `
 
@@ -370,11 +330,12 @@ export default function Map({ className = '', recommendations = [], eventData = 
     }).setHTML(`
       <div style="
         padding: 8px 12px;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
         color: #1f2937;
+        font-family: Inter, system-ui, sans-serif;
       ">
-        📍 ${event.name}
+        <span style="color: #3b82f6; margin-right: 4px;">●</span> ${event.name}
       </div>
     `)
 

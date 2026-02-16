@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useUser, useClerk, SignInButton, SignUpButton } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import MapComponent from '@/components/Map'
 import UploadZone from '@/components/UploadZone'
@@ -17,6 +18,7 @@ type UploadState = 'idle' | 'uploading' | 'analyzing' | 'confirming' | 'geocodin
 export default function UnifiedHomePage() {
   const { user, isLoaded, isSignedIn } = useUser()
   const { signOut } = useClerk()
+  const router = useRouter()
 
   // Upload state
   const [uploadState, setUploadState] = useState<UploadState>('idle')
@@ -243,6 +245,27 @@ export default function UnifiedHomePage() {
         />
       </div>
 
+      {/* Arlington Beta Badge - Top Center */}
+      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-10">
+        <div
+          className="rounded-lg px-4 py-2 backdrop-blur-xl shadow-lg"
+          style={{
+            background: 'rgba(26, 47, 58, 0.95)',
+            border: '1px solid rgba(74, 222, 128, 0.3)'
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#4ade80" className="w-4 h-4">
+              <path fillRule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <p className="text-xs font-semibold text-white">Currently Available in Arlington, VA Only</p>
+              <p className="text-xs" style={{ color: '#4ade80' }}>Beta Program</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Left Sidebar - Upload & Recommendations */}
       <div
         className="absolute left-6 top-6 bottom-6 w-[480px] rounded-xl shadow-2xl backdrop-blur-xl overflow-hidden animate-in slide-in-from-left duration-300 flex flex-col"
@@ -251,9 +274,12 @@ export default function UnifiedHomePage() {
         {/* Sidebar Header */}
         <div className="p-6 border-b" style={{ borderColor: 'rgba(42, 69, 81, 0.5)' }}>
           <div className="flex items-start justify-between mb-2">
-            <h1 className="text-2xl font-bold text-white">
-              Find OpenPlaces.
-            </h1>
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="OpenPlaces" className="w-10 h-10" />
+              <h1 className="text-2xl font-bold text-white">
+                OpenPlaces
+              </h1>
+            </div>
             {isSignedIn && user && (
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{ background: 'rgba(74, 222, 128, 0.1)' }}>
@@ -281,12 +307,94 @@ export default function UnifiedHomePage() {
             )}
           </div>
           <p className="text-sm" style={{ color: '#94a3b8' }}>
-            Upload a flyer to discover the best billboard locations
+            Upload any flyer or poster to discover the best placement locations
           </p>
         </div>
 
         {/* Upload Section */}
-        {uploadState === 'idle' && (
+        {uploadState === 'idle' && !isSignedIn && (
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {/* Hero Section */}
+            <div className="space-y-3">
+              <h2 className="text-2xl font-bold text-white">
+                Smart Placement for Any Message
+              </h2>
+              <p className="text-sm leading-relaxed" style={{ color: '#94a3b8' }}>
+                From event promotions to lost pet posters to emergency notices—discover the most effective locations to reach your audience based on foot traffic, demographics, and real-time data.
+              </p>
+            </div>
+
+            {/* Features */}
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(74, 222, 128, 0.1)' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#4ade80" className="w-5 h-5">
+                    <path d="M10 9a3 3 0 100-6 3 3 0 000 6zM6 8a2 2 0 11-4 0 2 2 0 014 0zM1.49 15.326a.78.78 0 01-.358-.442 3 3 0 014.308-3.516 6.484 6.484 0 00-1.905 3.959c-.023.222-.014.442.025.654a4.97 4.97 0 01-2.07-.655zM16.44 15.98a4.97 4.97 0 002.07-.654.78.78 0 00.357-.442 3 3 0 00-4.308-3.517 6.484 6.484 0 011.907 3.96 2.32 2.32 0 01-.026.654zM18 8a2 2 0 11-4 0 2 2 0 014 0zM5.304 16.19a.844.844 0 01-.277-.71 5 5 0 019.947 0 .843.843 0 01-.277.71A6.975 6.975 0 0110 18a6.974 6.974 0 01-4.696-1.81z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-1">Audience Matching</h3>
+                  <p className="text-xs" style={{ color: '#94a3b8' }}>Smart recommendations based on your target demographic</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(74, 222, 128, 0.1)' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#4ade80" className="w-5 h-5">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-1">Real-Time Analytics</h3>
+                  <p className="text-xs" style={{ color: '#94a3b8' }}>Foot traffic patterns and peak hours for maximum visibility</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(74, 222, 128, 0.1)' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#4ade80" className="w-5 h-5">
+                    <path fillRule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-1">Location Intelligence</h3>
+                  <p className="text-xs" style={{ color: '#94a3b8' }}>Distance scoring and optimal placement zones near your venue</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Upload Zone */}
+            <div>
+              <UploadZone onFileSelect={handleFileUpload} isUploading={false} />
+            </div>
+
+            {/* How it works */}
+            <div className="rounded-lg p-4" style={{ background: 'rgba(74, 222, 128, 0.05)', border: '1px solid rgba(74, 222, 128, 0.2)' }}>
+              <h3 className="text-sm font-semibold mb-2" style={{ color: '#4ade80' }}>How it works</h3>
+              <ol className="space-y-2 text-xs" style={{ color: '#94a3b8' }}>
+                <li className="flex gap-2">
+                  <span className="font-bold" style={{ color: '#4ade80' }}>1.</span>
+                  Upload your poster or flyer (JPG, PNG, or PDF)
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold" style={{ color: '#4ade80' }}>2.</span>
+                  Our AI analyzes your content and target audience
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold" style={{ color: '#4ade80' }}>3.</span>
+                  Get ranked locations on the map with visibility data
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold" style={{ color: '#4ade80' }}>4.</span>
+                  Save your top spots and maximize your reach
+                </li>
+              </ol>
+            </div>
+          </div>
+        )}
+
+        {/* Upload Section - Signed In */}
+        {uploadState === 'idle' && isSignedIn && (
           <div className="p-6">
             <UploadZone onFileSelect={handleFileUpload} isUploading={false} />
           </div>
@@ -390,6 +498,7 @@ export default function UnifiedHomePage() {
                     onHover={(zoneId) => setHoveredZoneId(zoneId)}
                     onLeave={() => setHoveredZoneId(null)}
                     isHighlighted={hoveredZoneId === recommendation.zone_id}
+                    onSaveChange={loadHistory}
                   />
                 </div>
               ))}
@@ -400,7 +509,18 @@ export default function UnifiedHomePage() {
         {/* History Section */}
         {uploadState === 'idle' && isSignedIn && (
           <div className="flex-1 overflow-y-auto p-6">
-            <h2 className="text-lg font-bold text-white mb-4">Recent Searches</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-white">Recent Searches</h2>
+              {savedRecommendations.length > 0 && (
+                <button
+                  onClick={() => router.push('/saved-recommendations')}
+                  className="text-xs font-medium hover:underline"
+                  style={{ color: '#4ade80' }}
+                >
+                  View All →
+                </button>
+              )}
+            </div>
             {isLoadingHistory ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-4 mx-auto" style={{ borderColor: 'rgba(74, 222, 128, 0.2)', borderTopColor: '#4ade80' }}></div>
@@ -410,6 +530,7 @@ export default function UnifiedHomePage() {
                 {savedRecommendations.slice(0, 10).map((saved) => (
                   <div
                     key={saved.id}
+                    onClick={() => router.push('/saved-recommendations')}
                     className="rounded-lg p-3 cursor-pointer transition-colors"
                     style={{ background: 'rgba(30, 58, 72, 0.5)' }}
                     onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(30, 58, 72, 0.7)'}
@@ -454,16 +575,15 @@ export default function UnifiedHomePage() {
 
       {/* Bottom Auth Bar - Only if not signed in */}
       {isLoaded && !isSignedIn && (
-        <div
-          className="fixed bottom-0 left-0 right-0 p-5 backdrop-blur-xl border-t shadow-2xl"
-          style={{
-            background: 'rgba(26, 47, 58, 0.98)',
-            borderColor: 'rgba(74, 222, 128, 0.3)',
-            zIndex: 2000,
-            boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.5)'
-          }}
-        >
-          <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[2000]">
+          <div
+            className="rounded-xl p-5 backdrop-blur-xl border shadow-2xl flex flex-col items-center justify-center gap-4 text-center"
+            style={{
+              background: 'rgba(26, 47, 58, 0.98)',
+              borderColor: 'rgba(74, 222, 128, 0.3)',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
+            }}
+          >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(74, 222, 128, 0.2)' }}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5" style={{ color: '#4ade80' }}>
@@ -479,7 +599,7 @@ export default function UnifiedHomePage() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-3 flex-shrink-0">
+            <div className="flex gap-3">
               <SignInButton mode="modal">
                 <button
                   className="px-6 py-2.5 rounded-lg text-sm font-semibold transition-all border-2"

@@ -35,3 +35,4 @@ httpx==0.26.0  # For testing async HTTP calls
 black==24.2.0
 ruff==0.2.2
 mypy==1.8.0
+svix==1.17.0

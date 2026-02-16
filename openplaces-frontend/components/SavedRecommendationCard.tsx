@@ -20,6 +20,7 @@ export default function SavedRecommendationCard({
   const [isEditing, setIsEditing] = useState(false)
   const [editedNotes, setEditedNotes] = useState(savedRecommendation.notes || '')
   const [isSaving, setIsSaving] = useState(false)
+  const [showDetails, setShowDetails] = useState(false)
 
   const handleSaveNotes = async () => {
     if (!user) return
@@ -185,12 +186,13 @@ export default function SavedRecommendationCard({
       {/* Actions */}
       <div className="flex gap-2">
         <button
+          onClick={() => setShowDetails(!showDetails)}
           className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
           style={{ background: '#4ade80', color: '#0f1c24' }}
           onMouseEnter={(e) => { e.currentTarget.style.background = '#22c55e' }}
           onMouseLeave={(e) => { e.currentTarget.style.background = '#4ade80' }}
         >
-          View Details
+          {showDetails ? 'Hide Details' : 'View Details'}
         </button>
         <button
           onClick={handleDelete}
@@ -208,6 +210,34 @@ export default function SavedRecommendationCard({
           Delete
         </button>
       </div>
+
+      {/* Expanded Details */}
+      {showDetails && (
+        <div className="mt-4 pt-4 space-y-3 border-t" style={{ borderColor: '#2a4551' }}>
+          <div>
+            <p className="text-xs font-medium mb-1" style={{ color: '#94a3b8' }}>EVENT NAME</p>
+            <p className="text-sm text-white">{savedRecommendation.event_name}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium mb-1" style={{ color: '#94a3b8' }}>EVENT DATE</p>
+            <p className="text-sm text-white">{savedRecommendation.event_date}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium mb-1" style={{ color: '#94a3b8' }}>ZONE ID</p>
+            <p className="text-sm font-mono text-white">{savedRecommendation.zone_id}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium mb-1" style={{ color: '#94a3b8' }}>SAVED ON</p>
+            <p className="text-sm text-white">{formatDate(savedRecommendation.created_at)}</p>
+          </div>
+          {savedRecommendation.notes && (
+            <div>
+              <p className="text-xs font-medium mb-1" style={{ color: '#94a3b8' }}>NOTES</p>
+              <p className="text-sm text-white">{savedRecommendation.notes}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
