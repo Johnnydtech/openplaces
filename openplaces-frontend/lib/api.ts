@@ -138,6 +138,34 @@ export interface RiskWarning {
   warning_categories?: WarningCategory[]  // Story 7.5: Category breakdown
 }
 
+export interface HourlyTraffic {
+  hour: string
+  traffic: number
+}
+
+export interface GenderDistribution {
+  name: string
+  value: number
+}
+
+export interface BusiestDay {
+  day: string
+  traffic: number
+}
+
+export interface AnalyticsMetrics {
+  average_hourly_audience: number
+  peak_hour_audience: number
+  total_daily_traffic: number
+}
+
+export interface Analytics {
+  hourly_traffic: HourlyTraffic[]
+  gender_distribution: GenderDistribution[]
+  busiest_days: BusiestDay[]
+  metrics: AnalyticsMetrics
+}
+
 export interface ZoneRecommendation {
   zone_id: string
   zone_name: string
@@ -156,6 +184,7 @@ export interface ZoneRecommendation {
   latitude: number
   longitude: number
   risk_warning?: RiskWarning  // Story 7.1: Risk detection
+  analytics?: Analytics  // Real traffic analytics data
 }
 
 export async function getRecommendations(eventData: EventDataForRecommendations): Promise<ZoneRecommendation[]> {

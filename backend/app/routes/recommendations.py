@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 import logging
+import asyncio
 
 from app.services.recommendations import (
     recommendations_service,
@@ -14,6 +15,7 @@ from app.services.recommendations import (
     ZoneScore,
     DataSource,
 )
+from app.services.analytics import analytics_service
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -35,6 +37,39 @@ class DataSourceResponse(BaseModel):
     status: str  # "detected" or "not_detected"
     details: Optional[str] = None
     last_updated: str
+
+
+class AnalyticsMetrics(BaseModel):
+    """Analytics metrics for a zone"""
+    average_hourly_audience: int
+    peak_hour_audience: int
+    total_daily_traffic: int
+
+
+class HourlyTraffic(BaseModel):
+    """Hourly traffic data point"""
+    hour: str
+    traffic: int
+
+
+class GenderDistribution(BaseModel):
+    """Gender distribution data point"""
+    name: str
+    value: int
+
+
+class BusiestDay(BaseModel):
+    """Busiest day data point"""
+    day: str
+    traffic: int
+
+
+class Analytics(BaseModel):
+    """Complete analytics data for a zone"""
+    hourly_traffic: List[HourlyTraffic]
+    gender_distribution: List[GenderDistribution]
+    busiest_days: List[BusiestDay]
+    metrics: AnalyticsMetrics
 
 
 class ZoneRecommendationResponse(BaseModel):
@@ -65,6 +100,9 @@ class ZoneRecommendationResponse(BaseModel):
     # Geographic data
     latitude: float
     longitude: float
+
+    # Analytics data
+    analytics: Optional[Analytics] = None
 
 
 def _format_timing_windows(timing_windows_dict: Dict[str, Any]) -> List[TimingWindowResponse]:
@@ -112,7 +150,7 @@ def _format_timing_windows(timing_windows_dict: Dict[str, Any]) -> List[TimingWi
     return formatted
 
 
-def _zone_score_to_response(zone_score: ZoneScore) -> ZoneRecommendationResponse:
+async def _zone_score_to_response(zone_score: ZoneScore) -> ZoneRecommendationResponse:
     """Convert internal ZoneScore to frontend-compatible response"""
     zone = zone_score.zone
 
@@ -126,6 +164,35 @@ def _zone_score_to_response(zone_score: ZoneScore) -> ZoneRecommendationResponse
         )
         for ds in zone_score.data_sources
     ]
+
+    # Generate analytics data based on zone location and audience signals
+    venue_types = []
+    if "demographics" in zone.audience_signals:
+        # Infer venue types from demographics
+        demographics = zone.audience_signals["demographics"]
+        if "students" in demographics or "young-adults" in demographics:
+            venue_types.append("cafe")
+        if "families" in demographics:
+            venue_types.append("park")
+        if "young-professionals" in demographics:
+            venue_types.append("restaurant")
+
+    if not venue_types:
+        venue_types = ["default"]
+
+    analytics_data = await analytics_service.generate_zone_analytics(
+        zone.coordinates["lat"],
+        zone.coordinates["lon"],
+        venue_types
+    )
+
+    # Convert to response models
+    analytics = Analytics(
+        hourly_traffic=[HourlyTraffic(**ht) for ht in analytics_data["hourly_traffic"]],
+        gender_distribution=[GenderDistribution(**gd) for gd in analytics_data["gender_distribution"]],
+        busiest_days=[BusiestDay(**bd) for bd in analytics_data["busiest_days"]],
+        metrics=AnalyticsMetrics(**analytics_data["metrics"])
+    )
 
     return ZoneRecommendationResponse(
         zone_id=zone.id,
@@ -144,6 +211,7 @@ def _zone_score_to_response(zone_score: ZoneScore) -> ZoneRecommendationResponse
         data_sources=data_sources_response,
         latitude=zone.coordinates["lat"],
         longitude=zone.coordinates["lon"],
+        analytics=analytics,
     )
 
 
@@ -178,8 +246,11 @@ async def score_zones(event_data: EventData):
             f"Top score: {scored_zones[0].total_score if scored_zones else 0}"
         )
 
-        # Convert to frontend-compatible format
-        return [_zone_score_to_response(zone_score) for zone_score in scored_zones]
+        # Convert to frontend-compatible format (with analytics)
+        responses = await asyncio.gather(
+            *[_zone_score_to_response(zone_score) for zone_score in scored_zones]
+        )
+        return responses
 
     except Exception as e:
         logger.error(f"Error scoring zones: {str(e)}", exc_info=True)
@@ -218,8 +289,11 @@ async def get_top_recommendations(
 
         logger.info(f"Returning top {len(top_zones)} recommendations")
 
-        # Convert to frontend-compatible format
-        return [_zone_score_to_response(zone_score) for zone_score in top_zones]
+        # Convert to frontend-compatible format (with analytics)
+        responses = await asyncio.gather(
+            *[_zone_score_to_response(zone_score) for zone_score in top_zones]
+        )
+        return responses
 
     except Exception as e:
         logger.error(f"Error getting top recommendations: {str(e)}", exc_info=True)

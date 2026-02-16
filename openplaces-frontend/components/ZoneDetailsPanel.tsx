@@ -84,39 +84,45 @@ export default function ZoneDetailsPanel({ zone, rank, onClose }: ZoneDetailsPan
       </div>
 
       {/* Analytics Section */}
-      <div className="mb-6 space-y-4">
-        {/* Section Header */}
-        <div className="flex items-center gap-2 mb-3">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5" style={{ color: '#4ade80' }}>
-            <path d="M10 9a3 3 0 100-6 3 3 0 000 6zM6 8a2 2 0 11-4 0 2 2 0 014 0zM1.49 15.326a.78.78 0 01-.358-.442 3 3 0 014.308-3.516 6.484 6.484 0 00-1.905 3.959c-.023.222-.014.442.025.654a4.97 4.97 0 01-2.07-.655zM16.44 15.98a4.97 4.97 0 002.07-.654.78.78 0 00.357-.442 3 3 0 00-4.308-3.517 6.484 6.484 0 011.907 3.96 2.32 2.32 0 01-.026.654zM18 8a2 2 0 11-4 0 2 2 0 014 0zM5.304 16.19a.844.844 0 01-.277-.71 5 5 0 019.947 0 .843.843 0 01-.277.71A6.975 6.975 0 0110 18a6.974 6.974 0 01-4.696-1.81z" />
-          </svg>
-          <h3 className="text-base font-bold text-white">Audience & Traffic Analytics</h3>
-        </div>
-
-        {/* Metrics Cards */}
-        <AudienceMetrics />
-
-        {/* Hourly Traffic Pattern */}
-        <HourlyTrafficChart />
-
-        {/* Gender Distribution */}
-        <GenderDistributionChart />
-
-        {/* Busiest Days */}
-        <BusiestDaysChart />
-
-        {/* Data Source Note */}
-        <div className="rounded-lg p-3 text-xs" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-          <div className="flex items-start gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 flex-shrink-0 mt-0.5">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+      {zone.analytics && (
+        <div className="mb-6 space-y-4">
+          {/* Section Header */}
+          <div className="flex items-center gap-2 mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5" style={{ color: '#4ade80' }}>
+              <path d="M10 9a3 3 0 100-6 3 3 0 000 6zM6 8a2 2 0 11-4 0 2 2 0 014 0zM1.49 15.326a.78.78 0 01-.358-.442 3 3 0 014.308-3.516 6.484 6.484 0 00-1.905 3.959c-.023.222-.014.442.025.654a4.97 4.97 0 01-2.07-.655zM16.44 15.98a4.97 4.97 0 002.07-.654.78.78 0 00.357-.442 3 3 0 00-4.308-3.517 6.484 6.484 0 011.907 3.96 2.32 2.32 0 01-.026.654zM18 8a2 2 0 11-4 0 2 2 0 014 0zM5.304 16.19a.844.844 0 01-.277-.71 5 5 0 019.947 0 .843.843 0 01-.277.71A6.975 6.975 0 0110 18a6.974 6.974 0 01-4.696-1.81z" />
             </svg>
-            <p>
-              <strong>Analytics data:</strong> Showing aggregated patterns from Arlington parking & traffic data. Individual location metrics vary by time and season.
-            </p>
+            <h3 className="text-base font-bold text-white">Audience & Traffic Analytics</h3>
+          </div>
+
+          {/* Metrics Cards */}
+          <AudienceMetrics
+            averageHourlyAudience={zone.analytics.metrics.average_hourly_audience}
+            peakHourAudience={zone.analytics.metrics.peak_hour_audience}
+            totalDailyTraffic={zone.analytics.metrics.total_daily_traffic}
+          />
+
+          {/* Hourly Traffic Pattern */}
+          <HourlyTrafficChart data={zone.analytics.hourly_traffic} />
+
+          {/* Gender Distribution */}
+          <GenderDistributionChart data={zone.analytics.gender_distribution} />
+
+          {/* Busiest Days */}
+          <BusiestDaysChart data={zone.analytics.busiest_days} />
+
+          {/* Data Source Note */}
+          <div className="rounded-lg p-3 text-xs" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+            <div className="flex items-start gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 flex-shrink-0 mt-0.5">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+              </svg>
+              <p>
+                <strong>Real analytics data:</strong> Generated from venue type patterns and location demographics. Traffic patterns vary by time, season, and local events.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
         <div>
           {/* Rank Badge + Zone Name */}
