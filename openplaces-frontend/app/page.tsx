@@ -350,7 +350,7 @@ export default function UnifiedHomePage() {
             )}
           </div>
           <p className="text-sm" style={{ color: '#94a3b8' }}>
-            Upload any flyer or poster to discover the best placement locations
+            Find WHERE to place your ads to get people to your event
           </p>
         </div>
 
@@ -360,10 +360,10 @@ export default function UnifiedHomePage() {
             {/* Hero Section */}
             <div className="space-y-3">
               <h2 className="text-2xl font-bold text-white">
-                Smart Placement for Any Message
+                Stop Guessing Where to Advertise
               </h2>
               <p className="text-sm leading-relaxed" style={{ color: '#94a3b8' }}>
-                From event promotions to lost pet posters to emergency notices—discover the most effective locations to reach your audience based on foot traffic, demographics, and real-time data.
+                We analyze foot traffic, demographics, and location data to recommend the best placement spots.
               </p>
             </div>
 
@@ -376,8 +376,8 @@ export default function UnifiedHomePage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white mb-1">Audience Matching</h3>
-                  <p className="text-xs" style={{ color: '#94a3b8' }}>Smart recommendations based on your target demographic</p>
+                  <h3 className="text-sm font-semibold text-white mb-1">Find Your Audience</h3>
+                  <p className="text-xs" style={{ color: '#94a3b8' }}>Discover where your target audience gathers in Arlington</p>
                 </div>
               </div>
 
@@ -388,8 +388,8 @@ export default function UnifiedHomePage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white mb-1">Real-Time Analytics</h3>
-                  <p className="text-xs" style={{ color: '#94a3b8' }}>Foot traffic patterns and peak hours for maximum visibility</p>
+                  <h3 className="text-sm font-semibold text-white mb-1">Timing Intelligence</h3>
+                  <p className="text-xs" style={{ color: '#94a3b8' }}>Know when to place your ads for maximum impact</p>
                 </div>
               </div>
 
@@ -400,8 +400,8 @@ export default function UnifiedHomePage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white mb-1">Location Intelligence</h3>
-                  <p className="text-xs" style={{ color: '#94a3b8' }}>Distance scoring and optimal placement zones near your venue</p>
+                  <h3 className="text-sm font-semibold text-white mb-1">Strategic Placement Zones</h3>
+                  <p className="text-xs" style={{ color: '#94a3b8' }}>See ranked locations with transparent reasoning</p>
                 </div>
               </div>
             </div>
@@ -417,19 +417,19 @@ export default function UnifiedHomePage() {
               <ol className="space-y-2 text-xs" style={{ color: '#94a3b8' }}>
                 <li className="flex gap-2">
                   <span className="font-bold" style={{ color: '#4ade80' }}>1.</span>
-                  Upload your poster or flyer (JPG, PNG, or PDF)
+                  Upload your event poster or flyer (JPG, PNG, or PDF)
                 </li>
                 <li className="flex gap-2">
                   <span className="font-bold" style={{ color: '#4ade80' }}>2.</span>
-                  Our AI analyzes your content and target audience
+                  AI figures out your event details and target audience
                 </li>
                 <li className="flex gap-2">
                   <span className="font-bold" style={{ color: '#4ade80' }}>3.</span>
-                  Get ranked locations on the map with visibility data
+                  See WHERE to place ads around Arlington to get people to your event
                 </li>
                 <li className="flex gap-2">
                   <span className="font-bold" style={{ color: '#4ade80' }}>4.</span>
-                  Save your top spots and maximize your reach
+                  Get timing, audience match, and reasoning for each spot
                 </li>
               </ol>
             </div>
