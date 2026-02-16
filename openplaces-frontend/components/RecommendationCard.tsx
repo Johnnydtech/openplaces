@@ -39,22 +39,26 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
       onMouseLeave={() => onLeave?.()}
     >
       {/* Story 7.2: Risk Warning Badge */}
+      {/* Story 7.6: Enhanced visual prominence */}
       {recommendation.risk_warning?.is_flagged && (
         <div
           className="absolute top-4 right-4 group cursor-pointer"
           onClick={(e) => {
-            e.stopPropagation()  // Prevent card click events
-            setIsWarningPanelOpen(!isWarningPanelOpen)  // Story 7.3: Toggle panel
+            e.stopPropagation()
+            setIsWarningPanelOpen(!isWarningPanelOpen)
           }}
           title="Risk Warning - Click for details"
         >
-          <div className="relative flex items-center justify-center w-8 h-8 bg-orange-500 rounded-full shadow-lg animate-pulse">
+          <div className="relative flex items-center justify-center w-10 h-10 bg-red-500 rounded-full shadow-lg animate-pulse">
+            {/* Stronger pulsing ring effect */}
+            <div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-75"></div>
+
             {/* Warning icon */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="w-5 h-5 text-white"
+              className="w-6 h-6 text-white relative z-10"
             >
               <path
                 fillRule="evenodd"
@@ -63,21 +67,21 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
               />
             </svg>
 
-            {/* Story 7.5: Enhanced tooltip with categories */}
-            <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-              <div className="font-semibold mb-1">Risk Warning</div>
+            {/* Story 7.5 + 7.6: Enhanced tooltip with categories and better styling */}
+            <div className="absolute top-full right-0 mt-2 px-4 py-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 border border-gray-700">
+              <div className="font-bold mb-1.5 text-red-400">⚠️ Risk Warning</div>
               {recommendation.risk_warning.warning_categories &&
                recommendation.risk_warning.warning_categories.length > 0 && (
-                <div className="text-xs space-y-0.5">
+                <div className="text-xs space-y-1">
                   {recommendation.risk_warning.warning_categories.map((cat) => (
-                    <div key={cat.category_type} className="flex items-center gap-1">
-                      <span>{cat.icon}</span>
-                      <span>{cat.display_name}</span>
+                    <div key={cat.category_type} className="flex items-center gap-1.5">
+                      <span className="text-base">{cat.icon}</span>
+                      <span className="font-medium">{cat.display_name}</span>
                     </div>
                   ))}
                 </div>
               )}
-              <div className="text-xs mt-1 opacity-75">Click for details</div>
+              <div className="text-xs mt-2 opacity-75 text-gray-300">Click to see why</div>
               <div className="absolute bottom-full right-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"></div>
             </div>
           </div>
@@ -279,52 +283,77 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
       </div>
 
       {/* Story 7.3: Risk Warning Explanation Panel */}
+      {/* Story 7.6: Enhanced visually striking design */}
       {recommendation.risk_warning?.is_flagged && isWarningPanelOpen && (
-        <div className="mt-4 rounded-lg border-2 border-orange-500 bg-orange-50 p-4 animate-in slide-in-from-top-2 duration-200">
-          {/* Warning header */}
-          <div className="flex items-start gap-3 mb-3">
+        <div className="mt-4 rounded-lg border-2 border-red-500 bg-gradient-to-br from-red-50 to-orange-50 p-4 shadow-lg animate-in slide-in-from-top-4 duration-300 ease-out">
+          {/* Warning header with stronger visual impact */}
+          <div className="flex items-start gap-3 mb-4">
             <div className="flex-shrink-0">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="w-6 h-6 text-orange-600"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              {/* Larger, more prominent warning icon in colored circle */}
+              <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center shadow-md">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="w-7 h-7 text-white"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
             </div>
             <div className="flex-1">
-              <h4 className="text-lg font-bold text-orange-900 mb-1">
-                ⚠️ Risk Warning: Deceptive Hotspot
+              {/* Bold, attention-grabbing title */}
+              <h4 className="text-xl font-black text-red-900 mb-2 tracking-tight">
+                ⚠️ Warning: Avoid This Zone
               </h4>
 
-              {/* Story 7.5: Category badges */}
+              {/* Story 7.5: Category badges with enhanced styling */}
               {recommendation.risk_warning.warning_categories &&
                recommendation.risk_warning.warning_categories.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-2">
+                <div className="flex flex-wrap gap-2 mb-3">
                   {recommendation.risk_warning.warning_categories.map((cat) => (
                     <span
                       key={cat.category_type}
-                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-bold shadow-sm ${
                         cat.severity === 'high'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-orange-100 text-orange-800'
+                          ? 'bg-red-600 text-white'
+                          : 'bg-orange-500 text-white'
                       }`}
                     >
-                      <span>{cat.icon}</span>
+                      <span className="text-base">{cat.icon}</span>
                       <span>{cat.display_name}</span>
                     </span>
                   ))}
                 </div>
               )}
 
-              <p className="text-sm text-orange-800 leading-relaxed">
-                {recommendation.risk_warning.reason}
-              </p>
+              {/* Scannable bullet-point format with bold key phrases */}
+              <div className="text-sm text-gray-800 leading-relaxed space-y-2 bg-white/50 rounded-md p-3 backdrop-blur-sm">
+                <p className="font-semibold text-red-900">Why this zone is problematic:</p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  {recommendation.risk_warning.warning_categories && recommendation.risk_warning.warning_categories.length > 0 ? (
+                    recommendation.risk_warning.warning_categories.map((cat) => (
+                      <li key={cat.category_type} className="text-gray-700">
+                        <span className="font-bold text-gray-900">{cat.display_name}:</span>{' '}
+                        {cat.description.includes(' - ')
+                          ? cat.description.split(' - ')[1]
+                          : cat.description}
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-gray-700">
+                      {recommendation.risk_warning.reason}
+                    </li>
+                  )}
+                </ul>
+                <p className="text-red-900 font-semibold mt-2">
+                  💡 Bottom line: Your ads likely won't be seen here.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -367,26 +396,28 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
           )}
 
           {/* Story 7.5: Detailed category explanations */}
+          {/* Story 7.6: Enhanced visual hierarchy */}
           {recommendation.risk_warning.warning_categories &&
            recommendation.risk_warning.warning_categories.length > 0 && (
-            <div className="bg-white rounded-md p-3 mb-3 border border-orange-200">
-              <h5 className="text-xs font-semibold text-gray-700 mb-2 uppercase">
+            <div className="bg-white rounded-lg p-4 mb-3 border-2 border-red-200 shadow-sm">
+              <h5 className="text-sm font-black text-red-900 mb-3 uppercase tracking-wide flex items-center gap-2">
+                <span className="text-red-500">⚡</span>
                 Risk Factors Detected
               </h5>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {recommendation.risk_warning.warning_categories.map((cat) => (
-                  <div key={cat.category_type} className="flex items-start gap-2 text-sm">
-                    <span className="text-lg flex-shrink-0">{cat.icon}</span>
+                  <div key={cat.category_type} className="flex items-start gap-3 p-2 rounded-md bg-gray-50">
+                    <span className="text-2xl flex-shrink-0">{cat.icon}</span>
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900">{cat.display_name}</div>
-                      <div className="text-gray-600 text-xs">{cat.description}</div>
+                      <div className="font-bold text-gray-900 text-base">{cat.display_name}</div>
+                      <div className="text-gray-600 text-sm mt-0.5">{cat.description}</div>
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded ${
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
                       cat.severity === 'high'
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-orange-100 text-orange-700'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-orange-500 text-white'
                     }`}>
-                      {cat.severity}
+                      {cat.severity.toUpperCase()}
                     </span>
                   </div>
                 ))}
@@ -395,15 +426,16 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
           )}
 
           {/* Story 7.4: Better Alternatives Section */}
+          {/* Story 7.6: Enhanced positive framing */}
           {recommendation.risk_warning.alternative_zones &&
            recommendation.risk_warning.alternative_zones.length > 0 && (
-            <div className="bg-green-50 rounded-md p-3 mb-3 border border-green-200">
-              <div className="flex items-start gap-2 mb-2">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 mb-3 border-2 border-green-400 shadow-sm">
+              <div className="flex items-start gap-2 mb-3">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
-                  className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5"
+                  className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5"
                 >
                   <path
                     fillRule="evenodd"
@@ -411,11 +443,11 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
                     clipRule="evenodd"
                   />
                 </svg>
-                <h5 className="text-sm font-bold text-green-900">
-                  Better Alternatives:
+                <h5 className="text-sm font-black text-green-900 uppercase tracking-wide">
+                  ✨ Smart Alternatives (Better ROI):
                 </h5>
               </div>
-              <div className="space-y-2 ml-7">
+              <div className="space-y-2">
                 {recommendation.risk_warning.alternative_zones.map((alt) => (
                   <button
                     key={alt.zone_id}
@@ -424,28 +456,28 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
                       const altCard = document.querySelector(`[data-zone-id="${alt.zone_id}"]`)
                       if (altCard) {
                         altCard.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                        // Optional: Flash the card to draw attention
-                        altCard.classList.add('ring-2', 'ring-green-500', 'ring-offset-2')
+                        // Story 7.6: Stronger ring effect
+                        altCard.classList.add('ring-4', 'ring-green-500', 'ring-offset-2')
                         setTimeout(() => {
-                          altCard.classList.remove('ring-2', 'ring-green-500', 'ring-offset-2')
+                          altCard.classList.remove('ring-4', 'ring-green-500', 'ring-offset-2')
                         }, 2000)
                       }
-                      setIsWarningPanelOpen(false)  // Close panel after clicking
+                      setIsWarningPanelOpen(false)
                     }}
-                    className="w-full text-left p-2 rounded-md bg-white hover:bg-green-100 transition-colors border border-green-200 hover:border-green-400"
+                    className="w-full text-left p-3 rounded-lg bg-white hover:bg-green-100 transition-all duration-200 border-2 border-green-300 hover:border-green-500 hover:shadow-md"
                   >
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center justify-between gap-2">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-green-700">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-base font-black text-green-700">
                             #{alt.rank}
                           </span>
-                          <span className="text-sm font-semibold text-gray-900">
+                          <span className="text-base font-bold text-gray-900">
                             {alt.zone_name}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-600 mt-1">
-                          {alt.reason}
+                        <p className="text-sm text-gray-700 font-medium">
+                          ✓ {alt.reason}
                         </p>
                       </div>
                       <svg
@@ -464,15 +496,18 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
                   </button>
                 ))}
               </div>
+              <p className="text-xs text-green-800 mt-3 font-semibold text-center bg-white/50 rounded-md py-2">
+                💰 Click any alternative to see details - save money by choosing wisely!
+              </p>
             </div>
           )}
 
-          {/* Close button */}
+          {/* Story 7.6: Enhanced close button with satisfying action language */}
           <button
             onClick={() => setIsWarningPanelOpen(false)}
-            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-[1.02]"
           >
-            Got it
+            ✓ Got it - I'll avoid this zone
           </button>
         </div>
       )}
