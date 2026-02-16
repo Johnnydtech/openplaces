@@ -16,8 +16,8 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "OpenPlaces - Smart Placement for Any Message",
-  description: "From event promotions to lost pet posters to emergency notices—discover the most effective locations to reach your audience in Arlington, VA",
+  title: "OpenPlaces - Smart Flyer & Poster Placement",
+  description: "Find the best locations to post your event flyers and posters in Arlington, VA. AI-powered recommendations based on foot traffic, demographics, and location data.",
 };
 
 export default function RootLayout({
@@ -36,6 +36,7 @@ export default function RootLayout({
           colorInputText: '#ffffff',
           colorText: '#f1f5f9',
           colorTextSecondary: '#cbd5e1',
+          colorTextOnPrimaryBackground: '#ffffff',
           colorDanger: '#fb923c',
           colorSuccess: '#4ade80',
           borderRadius: '0.75rem',
@@ -44,9 +45,11 @@ export default function RootLayout({
           card: 'bg-[#1a2f3a] border border-[#4ade80]/20 shadow-2xl',
           headerTitle: 'text-white font-bold',
           headerSubtitle: 'text-slate-300',
-          socialButtonsBlockButton: 'bg-[#1e3a48] border-[#2a4551] text-white hover:bg-[#243f4d]',
-          socialButtonsBlockButtonText: 'text-white font-medium',
-          formButtonPrimary: 'bg-[#4ade80] text-white hover:bg-[#22c55e] font-semibold shadow-lg',
+          socialButtonsBlockButton: 'bg-[#1e3a48] border-[#2a4551] !text-white hover:bg-[#243f4d]',
+          socialButtonsBlockButtonText: '!text-white font-medium',
+          socialButtonsBlockButtonArrow: '!text-white',
+          formButtonPrimary: 'bg-[#4ade80] !text-white hover:bg-[#22c55e] font-semibold shadow-lg',
+          formButtonPrimaryText__loading: '!text-white',
           formFieldInput: 'bg-[#1e3a48] border-[#2a4551] text-white placeholder:text-slate-400',
           footerActionLink: 'text-[#4ade80] hover:text-[#22c55e] font-medium',
           footerActionText: 'text-slate-300',

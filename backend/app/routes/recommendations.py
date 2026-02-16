@@ -310,7 +310,7 @@ async def recommendations_health():
     """
     try:
         # Check if zones service is working
-        zones = recommendations_service.zones_service.get_all_zones()
+        zones = await recommendations_service.zones_service.get_all_zones()
         return {
             "status": "ok",
             "zones_loaded": len(zones),

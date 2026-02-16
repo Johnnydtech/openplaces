@@ -2,21 +2,24 @@
 
 **AI-powered flyer placement recommendations for Arlington, VA events**
 
-OpenPlaces uses computer vision, semantic matching, and real-time data to recommend the best locations to place event flyers based on audience demographics, timing, distance, and foot traffic patterns.
+OpenPlaces uses Claude Opus 4.6 vision AI, semantic matching, and real-time data to recommend the best locations to place event flyers based on audience demographics, timing, distance, and foot traffic patterns.
+
+🎥 **[Watch Demo Video](#)** | 📖 **[View Documentation](./docs/)** | 🚀 **[Live Demo](#)**
 
 ## 🎯 What It Does
 
-1. **Upload an event flyer** (image or PDF)
-2. **AI extracts event details** (OpenAI Vision API)
+1. **Upload an event flyer** (JPG, PNG)
+2. **Claude Opus 4.6 extracts event details** - Advanced vision AI with content moderation
 3. **Get top 10 placement recommendations** ranked by:
-   - 🎯 **Audience Match** (40%) - Semantic matching with OpenAI embeddings
+   - 🎯 **Audience Match** (40%) - Semantic matching with Claude Opus 4.6
    - ⏰ **Timing** (30%) - When your target audience is there
    - 📍 **Distance** (20%) - Proximity to venue
    - 👀 **Dwell Time** (10%) - How long people stop and look
 
-4. **Interactive map** showing recommendations with Mapbox
+4. **Interactive map** showing recommendations with Mapbox GL JS
 5. **Risk warnings** for low-ROI locations with alternative suggestions
-6. **Save recommendations** for future reference
+6. **Save recommendations** with notes for future reference
+7. **Real-time analytics** with hourly traffic patterns and demographics
 
 ## 🏗️ Architecture
 
@@ -30,26 +33,33 @@ OpenPlaces uses computer vision, semantic matching, and real-time data to recomm
 
 ### Backend
 - **FastAPI** (Python 3.11+)
-- **OpenAI API** for:
+- **Claude Opus 4.6** for:
   - Vision: Event detail extraction from flyers
-  - Embeddings: Semantic audience matching
-- **Supabase PostgreSQL** for data storage
+  - Semantic audience matching with context understanding
+  - Content moderation for uploaded images
+- **Supabase PostgreSQL** for:
+  - Zone data with PostGIS support
+  - Saved recommendations
+  - User data
 - **Geopy** for geocoding
+- **Rate limiting** per-user abuse prevention
 
 ### Data Sources
-- **Static zones** (10 curated Arlington locations) - Current
-- **Arlington Parking API** (real parking data) - In progress
-- **Google Places API** (venue data, popular times) - In progress
+- **Dynamic zones** (29 zones) - Database-persisted, auto-refreshing
+- **Arlington Parking API** - Real parking locations and availability ✅
+- **Google Places API** - Venue data, popular times, foot traffic ✅
+- **Static fallback** - Curated zones for offline reliability
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - **Node.js 18+** and npm
 - **Python 3.11+** and pip
-- **OpenAI API key** ([Get one](https://platform.openai.com/api-keys))
+- **Anthropic API key** for Claude Opus 4.6 ([Get one](https://console.anthropic.com/))
 - **Supabase account** ([Sign up](https://supabase.com))
-- **Clerk account** ([Sign up](https://clerk.com))
+- **Clerk account** for authentication ([Sign up](https://clerk.com))
 - **Mapbox API key** ([Sign up](https://account.mapbox.com/))
+- **Google Places API key** (optional, for real venue data)
 
 ### 1. Clone Repository
 ```bash
@@ -71,10 +81,11 @@ pip install -r requirements.txt
 # Create .env file
 cp .env.example .env
 # Add your API keys to .env:
-# OPENAI_API_KEY=sk-...
+# ANTHROPIC_API_KEY=sk-ant-...
 # SUPABASE_URL=https://...
 # SUPABASE_KEY=...
 # CLERK_SECRET_KEY=...
+# GOOGLE_PLACES_API_KEY=... (optional)
 
 # Run database migrations (see SUPABASE_SETUP.md)
 
@@ -187,31 +198,39 @@ total_score = (
 
 ### Semantic Audience Matching
 ```python
-# Get embeddings for event audience and zone signals
-event_embedding = openai.embeddings.create(
-    model="text-embedding-3-small",
-    input="kids, teens, adults, art enthusiasts"
+# Claude Opus 4.6 semantic understanding
+prompt = f"""Score how well this zone's audience matches the event's target audience.
+Event Target Audience: {target_audience}
+Zone Audience Profile: {zone_demographics}, {zone_interests}, {zone_behaviors}
+
+Consider semantic overlap, lifestyle compatibility, demographic alignment.
+Respond with JSON: {{"score": <0-40>, "reasoning": "..."}}"""
+
+response = await claude_client.messages.create(
+    model="claude-opus-4-6",
+    messages=[{"role": "user", "content": prompt}],
+    timeout=30.0  # With fallback to keyword matching
 )
-
-zone_embedding = cached_embeddings["families, cultural, community"]
-
-# Calculate cosine similarity
-similarity = cosine_similarity(event_embedding, zone_embedding)
-score = similarity * 40  # Scale to 0-40 points
 ```
 
-## 🗺️ Data Sources
+## 🗺️ Data Sources & Persistence
 
-### Current (Static)
-- 10 manually curated zones in Arlington, VA
-- Based on real locations (metro stations, Whole Foods, gyms, etc.)
-- Synthetic but realistic audience/timing data
+### Dynamic Zone Generation ✅
+- **29 zones** generated from Arlington Parking API + Google Places
+- **Database persistence** (Supabase PostgreSQL with PostGIS)
+- **3-tier caching**: Memory (24hr) → Database → API generation → Static fallback
+- **Auto-refresh**: Updates every 24 hours or on-demand via `/zones/refresh`
 
-### Future (Real Data Integration)
-- **Arlington Parking API**: Real parking locations → high-traffic areas
-- **Google Places API**: Venue data, popular times, foot traffic patterns
+### Real Data Integration ✅
+- **Arlington Parking API**: 400+ parking locations → high-traffic placement zones
+- **Google Places API**: Venue names, foot traffic estimates, popular times
+- **Geocoding**: Geopy + Nominatim for accurate coordinates
+- **Static fallback**: 29 curated zones for offline reliability
+
+### Future Integrations
 - **Census Data**: Demographics, household composition
 - **Transit APIs**: WMATA ridership, peak times
+- **Historical performance**: Track actual placement results
 
 ## 📊 API Endpoints
 
@@ -248,17 +267,29 @@ For production, integrate PostHog or Mixpanel in `lib/analytics.ts`.
 
 ## 🎯 Roadmap
 
-- [x] AI flyer analysis (OpenAI Vision)
-- [x] Semantic audience matching (OpenAI embeddings)
-- [x] Interactive map with Mapbox
+### ✅ Completed
+- [x] AI flyer analysis (Claude Opus 4.6 Vision)
+- [x] Content moderation for uploaded images
+- [x] Semantic audience matching (Claude Opus 4.6)
+- [x] Interactive map with Mapbox GL JS
 - [x] Risk warnings with alternatives
 - [x] Temporal intelligence (time period toggle)
-- [x] Save recommendations
-- [ ] Real data integration (Arlington Parking + Google Places)
+- [x] Save recommendations with notes
+- [x] Real data integration (Arlington Parking + Google Places)
+- [x] Database persistence with auto-refresh
+- [x] Per-user rate limiting (abuse prevention)
+- [x] Real-time analytics with hourly traffic
+
+### 🚧 In Progress
+- [ ] Frontend optimization (reduce Claude timeout issues)
+- [ ] Batch progress streaming for long operations
+
+### 📋 Future
 - [ ] Mobile app (React Native)
-- [ ] Multi-city support
+- [ ] Multi-city support (DC, Baltimore, Alexandria)
 - [ ] A/B testing for recommendations
-- [ ] Historical performance tracking
+- [ ] Historical performance tracking (QR codes on flyers)
+- [ ] Community feedback integration
 
 ## 📝 License
 

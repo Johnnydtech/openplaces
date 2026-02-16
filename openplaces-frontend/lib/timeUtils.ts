@@ -17,28 +17,53 @@ export type TimePeriod = 'morning' | 'lunch' | 'evening'
  */
 export function getDefaultTimePeriod(eventDate: string, eventTime: string): TimePeriod {
   try {
-    // Parse time (format: "7:00 PM", "11:30 AM", "7PM", "11 AM", etc.)
-    const timeMatch = eventTime.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/i)
+    // Try to parse with AM/PM first (format: "7:00 PM", "11:30 AM", "7PM", "11 AM", etc.)
+    const timeMatchWithPeriod = eventTime.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/i)
 
-    if (!timeMatch) {
-      console.log('[timeUtils] Could not parse event time, defaulting to evening:', eventTime)
-      return 'evening'
+    let hours: number
+    let minutes: number
+
+    if (timeMatchWithPeriod) {
+      // Has AM/PM indicator
+      hours = parseInt(timeMatchWithPeriod[1], 10)
+      minutes = timeMatchWithPeriod[2] ? parseInt(timeMatchWithPeriod[2], 10) : 0
+      const period = timeMatchWithPeriod[3].toUpperCase()
+
+      // Convert to 24-hour format
+      if (period === 'PM' && hours !== 12) {
+        hours += 12
+      } else if (period === 'AM' && hours === 12) {
+        hours = 0
+      }
+
+      console.log(`[timeUtils] Parsed event time with period: ${hours}:${minutes.toString().padStart(2, '0')} (${period})`)
+    } else {
+      // No AM/PM - try to parse as 24-hour or make reasonable assumption for 12-hour
+      const timeMatchNoPeriod = eventTime.match(/(\d{1,2}):?(\d{2})?/)
+
+      if (!timeMatchNoPeriod) {
+        console.log('[timeUtils] Could not parse event time, defaulting to evening:', eventTime)
+        return 'evening'
+      }
+
+      hours = parseInt(timeMatchNoPeriod[1], 10)
+      minutes = timeMatchNoPeriod[2] ? parseInt(timeMatchNoPeriod[2], 10) : 0
+
+      // If hour is already in 24-hour format (13-23), use as-is
+      // Otherwise assume AM for hours 1-11 (most events during day)
+      if (hours >= 13 && hours <= 23) {
+        // Already 24-hour format, keep as-is
+        console.log(`[timeUtils] Parsed 24-hour time: ${hours}:${minutes.toString().padStart(2, '0')}`)
+      } else if (hours === 12) {
+        // 12 without AM/PM - assume noon (most common)
+        console.log(`[timeUtils] Assuming 12:00 is noon`)
+      } else {
+        // 1-11 without AM/PM - assume AM for morning/lunch events
+        console.log(`[timeUtils] Parsed time without period (assuming AM for 1-11): ${hours}:${minutes.toString().padStart(2, '0')}`)
+      }
     }
 
-    let hours = parseInt(timeMatch[1], 10)
-    const minutes = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0
-    const period = timeMatch[3].toUpperCase()
-
-    // Convert to 24-hour format
-    if (period === 'PM' && hours !== 12) {
-      hours += 12
-    } else if (period === 'AM' && hours === 12) {
-      hours = 0
-    }
-
-    console.log(`[timeUtils] Parsed event time: ${hours}:${minutes.toString().padStart(2, '0')} (${period})`)
-
-    // Determine time period based on hours
+    // Determine time period based on hours (24-hour format)
     if (hours >= 6 && hours < 11) {
       console.log('[timeUtils] Default time period: morning')
       return 'morning'

@@ -55,7 +55,7 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
     'Cultural',
   ]
 
-  // Auto-geocode venue
+  // Auto-geocode venue (re-runs when venue changes OR when latitude is cleared)
   useEffect(() => {
     const geocodeAddress = async () => {
       if (!localData.venue || localData.latitude) return
@@ -80,7 +80,7 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
     }
 
     geocodeAddress()
-  }, [localData.venue])
+  }, [localData.venue, localData.latitude])
 
   const handleConfirm = () => {
     console.log('[EventConfirmation] Confirming with data:', localData)

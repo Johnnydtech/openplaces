@@ -14,10 +14,11 @@ interface RecommendationCardProps {
   onLeave?: () => void
   isHighlighted?: boolean
   onSaveChange?: () => void
+  isSaved?: boolean
 }
 
 const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
-  ({ recommendation, rank, eventName, eventDate, onHover, onLeave, isHighlighted, onSaveChange }, ref) => {
+  ({ recommendation, rank, eventName, eventDate, onHover, onLeave, isHighlighted, onSaveChange, isSaved }, ref) => {
   const [isWarningPanelOpen, setIsWarningPanelOpen] = useState(false)
   const [panelOpenedAt, setPanelOpenedAt] = useState<Date | null>(null)
 
@@ -267,6 +268,7 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
           eventName={eventName}
           eventDate={eventDate}
           onSaveChange={onSaveChange}
+          initialSavedStatus={isSaved}
         />
       </div>
     </div>

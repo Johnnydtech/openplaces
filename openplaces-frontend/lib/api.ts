@@ -220,7 +220,7 @@ export interface ZoneRecommendation {
 
 export async function getRecommendations(eventData: EventDataForRecommendations): Promise<ZoneRecommendation[]> {
   const response = await apiClient.post('/api/recommendations/top', eventData, {
-    timeout: 60000  // 60 second timeout (NFR-P1: <60s total)
+    timeout: 120000  // 120 second timeout (increased for Claude scoring of 29 zones)
   })
   return response.data
 }
@@ -307,6 +307,27 @@ export async function checkIfSaved(
   zoneId: string
 ): Promise<{ is_saved: boolean }> {
   const response = await apiClient.get(`/api/saved-recommendations/check/${userId}/${zoneId}`, {
+    headers: {
+      'X-Clerk-User-Id': userId
+    }
+  })
+  return response.data
+}
+
+/**
+ * Batch check if multiple zones are saved
+ * POST /api/saved-recommendations/check-batch/{user_id}
+ * Reduces API calls from N to 1
+ *
+ * @param userId - Clerk user ID
+ * @param zoneIds - Array of zone IDs to check
+ * @returns Object mapping zone_id to is_saved boolean
+ */
+export async function checkIfSavedBatch(
+  userId: string,
+  zoneIds: string[]
+): Promise<Record<string, boolean>> {
+  const response = await apiClient.post(`/api/saved-recommendations/check-batch/${userId}`, zoneIds, {
     headers: {
       'X-Clerk-User-Id': userId
     }

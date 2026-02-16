@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import toast from 'react-hot-toast'
-import { saveRecommendation, unsaveRecommendation, checkIfSaved } from '@/lib/api'
+import { saveRecommendation, unsaveRecommendation } from '@/lib/api'
 
 interface SaveButtonProps {
   zoneId: string
@@ -11,30 +11,18 @@ interface SaveButtonProps {
   eventName: string
   eventDate: string
   onSaveChange?: () => void
+  initialSavedStatus?: boolean
 }
 
-export default function SaveButton({ zoneId, zoneName, eventName, eventDate, onSaveChange }: SaveButtonProps) {
+export default function SaveButton({ zoneId, zoneName, eventName, eventDate, onSaveChange, initialSavedStatus }: SaveButtonProps) {
   const { user, isLoaded } = useUser()
-  const [isSaved, setIsSaved] = useState(false)
+  const [isSaved, setIsSaved] = useState(initialSavedStatus || false)
   const [isLoading, setIsLoading] = useState(false)
 
-  // Check if already saved on mount
+  // Update local state when initialSavedStatus prop changes (from batch check)
   useEffect(() => {
-    const checkSavedStatus = async () => {
-      if (!user?.id) return
-
-      try {
-        const result = await checkIfSaved(user.id, zoneId)
-        setIsSaved(result.is_saved)
-      } catch (error) {
-        console.error('Error checking saved status:', error)
-      }
-    }
-
-    if (isLoaded && user) {
-      checkSavedStatus()
-    }
-  }, [user?.id, zoneId, isLoaded])
+    setIsSaved(initialSavedStatus || false)
+  }, [initialSavedStatus])
 
   const handleToggleSave = async () => {
     // Require authentication

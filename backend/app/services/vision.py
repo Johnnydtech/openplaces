@@ -112,7 +112,7 @@ Analyze the visual design, readability, and overall quality of the flyer as well
             client = get_anthropic_client()
             response = await asyncio.wait_for(
                 client.messages.create(
-                    model="claude-opus-4-20250514",  # Claude Opus 4.6
+                    model="claude-opus-4-6",  # Claude Opus 4.6
                     max_tokens=1024,
                     messages=[
                         {
@@ -195,11 +195,15 @@ Analyze the visual design, readability, and overall quality of the flyer as well
         # Story 3.2 AC: API costs logged
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
-        tokens_used = response.usage.total_tokens if response.usage else 0
+        # Claude API uses input_tokens + output_tokens instead of total_tokens
+        tokens_used = (response.usage.input_tokens + response.usage.output_tokens) if response.usage else 0
         logger.info(
             f"Flyer analysis complete in {duration:.2f}s using {tokens_used} tokens"
         )
-        logger.info(f"Estimated cost: ${(tokens_used * 0.00003):.4f}")  # Rough estimate
+        # Claude Opus pricing: $15/1M input, $75/1M output tokens
+        input_cost = (response.usage.input_tokens * 0.000015) if response.usage else 0
+        output_cost = (response.usage.output_tokens * 0.000075) if response.usage else 0
+        logger.info(f"Estimated cost: ${(input_cost + output_cost):.4f}")
 
         return result
 

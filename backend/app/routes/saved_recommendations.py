@@ -288,6 +288,51 @@ async def delete_saved_recommendation(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/check-batch/{user_id}")
+async def check_if_saved_batch(
+    user_id: str,
+    zone_ids: list[str],
+    x_clerk_user_id: Optional[str] = Header(None, alias="X-Clerk-User-Id")
+):
+    """
+    Batch check if multiple zones are saved by the user
+
+    Returns a dict mapping zone_id to is_saved status
+    Reduces API calls from N to 1
+    """
+    if not x_clerk_user_id or x_clerk_user_id != user_id:
+        return {zone_id: False for zone_id in zone_ids}
+
+    try:
+        supabase = get_supabase_client()
+
+        # Get internal user_id
+        user_result = supabase.table("users").select("id").eq("clerk_user_id", x_clerk_user_id).execute()
+
+        if not user_result.data:
+            return {zone_id: False for zone_id in zone_ids}
+
+        internal_user_id = user_result.data[0]["id"]
+
+        # Check all zones in one query using .in_()
+        result = supabase.table("saved_recommendations")\
+            .select("zone_id")\
+            .eq("user_id", internal_user_id)\
+            .in_("zone_id", zone_ids)\
+            .execute()
+
+        saved_zone_ids = {row["zone_id"] for row in result.data}
+
+        return {
+            zone_id: zone_id in saved_zone_ids
+            for zone_id in zone_ids
+        }
+
+    except Exception as e:
+        logger.error(f"Error checking batch saved status: {e}")
+        return {zone_id: False for zone_id in zone_ids}
+
+
 @router.get("/check/{user_id}/{zone_id}")
 async def check_if_saved(
     user_id: str,

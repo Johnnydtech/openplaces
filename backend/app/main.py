@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
 from dotenv import load_dotenv
-from app.routes import webhooks, saved_recommendations, flyer_uploads, recommendations_cache, analyze, geocoding, recommendations, data_ingestion
+from app.routes import webhooks, saved_recommendations, flyer_uploads, recommendations_cache, analyze, geocoding, recommendations, data_ingestion, zones
 from app.middleware import RateLimitMiddleware
 
 # Load environment variables
@@ -54,6 +54,8 @@ app.include_router(recommendations_cache.router)
 app.include_router(analyze.router)
 # Story 3.6: Venue geocoding endpoint
 app.include_router(geocoding.router, prefix="/api")
+# Story 4.1: Zones management
+app.include_router(zones.router)
 # Story 4.2-4.3: Zone recommendations
 app.include_router(recommendations.router)
 # Real data ingestion from Arlington + Google APIs

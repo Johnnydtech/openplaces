@@ -114,22 +114,50 @@ class RecommendationsService:
         Returns list of ZoneScore objects sorted by total_score (highest first)
 
         Scoring Formula (Story 4.2 AC):
-        - audience_match: 40% - uses Claude for intelligent semantic matching
+        - audience_match: 40% - uses Claude for intelligent semantic matching (batched in parallel)
         - temporal_alignment: 30% - are people there when you need them?
         - distance: 20% - how close to venue?
         - dwell_time: 10% - do people stop and look?
 
         Final score: 0-100%
         """
-        zones = self.zones_service.get_all_zones()
-        scored_zones = []
+        zones = await self.zones_service.get_all_zones()
 
-        for zone in zones:
-            # Calculate individual components
-            # Use Claude Opus 4.6 for intelligent audience matching
-            audience_match, match_reasoning = await self._calculate_audience_match_with_claude(
-                event_data.target_audience, zone.audience_signals
-            )
+        # Batch Claude API calls with rate limiting (max 5 concurrent)
+        logger.info(f"Scoring {len(zones)} zones with Claude Opus 4.6 (rate-limited batch processing)...")
+        audience_matches = []
+        batch_size = 5  # Process 5 zones at a time to avoid rate limits
+
+        for i in range(0, len(zones), batch_size):
+            batch = zones[i:i+batch_size]
+            batch_num = (i // batch_size) + 1
+            total_batches = (len(zones) + batch_size - 1) // batch_size
+            logger.info(f"Processing batch {batch_num}/{total_batches} ({len(batch)} zones)...")
+
+            batch_tasks = [
+                self._calculate_audience_match_with_claude(event_data.target_audience, zone.audience_signals)
+                for zone in batch
+            ]
+            batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+            audience_matches.extend(batch_results)
+            logger.info(f"Batch {batch_num}/{total_batches} complete")
+
+            # Small delay between batches to avoid rate limits
+            if i + batch_size < len(zones):
+                await asyncio.sleep(0.5)
+
+        scored_zones = []
+        for i, zone in enumerate(zones):
+            # Get pre-computed audience match from parallel batch
+            result = audience_matches[i]
+
+            # Handle exceptions from failed API calls
+            if isinstance(result, Exception):
+                logger.warning(f"Claude API failed for zone {zone.id}, using keyword fallback: {result}")
+                audience_match = self._keyword_based_audience_match(event_data.target_audience, zone.audience_signals)
+                match_reasoning = "Keyword-based matching (API unavailable)"
+            else:
+                audience_match, match_reasoning = result
             temporal_alignment = self._calculate_temporal_alignment(
                 event_data.date, event_data.time, event_data.event_type, zone.timing_windows
             )
@@ -235,10 +263,15 @@ Respond with ONLY a JSON object (no markdown, no explanation):
 {{"score": <number 0-40>, "reasoning": "<brief 1-sentence explanation>"}}"""
 
         try:
-            response = await self.claude_client.messages.create(
-                model="claude-opus-4-20250514",  # Claude Opus 4.6
-                max_tokens=150,
-                messages=[{"role": "user", "content": prompt}]
+            # Add 30 second timeout to prevent hanging
+            response = await asyncio.wait_for(
+                self.claude_client.messages.create(
+                    model="claude-opus-4-6",  # Claude Opus 4.6
+                    max_tokens=150,
+                    messages=[{"role": "user", "content": prompt}],
+                    timeout=30.0  # 30 second timeout per API call
+                ),
+                timeout=35.0  # asyncio timeout slightly longer
             )
 
             # Parse response
@@ -262,8 +295,12 @@ Respond with ONLY a JSON object (no markdown, no explanation):
             else:
                 raise ValueError("No valid JSON in response")
 
+        except asyncio.TimeoutError:
+            logger.error(f"Claude API timeout after 30s - using keyword fallback")
+            # Fallback to keyword matching
+            return self._keyword_based_audience_match(target_audience, zone_audience_signals), "Fallback: API timeout"
         except Exception as e:
-            logger.error(f"Claude audience matching failed: {e}")
+            logger.error(f"Claude audience matching failed: {type(e).__name__}: {e}")
             # Fallback to keyword matching
             return self._keyword_based_audience_match(target_audience, zone_audience_signals), "Fallback: keyword matching"
 

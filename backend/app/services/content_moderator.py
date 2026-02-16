@@ -47,7 +47,7 @@ Respond with ONLY a JSON object (no markdown, no explanation):
 {"safe": true/false, "reason": "brief explanation", "categories": ["list of flagged categories"]}"""
 
             response = await self.client.messages.create(
-                model="claude-opus-4-20250514",  # Claude Opus 4.6
+                model="claude-opus-4-6",  # Claude Opus 4.6
                 max_tokens=200,
                 messages=[
                     {
@@ -131,7 +131,7 @@ Respond with ONLY a JSON object (no markdown, no explanation):
 {{"safe": true/false, "reason": "brief explanation", "categories": ["list of flagged categories"]}}"""
 
             response = await self.client.messages.create(
-                model="claude-opus-4-20250514",  # Claude Opus 4.6
+                model="claude-opus-4-6",  # Claude Opus 4.6
                 max_tokens=200,
                 messages=[
                     {

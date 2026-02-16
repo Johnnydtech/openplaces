@@ -164,9 +164,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     f"on {request.url.path}"
                 )
 
-                return HTTPException(
+                from starlette.responses import JSONResponse
+                return JSONResponse(
                     status_code=429,
-                    detail={
+                    content={
                         "error": "Rate limit exceeded",
                         "limit": limit_name,
                         "retry_after": retry_after,
@@ -178,7 +179,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                         "X-RateLimit-Reset": str(reset_time),
                         "Retry-After": str(retry_after),
                     }
-                ).init_response(request)
+                )
 
         # Request allowed - add rate limit headers
         response = await call_next(request)

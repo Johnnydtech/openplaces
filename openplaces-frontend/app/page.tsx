@@ -10,7 +10,7 @@ import EventConfirmation from '@/components/EventConfirmation'
 import RecommendationCard from '@/components/RecommendationCard'
 import ZoneDetailsPanel from '@/components/ZoneDetailsPanel'
 import TimePeriodToggle, { type TimePeriod } from '@/components/TimePeriodToggle'
-import { analyzeFlyer, geocodeVenue, getRecommendations, getSavedRecommendations, setApiUserId, type EventDataForRecommendations, type ZoneRecommendation, type SavedRecommendation } from '@/lib/api'
+import { analyzeFlyer, geocodeVenue, getRecommendations, getSavedRecommendations, checkIfSavedBatch, setApiUserId, type EventDataForRecommendations, type ZoneRecommendation, type SavedRecommendation } from '@/lib/api'
 import { getDefaultTimePeriod } from '@/lib/timeUtils'
 
 type UploadState = 'idle' | 'uploading' | 'analyzing' | 'confirming' | 'geocoding' | 'complete'
@@ -40,6 +40,7 @@ export default function UnifiedHomePage() {
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false)
   const [eventData, setEventData] = useState<EventDataForRecommendations | null>(null)
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<TimePeriod>('evening')
+  const [savedStatusMap, setSavedStatusMap] = useState<Record<string, boolean>>({})
 
   // Map state
   const [hoveredZoneId, setHoveredZoneId] = useState<string | null>(null)
@@ -69,6 +70,34 @@ export default function UnifiedHomePage() {
       setIsLoadingHistory(false)
     }
   }
+
+  // Refresh saved status map (called after save/unsave actions)
+  const refreshSavedStatus = async () => {
+    if (!isSignedIn || !user || recommendations.length === 0) {
+      setSavedStatusMap({})
+      return
+    }
+
+    try {
+      const zoneIds = recommendations.map(r => r.zone_id)
+      const statusMap = await checkIfSavedBatch(user.id, zoneIds)
+      setSavedStatusMap(statusMap)
+    } catch (error) {
+      console.error('Error checking saved status:', error)
+      // On error, default to empty map (buttons will show unsaved state)
+      setSavedStatusMap({})
+    }
+  }
+
+  // Handler for when save status changes (save/unsave button clicked)
+  const handleSaveChange = async () => {
+    await Promise.all([loadHistory(), refreshSavedStatus()])
+  }
+
+  // Batch check saved status when recommendations load (reduces API calls from N to 1)
+  useEffect(() => {
+    refreshSavedStatus()
+  }, [isSignedIn, user, recommendations])
 
   // Handle file upload
   const handleFileUpload = async (file: File) => {
@@ -246,7 +275,7 @@ export default function UnifiedHomePage() {
   return (
     <div className="flex h-screen overflow-hidden relative" style={{ background: '#0f1c24' }}>
       <Toaster
-        position="top-center"
+        position="top-right"
         toastOptions={{
           style: {
             background: '#1a2f3a',
@@ -288,8 +317,8 @@ export default function UnifiedHomePage() {
         />
       </div>
 
-      {/* Arlington Beta Badge - Top Center */}
-      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-10">
+      {/* Arlington Beta Badge - Top Center (responsive positioning) */}
+      <div className="absolute top-6 left-1/2 lg:left-[calc(50%+120px)] transform -translate-x-1/2 z-10">
         <div
           className="rounded-lg px-4 py-2 backdrop-blur-xl shadow-lg"
           style={{
@@ -309,37 +338,63 @@ export default function UnifiedHomePage() {
         </div>
       </div>
 
-      {/* Left Sidebar - Upload & Recommendations */}
+      {/* Left Sidebar - Upload & Recommendations (responsive) */}
       <div
-        className="absolute left-6 top-6 bottom-6 w-[480px] rounded-xl shadow-2xl backdrop-blur-xl overflow-hidden animate-in slide-in-from-left duration-300 flex flex-col"
+        className="absolute inset-x-4 top-20 bottom-4 lg:left-6 lg:top-6 lg:bottom-6 lg:w-[480px] lg:inset-x-auto rounded-xl shadow-2xl backdrop-blur-xl overflow-hidden animate-in slide-in-from-left duration-300 flex flex-col"
         style={{ background: 'rgba(26, 47, 58, 0.95)', border: '1px solid rgba(74, 222, 128, 0.2)' }}
       >
         {/* Sidebar Header */}
         <div className="p-6 border-b" style={{ borderColor: 'rgba(42, 69, 81, 0.5)' }}>
-          {/* User info - top right if signed in */}
+          {/* Top bar with back button and user info */}
           {isSignedIn && user && (
-            <div className="flex items-center justify-end gap-2 mb-3">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{ background: 'rgba(74, 222, 128, 0.1)' }}>
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: '#4ade80', color: '#0f1c24' }}>
-                  {user.firstName?.[0] || user.emailAddresses[0]?.emailAddress[0].toUpperCase()}
+            <div className="flex items-center justify-between gap-2 mb-3">
+              {/* Back Button - Show during loading/recommendations */}
+              {(uploadState === 'confirming' || uploadState === 'complete' || isLoadingRecommendations) ? (
+                <button
+                  onClick={() => {
+                    setUploadState('idle')
+                    setUploadedFile(null)
+                    setExtractedData(null)
+                    setRecommendations([])
+                    setEventData(null)
+                    setSelectedZone(null)
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors"
+                  style={{ background: 'rgba(74, 222, 128, 0.1)', color: '#4ade80' }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(74, 222, 128, 0.2)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(74, 222, 128, 0.1)'}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                    <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-sm font-medium">Start Over</span>
+                </button>
+              ) : <div />}
+
+              {/* User info - right side */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{ background: 'rgba(74, 222, 128, 0.1)' }}>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: '#4ade80', color: '#0f1c24' }}>
+                    {user.firstName?.[0] || user.emailAddresses[0]?.emailAddress[0].toUpperCase()}
+                  </div>
+                  <span className="text-xs font-medium" style={{ color: '#4ade80' }}>
+                    {user.firstName || 'User'}
+                  </span>
                 </div>
-                <span className="text-xs font-medium" style={{ color: '#4ade80' }}>
-                  {user.firstName || 'User'}
-                </span>
+                <button
+                  onClick={() => signOut()}
+                  className="p-1.5 rounded-lg transition-colors"
+                  style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                  title="Sign out"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                    <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M19 10a.75.75 0 00-.75-.75H8.704l1.048-.943a.75.75 0 10-1.004-1.114l-2.5 2.25a.75.75 0 000 1.114l2.5 2.25a.75.75 0 101.004-1.114l-1.048-.943h9.546A.75.75 0 0019 10z" clipRule="evenodd" />
+                  </svg>
+                </button>
               </div>
-              <button
-                onClick={() => signOut()}
-                className="p-1.5 rounded-lg transition-colors"
-                style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-                title="Sign out"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                  <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z" clipRule="evenodd" />
-                  <path fillRule="evenodd" d="M19 10a.75.75 0 00-.75-.75H8.704l1.048-.943a.75.75 0 10-1.004-1.114l-2.5 2.25a.75.75 0 000 1.114l2.5 2.25a.75.75 0 101.004-1.114l-1.048-.943h9.546A.75.75 0 0019 10z" clipRule="evenodd" />
-                </svg>
-              </button>
             </div>
           )}
 
@@ -352,7 +407,7 @@ export default function UnifiedHomePage() {
               </h1>
             </div>
             <p className="text-sm text-center" style={{ color: '#94a3b8' }}>
-              Find WHERE to place your ads to get people to your event
+              Find WHERE to place your flyers & posters to get people to your event
             </p>
             {/* Powered by Claude Opus 4.6 Badge */}
             <div className="inline-flex items-center gap-2 rounded-full px-3 py-1.5" style={{ background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
@@ -374,10 +429,10 @@ export default function UnifiedHomePage() {
             {/* Hero Section */}
             <div className="space-y-3">
               <h2 className="text-2xl font-bold text-white">
-                Stop Guessing Where to Advertise
+                Stop Guessing Where to Post Your Flyers
               </h2>
               <p className="text-sm leading-relaxed" style={{ color: '#94a3b8' }}>
-                We analyze foot traffic, demographics, and location data to recommend the best placement spots.
+                We analyze foot traffic, demographics, and location data to recommend the best spots for your physical ads.
               </p>
             </div>
 
@@ -403,7 +458,7 @@ export default function UnifiedHomePage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-white mb-1">Timing Intelligence</h3>
-                  <p className="text-xs" style={{ color: '#94a3b8' }}>Know when to place your ads for maximum impact</p>
+                  <p className="text-xs" style={{ color: '#94a3b8' }}>Know when to post your flyers for maximum visibility</p>
                 </div>
               </div>
 
@@ -414,8 +469,8 @@ export default function UnifiedHomePage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white mb-1">Strategic Placement Zones</h3>
-                  <p className="text-xs" style={{ color: '#94a3b8' }}>See ranked locations with transparent reasoning</p>
+                  <h3 className="text-sm font-semibold text-white mb-1">Physical Posting Spots</h3>
+                  <p className="text-xs" style={{ color: '#94a3b8' }}>Ranked locations to hang your flyers with transparent reasoning</p>
                 </div>
               </div>
             </div>
@@ -519,11 +574,38 @@ export default function UnifiedHomePage() {
         {/* Loading State */}
         {(uploadState === 'analyzing' || uploadState === 'geocoding' || (isLoadingRecommendations && recommendations.length === 0)) && (
           <div className="flex-1 flex items-center justify-center p-6">
-            <div className="text-center">
+            <div className="text-center max-w-md w-full">
               <div className="animate-spin rounded-full h-12 w-12 border-4 mx-auto mb-4" style={{ borderColor: 'rgba(74, 222, 128, 0.2)', borderTopColor: '#4ade80' }}></div>
-              <p className="text-sm text-white">
-                {uploadState === 'analyzing' ? 'Analyzing flyer...' : uploadState === 'geocoding' ? 'Finding venue...' : 'Generating recommendations...'}
+              <p className="text-sm font-semibold text-white mb-2">
+                {uploadState === 'analyzing' ? 'Analyzing flyer with Claude Opus 4.6...' :
+                 uploadState === 'geocoding' ? 'Finding venue location...' :
+                 'Analyzing 29 zones with Claude Opus 4.6...'}
               </p>
+              <p className="text-xs mb-4" style={{ color: '#94a3b8' }}>
+                {uploadState === 'analyzing' ? 'Extracting event details' :
+                 uploadState === 'geocoding' ? 'Geocoding venue address' :
+                 'Intelligently matching audience & location data (~15-20 seconds)'}
+              </p>
+              {/* Progress bar for recommendations */}
+              {isLoadingRecommendations && recommendations.length === 0 && (
+                <div className="w-full rounded-full h-2 overflow-hidden relative" style={{ background: 'rgba(74, 222, 128, 0.1)' }}>
+                  <div
+                    className="h-full rounded-full absolute"
+                    style={{
+                      background: 'linear-gradient(90deg, #4ade80 0%, #22c55e 100%)',
+                      width: '40%',
+                      animation: 'slideProgress 2s ease-in-out infinite',
+                    }}
+                  />
+                  <style jsx>{`
+                    @keyframes slideProgress {
+                      0% { left: -40%; }
+                      50% { left: 100%; }
+                      100% { left: -40%; }
+                    }
+                  `}</style>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -589,7 +671,8 @@ export default function UnifiedHomePage() {
                     onHover={(zoneId) => setHoveredZoneId(zoneId)}
                     onLeave={() => setHoveredZoneId(null)}
                     isHighlighted={hoveredZoneId === recommendation.zone_id}
-                    onSaveChange={loadHistory}
+                    onSaveChange={handleSaveChange}
+                    isSaved={savedStatusMap[recommendation.zone_id]}
                   />
                 </div>
               ))}
