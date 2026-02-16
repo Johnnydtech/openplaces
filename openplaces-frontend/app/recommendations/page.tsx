@@ -373,38 +373,59 @@ function RecommendationsContent() {
           />
         </div>
 
-        {/* Loading State */}
-        {isLoading && (
+        {/* Story 6.6: Recommendations List with Smooth Transitions */}
+        {recommendations.length > 0 && eventData && (
+          <div className="relative">
+            {/* Story 6.6: Loading overlay during time period re-ranking */}
+            {isLoading && (
+              <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-sm rounded-lg flex items-center justify-center transition-opacity duration-200">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                  <p className="text-sm font-medium text-gray-700">Re-ranking recommendations...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Story 6.6: Recommendations with fade animation */}
+            <div
+              className={`space-y-4 transition-opacity duration-200 ${
+                isLoading ? 'opacity-40' : 'opacity-100'
+              }`}
+            >
+              {recommendations.map((recommendation, index) => (
+                <div
+                  key={`${recommendation.zone_id}-${selectedTimePeriod}`}  // Story 6.6: Force re-render on period change
+                  className="animate-in fade-in slide-in-from-bottom-1 duration-200 motion-reduce:animate-none"
+                >
+                  <RecommendationCard
+                    ref={(el) => {
+                      if (el) {
+                        recommendationRefs.current.set(recommendation.zone_id, el)
+                      } else {
+                        recommendationRefs.current.delete(recommendation.zone_id)
+                      }
+                    }}
+                    recommendation={recommendation}
+                    rank={index + 1}
+                    eventName={eventData.name}
+                    eventDate={eventData.date}
+                    onHover={(zoneId) => setHoveredZoneId(zoneId)}
+                    onLeave={() => setHoveredZoneId(null)}
+                    isHighlighted={hoveredZoneId === recommendation.zone_id}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Initial Loading State (first load only) */}
+        {isLoading && recommendations.length === 0 && (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse rounded-lg border border-gray-200 bg-white p-6">
                 <div className="h-24 bg-gray-200 rounded"></div>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Recommendations List */}
-        {!isLoading && recommendations.length > 0 && eventData && (
-          <div className="space-y-4">
-            {recommendations.map((recommendation, index) => (
-              <RecommendationCard
-                key={recommendation.zone_id}
-                ref={(el) => {
-                  if (el) {
-                    recommendationRefs.current.set(recommendation.zone_id, el)
-                  } else {
-                    recommendationRefs.current.delete(recommendation.zone_id)
-                  }
-                }}
-                recommendation={recommendation}
-                rank={index + 1}
-                eventName={eventData.name}
-                eventDate={eventData.date}
-                onHover={(zoneId) => setHoveredZoneId(zoneId)}
-                onLeave={() => setHoveredZoneId(null)}
-                isHighlighted={hoveredZoneId === recommendation.zone_id}
-              />
             ))}
           </div>
         )}
