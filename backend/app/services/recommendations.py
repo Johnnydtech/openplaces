@@ -36,11 +36,24 @@ class DataSource(BaseModel):
     last_updated: str  # ISO date, e.g., "2026-02-10"
 
 
+class WarningCategory(BaseModel):
+    """
+    Story 7.5: Individual warning category with details
+    """
+    category_type: str  # "low_dwell_time", "poor_audience_match", "visual_noise", "timing_misalignment"
+    display_name: str  # "Low Dwell Time"
+    icon: str  # "⏱️"
+    description: str  # Short explanation of the issue
+    severity: str  # "high", "medium", "low"
+    metric_value: Optional[float] = None  # The actual metric that triggered this
+
+
 class RiskWarning(BaseModel):
     """
     Risk warning metadata for deceptive hotspots
     Story 7.1: Protective intelligence for users
     Story 7.4: Added alternative_zones
+    Story 7.5: Added warning_categories
     """
     is_flagged: bool  # True if zone is deceptive hotspot
     warning_type: str  # "deceptive_hotspot"
@@ -48,6 +61,7 @@ class RiskWarning(BaseModel):
     severity: str  # "high", "medium", "low"
     details: Dict[str, Any]  # Supporting data
     alternative_zones: List[Dict[str, Any]] = Field(default_factory=list)  # Story 7.4: Better alternatives
+    warning_categories: List[WarningCategory] = Field(default_factory=list)  # Story 7.5: Specific categories
 
 
 class ZoneScore(BaseModel):
@@ -614,7 +628,7 @@ class RecommendationsService:
         """
         # Find flagged zone's score
         flagged_zone_data = next(
-            (sz for sz in all_scored_zones if sz.zone.zone_id == flagged_zone.zone_id),
+            (sz for sz in all_scored_zones if sz.zone.id == flagged_zone.id),
             None
         )
 
@@ -628,7 +642,7 @@ class RecommendationsService:
             sz for sz in all_scored_zones
             if (not sz.risk_warning or not sz.risk_warning.is_flagged)
             and sz.total_score > flagged_score
-            and sz.zone.zone_id != flagged_zone.zone_id
+            and sz.zone.id != flagged_zone.id
         ]
 
         # Sort by total score (best first)
@@ -639,7 +653,7 @@ class RecommendationsService:
         for candidate in candidates[:max_alternatives]:
             # Find rank (1-indexed)
             rank = next(
-                (i + 1 for i, sz in enumerate(all_scored_zones) if sz.zone.zone_id == candidate.zone.zone_id),
+                (i + 1 for i, sz in enumerate(all_scored_zones) if sz.zone.id == candidate.zone.id),
                 0
             )
 
@@ -657,7 +671,7 @@ class RecommendationsService:
                 reasons.append("higher overall score")
 
             alternatives.append({
-                "zone_id": candidate.zone.zone_id,
+                "zone_id": candidate.zone.id,
                 "zone_name": candidate.zone.name,
                 "rank": rank,
                 "total_score": round(candidate.total_score, 1),
