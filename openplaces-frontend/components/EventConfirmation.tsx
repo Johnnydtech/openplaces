@@ -249,21 +249,21 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
     <div className="rounded-xl border shadow-2xl backdrop-blur-xl overflow-hidden" style={{ background: 'rgba(26, 47, 58, 0.95)', borderColor: 'rgba(74, 222, 128, 0.2)' }}>
       {/* Header */}
       <div className="p-6 border-b" style={{ borderColor: 'rgba(42, 69, 81, 0.5)' }}>
-        <div className="flex items-start justify-between mb-2">
-          <div>
-            <h3 className="text-xl font-bold text-white mb-1">
+        <div className="mb-2">
+          <div className="flex items-center gap-3 mb-1">
+            <h3 className="text-xl font-bold text-white flex-1 min-w-0">
               {localData.event_name}
             </h3>
-            <p className="text-sm" style={{ color: '#94a3b8' }}>
-              {new Date(localData.event_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at {localData.event_time}
-            </p>
+            <span className="rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap flex-shrink-0" style={{
+              background: localData.confidence.toLowerCase() === 'high' ? '#4ade80' : localData.confidence.toLowerCase() === 'medium' ? '#facc15' : '#fb923c',
+              color: '#0f1c24'
+            }}>
+              AI Extracted
+            </span>
           </div>
-          <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{
-            background: localData.confidence.toLowerCase() === 'high' ? '#4ade80' : localData.confidence.toLowerCase() === 'medium' ? '#facc15' : '#fb923c',
-            color: '#0f1c24'
-          }}>
-            AI Extracted
-          </span>
+          <p className="text-sm" style={{ color: '#94a3b8' }}>
+            {new Date(localData.event_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at {localData.event_time}
+          </p>
         </div>
       </div>
 
