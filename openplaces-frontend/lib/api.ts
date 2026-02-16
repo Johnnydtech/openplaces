@@ -105,6 +105,22 @@ export interface DataSource {
   last_updated: string
 }
 
+export interface RiskWarning {
+  is_flagged: boolean
+  warning_type: string
+  reason: string
+  severity: string
+  details: {
+    foot_traffic_daily: number
+    dwell_time_seconds: number
+    audience_match_score: number
+    audience_match_percent: number
+    threshold_traffic: number
+    threshold_dwell_time: number
+    threshold_audience_match: number
+  }
+}
+
 export interface ZoneRecommendation {
   zone_id: string
   zone_name: string
@@ -122,6 +138,7 @@ export interface ZoneRecommendation {
   data_sources: DataSource[]
   latitude: number
   longitude: number
+  risk_warning?: RiskWarning  // Story 7.1: Risk detection
 }
 
 export async function getRecommendations(eventData: EventDataForRecommendations): Promise<ZoneRecommendation[]> {

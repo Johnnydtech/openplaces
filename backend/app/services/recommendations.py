@@ -36,9 +36,22 @@ class DataSource(BaseModel):
     last_updated: str  # ISO date, e.g., "2026-02-10"
 
 
+class RiskWarning(BaseModel):
+    """
+    Risk warning metadata for deceptive hotspots
+    Story 7.1: Protective intelligence for users
+    """
+    is_flagged: bool  # True if zone is deceptive hotspot
+    warning_type: str  # "deceptive_hotspot"
+    reason: str  # Plain-language explanation
+    severity: str  # "high", "medium", "low"
+    details: Dict[str, Any]  # Supporting data
+
+
 class ZoneScore(BaseModel):
     """
     Zone with calculated score and breakdown
+    Story 7.1: Added risk_warning field
     """
     zone: Zone
     total_score: float  # 0-100
@@ -49,6 +62,7 @@ class ZoneScore(BaseModel):
     distance_miles: float
     reasoning: str
     data_sources: List[DataSource] = Field(default_factory=list)  # Story 4.10
+    risk_warning: Optional[RiskWarning] = None  # Story 7.1: Risk detection
 
 
 class RecommendationsService:
@@ -108,6 +122,11 @@ class RecommendationsService:
             # Story 4.10: Detect data sources used for this zone
             data_sources = self._detect_data_sources(zone, event_data)
 
+            # Story 7.1: Detect deceptive hotspots
+            risk_warning = self._detect_deceptive_hotspot(
+                zone, audience_match, zone.dwell_time_seconds
+            )
+
             scored_zones.append(
                 ZoneScore(
                     zone=zone,
@@ -119,6 +138,7 @@ class RecommendationsService:
                     distance_miles=round(distance_miles, 2),
                     reasoning=reasoning,
                     data_sources=data_sources,
+                    risk_warning=risk_warning,  # Story 7.1
                 )
             )
 
@@ -453,6 +473,62 @@ class RecommendationsService:
 
         # Fallback (shouldn't happen)
         return "strategic timing for target audience behavior patterns"
+
+    def _detect_deceptive_hotspot(
+        self, zone: Zone, audience_match_score: float, dwell_time_seconds: int
+    ) -> Optional[RiskWarning]:
+        """
+        Story 7.1: Detect deceptive hotspots
+
+        A deceptive hotspot is a zone that APPEARS attractive (high traffic)
+        but is ACTUALLY ineffective (people rush through, wrong audience).
+
+        Detection Criteria (ALL must be true):
+        1. High foot traffic (>1000/day) - appears attractive
+        2. Low dwell time (<20 seconds) - people rush through
+        3. Poor audience alignment (<60% match / <24 points) - wrong demographic
+
+        Returns:
+            RiskWarning if zone is deceptive hotspot, None otherwise
+        """
+        # Get foot traffic data (from zone metadata)
+        foot_traffic_daily = getattr(zone, 'foot_traffic_daily', 0)
+
+        # Check all three criteria
+        has_high_traffic = foot_traffic_daily > 1000
+        has_low_dwell_time = dwell_time_seconds < 20
+        has_poor_audience_match = audience_match_score < 24.0  # <60% of 40 points
+
+        # All three must be true for deceptive hotspot
+        if has_high_traffic and has_low_dwell_time and has_poor_audience_match:
+            # Calculate audience match percentage for display
+            audience_match_percent = int((audience_match_score / 40.0) * 100)
+
+            # Generate specific reason
+            reason = (
+                f"High traffic ({foot_traffic_daily}/day) but people rush through "
+                f"({dwell_time_seconds}s dwell time). Poor audience match ({audience_match_percent}%). "
+                f"Posters likely to be overlooked."
+            )
+
+            return RiskWarning(
+                is_flagged=True,
+                warning_type="deceptive_hotspot",
+                reason=reason,
+                severity="high",  # High severity because users might waste money
+                details={
+                    "foot_traffic_daily": foot_traffic_daily,
+                    "dwell_time_seconds": dwell_time_seconds,
+                    "audience_match_score": audience_match_score,
+                    "audience_match_percent": audience_match_percent,
+                    "threshold_traffic": 1000,
+                    "threshold_dwell_time": 20,
+                    "threshold_audience_match": 24.0
+                }
+            )
+
+        # No warning needed
+        return None
 
 
 # Singleton instance
