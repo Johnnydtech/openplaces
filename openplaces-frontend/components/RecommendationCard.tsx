@@ -1,6 +1,6 @@
 'use client'
 
-import { forwardRef } from 'react'
+import { forwardRef, useState } from 'react'
 import { type ZoneRecommendation } from '@/lib/api'
 import SaveButton from './SaveButton'
 
@@ -16,6 +16,9 @@ interface RecommendationCardProps {
 
 const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
   ({ recommendation, rank, eventName, eventDate, onHover, onLeave, isHighlighted }, ref) => {
+  // Story 7.3: Track warning panel open state
+  const [isWarningPanelOpen, setIsWarningPanelOpen] = useState(false)
+
   // Story 4.4: Calculate percentage for audience match (out of 40 possible points)
   const audienceMatchPercent = Math.round((recommendation.audience_match_score / 40) * 100)
   // Story 4.11: Calculate percentages for all scoring components
@@ -38,7 +41,11 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
       {recommendation.risk_warning?.is_flagged && (
         <div
           className="absolute top-4 right-4 group cursor-pointer"
-          title="Risk Warning - This zone may be ineffective"
+          onClick={(e) => {
+            e.stopPropagation()  // Prevent card click events
+            setIsWarningPanelOpen(!isWarningPanelOpen)  // Story 7.3: Toggle panel
+          }}
+          title="Risk Warning - Click for details"
         >
           <div className="relative flex items-center justify-center w-8 h-8 bg-orange-500 rounded-full shadow-lg animate-pulse">
             {/* Warning icon */}
@@ -257,6 +264,83 @@ const RecommendationCard = forwardRef<HTMLDivElement, RecommendationCardProps>(
           </div>
         </div>
       </div>
+
+      {/* Story 7.3: Risk Warning Explanation Panel */}
+      {recommendation.risk_warning?.is_flagged && isWarningPanelOpen && (
+        <div className="mt-4 rounded-lg border-2 border-orange-500 bg-orange-50 p-4 animate-in slide-in-from-top-2 duration-200">
+          {/* Warning header */}
+          <div className="flex items-start gap-3 mb-3">
+            <div className="flex-shrink-0">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="w-6 h-6 text-orange-600"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="text-lg font-bold text-orange-900 mb-1">
+                ⚠️ Risk Warning: Deceptive Hotspot
+              </h4>
+              <p className="text-sm text-orange-800 leading-relaxed">
+                {recommendation.risk_warning.reason}
+              </p>
+            </div>
+          </div>
+
+          {/* Data breakdown */}
+          {recommendation.risk_warning.details && (
+            <div className="bg-white rounded-md p-3 mb-3 border border-orange-200">
+              <h5 className="text-xs font-semibold text-gray-700 mb-2 uppercase">
+                Detection Data
+              </h5>
+              <div className="space-y-1 text-sm text-gray-700">
+                <div className="flex justify-between">
+                  <span>Daily Foot Traffic:</span>
+                  <span className="font-semibold">
+                    {recommendation.risk_warning.details.foot_traffic_daily?.toLocaleString() || 0}/day
+                    {(recommendation.risk_warning.details.foot_traffic_daily || 0) > (recommendation.risk_warning.details.threshold_traffic || 1000) && (
+                      <span className="ml-1 text-orange-600">⚠️ High</span>
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Dwell Time:</span>
+                  <span className="font-semibold">
+                    {recommendation.risk_warning.details.dwell_time_seconds || 0}s
+                    {(recommendation.risk_warning.details.dwell_time_seconds || 0) < (recommendation.risk_warning.details.threshold_dwell_time || 20) && (
+                      <span className="ml-1 text-orange-600">⚠️ Low</span>
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Audience Match:</span>
+                  <span className="font-semibold">
+                    {recommendation.risk_warning.details.audience_match_percent || 0}%
+                    {(recommendation.risk_warning.details.audience_match_score || 0) < (recommendation.risk_warning.details.threshold_audience_match || 24) && (
+                      <span className="ml-1 text-orange-600">⚠️ Poor</span>
+                    )}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Close button */}
+          <button
+            onClick={() => setIsWarningPanelOpen(false)}
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+          >
+            Got it
+          </button>
+        </div>
+      )}
     </div>
   )
 })
