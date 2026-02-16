@@ -74,10 +74,13 @@ export async function geocodeVenue(venueAddress: string) {
  * Get top placement recommendations for an event
  * POST /api/recommendations/top
  * Story 4.4: Display recommendations with audience match scores
+ * Story 6.2: Dynamic scoring adjustment based on time period
  *
  * @param eventData - Event details for scoring
  * @returns Array of zone recommendations with scores
  */
+export type TimePeriod = 'morning' | 'lunch' | 'evening'
+
 export interface EventDataForRecommendations {
   name: string
   date: string
@@ -86,6 +89,7 @@ export interface EventDataForRecommendations {
   venue_lon: number
   target_audience: string[]
   event_type: string
+  time_period?: TimePeriod  // Story 6.2: Optional time period for temporal scoring
 }
 
 export interface TimingWindow {
@@ -124,5 +128,175 @@ export async function getRecommendations(eventData: EventDataForRecommendations)
   const response = await apiClient.post('/api/recommendations/top', eventData, {
     timeout: 60000  // 60 second timeout (NFR-P1: <60s total)
   })
+  return response.data
+}
+
+/**
+ * Save a recommendation for the current user
+ * POST /api/saved-recommendations/save
+ * Story 2.6: Save recommendation functionality
+ *
+ * @param userId - Clerk user ID
+ * @param zoneId - Zone identifier
+ * @param zoneName - Zone name
+ * @param eventData - Event details
+ * @param notes - Optional user notes
+ * @returns Success response
+ */
+export interface SaveRecommendationRequest {
+  user_id: string
+  zone_id: string
+  zone_name: string
+  event_name: string
+  event_date: string
+  notes?: string
+}
+
+export async function saveRecommendation(
+  userId: string,
+  zoneId: string,
+  zoneName: string,
+  eventName: string,
+  eventDate: string,
+  notes?: string
+): Promise<{ message: string; saved_recommendation_id: string }> {
+  const response = await apiClient.post('/api/saved-recommendations/save', {
+    user_id: userId,
+    zone_id: zoneId,
+    zone_name: zoneName,
+    event_name: eventName,
+    event_date: eventDate,
+    notes: notes || null
+  }, {
+    headers: {
+      'X-Clerk-User-Id': userId
+    }
+  })
+  return response.data
+}
+
+/**
+ * Remove a saved recommendation
+ * POST /api/saved-recommendations/unsave
+ * Story 2.6: Save recommendation functionality
+ *
+ * @param userId - Clerk user ID
+ * @param zoneId - Zone identifier
+ * @returns Success response
+ */
+export async function unsaveRecommendation(
+  userId: string,
+  zoneId: string
+): Promise<{ message: string }> {
+  const response = await apiClient.post('/api/saved-recommendations/unsave', {
+    user_id: userId,
+    zone_id: zoneId
+  }, {
+    headers: {
+      'X-Clerk-User-Id': userId
+    }
+  })
+  return response.data
+}
+
+/**
+ * Check if a zone is already saved for the user
+ * GET /api/saved-recommendations/check/{user_id}/{zone_id}
+ * Story 2.6: Save recommendation functionality
+ *
+ * @param userId - Clerk user ID
+ * @param zoneId - Zone identifier
+ * @returns Whether the zone is saved
+ */
+export async function checkIfSaved(
+  userId: string,
+  zoneId: string
+): Promise<{ is_saved: boolean }> {
+  const response = await apiClient.get(`/api/saved-recommendations/check/${userId}/${zoneId}`, {
+    headers: {
+      'X-Clerk-User-Id': userId
+    }
+  })
+  return response.data
+}
+
+/**
+ * Get all saved recommendations for the current user
+ * GET /api/saved-recommendations/{user_id}
+ * Story 2.7: View saved recommendations history
+ *
+ * @param userId - Clerk user ID
+ * @returns Array of saved recommendations
+ */
+export interface SavedRecommendation {
+  id: string
+  user_id: string
+  zone_id: string
+  zone_name: string
+  event_name: string
+  event_date: string
+  notes: string | null
+  created_at: string
+}
+
+export async function getSavedRecommendations(
+  userId: string
+): Promise<SavedRecommendation[]> {
+  const response = await apiClient.get(`/api/saved-recommendations/${userId}`, {
+    headers: {
+      'X-Clerk-User-Id': userId
+    }
+  })
+  return response.data
+}
+
+/**
+ * Update notes for a saved recommendation
+ * PATCH /api/saved-recommendations/{saved_recommendation_id}/notes
+ * Story 2.8: Add/edit notes on saved recommendations
+ *
+ * @param userId - Clerk user ID
+ * @param savedRecommendationId - Saved recommendation ID
+ * @param notes - Updated notes text (max 500 characters)
+ * @returns Success response
+ */
+export async function updateSavedRecommendationNotes(
+  userId: string,
+  savedRecommendationId: string,
+  notes: string
+): Promise<{ message: string }> {
+  const response = await apiClient.patch(
+    `/api/saved-recommendations/${savedRecommendationId}/notes`,
+    { notes },
+    {
+      headers: {
+        'X-Clerk-User-Id': userId
+      }
+    }
+  )
+  return response.data
+}
+
+/**
+ * Delete a saved recommendation
+ * DELETE /api/saved-recommendations/{saved_recommendation_id}
+ * Story 2.9: Delete saved recommendations
+ *
+ * @param userId - Clerk user ID
+ * @param savedRecommendationId - Saved recommendation ID
+ * @returns Success response
+ */
+export async function deleteSavedRecommendation(
+  userId: string,
+  savedRecommendationId: string
+): Promise<{ message: string }> {
+  const response = await apiClient.delete(
+    `/api/saved-recommendations/${savedRecommendationId}`,
+    {
+      headers: {
+        'X-Clerk-User-Id': userId
+      }
+    }
+  )
   return response.data
 }

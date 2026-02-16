@@ -14,6 +14,7 @@ from app.services.zones import Zone, zones_service
 class EventData(BaseModel):
     """
     Event data model for scoring
+    Story 6.2: Added time_period for temporal scoring adjustment
     """
     name: str
     date: str  # ISO format
@@ -22,6 +23,7 @@ class EventData(BaseModel):
     venue_lon: float
     target_audience: List[str]  # e.g., ["young-professionals", "25-34", "coffee-enthusiasts"]
     event_type: str  # e.g., "workshop", "concert", "sale"
+    time_period: Optional[str] = "evening"  # Story 6.2: "morning", "lunch", or "evening"
 
 
 class DataSource(BaseModel):

@@ -114,11 +114,33 @@ function RecommendationsContent() {
     }
   }
 
-  // Story 6.1: Handler for time period changes
-  const handleTimePeriodChange = (period: TimePeriod) => {
+  // Story 6.1/6.2: Handler for time period changes with re-ranking
+  const handleTimePeriodChange = async (period: TimePeriod) => {
+    if (!eventData) return
+
     setSelectedTimePeriod(period)
-    console.log(`[Recommendations] Time period changed to: ${period}`)
-    // Story 6.2 will add re-ranking logic here
+    setIsLoading(true)
+
+    try {
+      toast.loading(`Re-ranking for ${period}...`, { id: 'rerank' })
+
+      // Story 6.2: Include time period in API request
+      const eventDataWithPeriod: EventDataForRecommendations = {
+        ...eventData,
+        time_period: period
+      }
+
+      const results = await getRecommendations(eventDataWithPeriod)
+      setRecommendations(results)
+
+      toast.success(`Optimized for ${period}!`, { id: 'rerank' })
+    } catch (error: any) {
+      console.error('[Recommendations] Error re-ranking:', error)
+      toast.error('Failed to re-rank recommendations', { id: 'rerank' })
+      // Keep previous recommendations on error
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
