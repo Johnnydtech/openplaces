@@ -21,6 +21,22 @@ function RecommendationsContent() {
   // Story 5.8: Track recommendation card refs for scroll-into-view
   const recommendationRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
+  // Story 5.10: Register service worker for offline tile caching (production only)
+  useEffect(() => {
+    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((registration) => {
+          console.log('[App] Service Worker registered successfully:', registration.scope)
+        })
+        .catch((error) => {
+          console.error('[App] Service Worker registration failed:', error)
+        })
+    } else if (process.env.NODE_ENV === 'development') {
+      console.log('[App] Service Worker disabled in development mode')
+    }
+  }, [])
+
   // Story 5.8: Scroll to highlighted recommendation when hoveredZoneId changes
   useEffect(() => {
     if (!hoveredZoneId) return
