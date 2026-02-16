@@ -34,13 +34,20 @@ export default function UploadZone({ onFileSelect, isUploading }: UploadZoneProp
     <div
       {...getRootProps()}
       className={`
-        relative cursor-pointer rounded-lg border-2 border-dashed p-12 text-center transition-all
-        ${isDragActive ? 'scale-[1.02]' : ''}
-        ${isUploading ? 'cursor-not-allowed opacity-50' : 'hover:border-opacity-100'}
+        relative cursor-pointer rounded-2xl border-2 border-dashed p-12 text-center
+        backdrop-blur-xl shadow-2xl
+        transition-all duration-500 ease-out
+        ${isDragActive ? 'scale-[1.02] shadow-green-500/50' : 'hover:scale-[1.01]'}
+        ${isUploading ? 'cursor-not-allowed opacity-50' : 'hover:shadow-green-500/30'}
       `}
       style={{
-        borderColor: isDragActive ? '#4ade80' : '#2a4551',
-        background: isDragActive ? '#4ade8020' : '#1a2f3a'
+        borderColor: isDragActive ? '#4ade80' : 'rgba(74, 222, 128, 0.3)',
+        background: isDragActive
+          ? 'rgba(74, 222, 128, 0.1)'
+          : 'rgba(26, 47, 58, 0.6)',
+        boxShadow: isDragActive
+          ? '0 0 40px rgba(74, 222, 128, 0.3)'
+          : '0 8px 32px rgba(0, 0, 0, 0.3)'
       }}
     >
       <input {...getInputProps()} />
@@ -57,8 +64,11 @@ export default function UploadZone({ onFileSelect, isUploading }: UploadZoneProp
           </>
         ) : (
           <>
-            <div className="h-16 w-16" style={{ color: '#94a3b8' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <div
+              className="h-16 w-16 transition-transform duration-300 hover:scale-110"
+              style={{ color: '#94a3b8' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="drop-shadow-lg">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
               </svg>
             </div>
