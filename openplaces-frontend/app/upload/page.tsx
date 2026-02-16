@@ -19,7 +19,6 @@ export default function UploadPage() {
   const [showManualForm, setShowManualForm] = useState(false)
 
   const handleFileSelect = async (file: File) => {
-    // Client-side validation (Story 3.10: Enhanced error messages)
     const maxSize = 10 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
       toast.error('File too large (max 10MB). Compress image or enter details manually.')
@@ -32,7 +31,6 @@ export default function UploadPage() {
       return
     }
 
-    // Set file and create preview
     setSelectedFile(file)
 
     if (file.type !== 'application/pdf') {
@@ -40,7 +38,6 @@ export default function UploadPage() {
       setPreviewUrl(url)
     }
 
-    // Auto-upload after file select
     await uploadFile(file)
   }
 
@@ -62,7 +59,6 @@ export default function UploadPage() {
     } catch (error: any) {
       console.error('Upload error:', error)
 
-      // Story 3.10: Enhanced error messages (≤20 words, actionable)
       if (error.response?.status === 400) {
         toast.error('File cannot be read. Try different file or enter manually.', { id: 'upload' })
       } else if (error.response?.status === 504) {
@@ -87,19 +83,16 @@ export default function UploadPage() {
   }
 
   const handleGetRecommendations = () => {
-    // Story 4.4: Navigate to recommendations page with event data
     if (!extractedData) {
       toast.error('No event data available')
       return
     }
 
-    // Validate required fields (geocoded coordinates)
     if (!extractedData.latitude || !extractedData.longitude) {
       toast.error('Venue must be geocoded first')
       return
     }
 
-    // Build event data for recommendations API
     const eventData = {
       name: extractedData.event_name,
       date: extractedData.event_date,
@@ -110,7 +103,6 @@ export default function UploadPage() {
       event_type: extractedData.event_type || 'Community event'
     }
 
-    // Navigate to recommendations page with event data
     const params = new URLSearchParams({
       eventData: JSON.stringify(eventData)
     })
@@ -132,41 +124,46 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen" style={{ background: '#0f1c24' }}>
       <Toaster position="top-center" />
 
       {/* Header */}
-      <nav className="border-b bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">OpenPlaces</h1>
+      <nav className="border-b" style={{ background: '#1a2f3a', borderColor: '#2a4551' }}>
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <h1 className="text-2xl font-bold text-white">OpenPlaces</h1>
           <button
             onClick={() => router.push('/')}
-            className="text-sm font-medium text-gray-600 hover:text-gray-900"
+            className="text-sm font-semibold hover:text-white transition-colors flex items-center gap-1"
+            style={{ color: '#94a3b8' }}
           >
-            ← Back to Home
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+              <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
+            </svg>
+            Back to Home
           </button>
         </div>
       </nav>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-3xl px-4 py-12">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+      <main className="mx-auto max-w-3xl px-6 py-12">
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-bold tracking-tight text-white mb-3">
             Upload Your Event Flyer
           </h2>
-          <p className="mt-2 text-lg text-gray-600">
+          <p className="text-lg" style={{ color: '#94a3b8' }}>
             AI will extract event details automatically
           </p>
         </div>
 
-        <div className="mt-8 space-y-6">
+        <div className="space-y-6">
           {!selectedFile && !showManualForm && (
             <>
               <UploadZone onFileSelect={handleFileSelect} isUploading={isUploading} />
               <div className="text-center">
                 <button
                   onClick={() => setShowManualForm(true)}
-                  className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                  className="text-sm font-semibold hover:underline"
+                  style={{ color: '#4ade80' }}
                 >
                   Or enter details manually →
                 </button>

@@ -32,7 +32,6 @@ export default function SavedRecommendationCard({
     try {
       await updateSavedRecommendationNotes(user.id, savedRecommendation.id, editedNotes)
 
-      // Update parent state
       onNotesUpdate?.(savedRecommendation.id, editedNotes)
 
       setIsEditing(false)
@@ -50,11 +49,9 @@ export default function SavedRecommendationCard({
     setIsEditing(false)
   }
 
-  // Story 2.9: Delete with confirmation
   const handleDelete = async () => {
     if (!user) return
 
-    // Browser confirmation dialog
     const confirmed = window.confirm(
       'Are you sure you want to delete this recommendation? This action cannot be undone.'
     )
@@ -62,10 +59,8 @@ export default function SavedRecommendationCard({
     if (!confirmed) return
 
     try {
-      // Delete via API
       await deleteSavedRecommendation(user.id, savedRecommendation.id)
 
-      // Call parent onDelete to remove from UI
       onDelete?.(savedRecommendation.id)
 
       toast.success('Recommendation deleted')
@@ -85,79 +80,102 @@ export default function SavedRecommendationCard({
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className="rounded-lg p-6 shadow-lg hover:shadow-xl transition-shadow" style={{ background: '#1a2f3a' }}>
       {/* Event Name */}
-      <h3 className="text-lg font-bold text-gray-900 mb-2">
+      <h3 className="text-lg font-bold text-white mb-2">
         {savedRecommendation.event_name}
       </h3>
 
       {/* Date Saved */}
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm mb-4" style={{ color: '#94a3b8' }}>
         Saved {formatDate(savedRecommendation.created_at)}
       </p>
 
       {/* Top Zone */}
-      <div className="rounded-lg bg-blue-50 p-3 mb-4">
-        <p className="text-sm font-medium text-blue-900 mb-1">
-          Top Zone
+      <div className="rounded-lg p-3 mb-4" style={{ background: '#1e3a48' }}>
+        <p className="text-xs font-medium mb-1" style={{ color: '#4ade80' }}>
+          TOP ZONE
         </p>
-        <p className="text-base font-semibold text-blue-800">
+        <p className="text-base font-semibold text-white">
           {savedRecommendation.zone_name}
+        </p>
+        <p className="text-sm mt-1" style={{ color: '#94a3b8' }}>
+          {savedRecommendation.audience_match}% Audience Match
         </p>
       </div>
 
-      {/* Story 2.8: Notes Section with Add/Edit functionality */}
+      {/* Notes Section */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-medium text-gray-700">Notes:</p>
+          <p className="text-xs font-medium text-white">NOTES</p>
           {!isEditing && (
             <button
               onClick={() => setIsEditing(true)}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="text-xs font-medium hover:underline"
+              style={{ color: '#4ade80' }}
             >
-              {savedRecommendation.notes ? 'Edit note' : 'Add note'}
+              {savedRecommendation.notes ? 'Edit' : 'Add'}
             </button>
           )}
         </div>
 
         {!isEditing ? (
-          // Display mode
           savedRecommendation.notes ? (
-            <p className="text-sm text-gray-600 line-clamp-3">
+            <p className="text-sm line-clamp-3" style={{ color: '#94a3b8' }}>
               {savedRecommendation.notes}
             </p>
           ) : (
-            <p className="text-sm text-gray-400 italic">
+            <p className="text-sm italic" style={{ color: '#94a3b8' }}>
               No notes yet
             </p>
           )
         ) : (
-          // Edit mode
           <div className="space-y-2">
             <textarea
               value={editedNotes}
               onChange={(e) => setEditedNotes(e.target.value)}
               placeholder="Add notes about this placement strategy..."
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 text-white"
+              style={{
+                background: '#1e3a48',
+                borderColor: '#2a4551',
+                '--tw-ring-color': '#4ade80'
+              } as React.CSSProperties}
               rows={4}
               maxLength={500}
             />
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">
+              <span className="text-xs" style={{ color: '#94a3b8' }}>
                 {editedNotes.length}/500 characters
               </span>
               <div className="flex gap-2">
                 <button
                   onClick={handleCancelEdit}
                   disabled={isSaving}
-                  className="rounded px-3 py-1.5 text-xs font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                  className="rounded px-3 py-1.5 text-xs font-medium border transition-colors disabled:opacity-50"
+                  style={{
+                    color: '#94a3b8',
+                    borderColor: '#2a4551',
+                    background: 'transparent'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSaving) e.currentTarget.style.background = '#1e3a48'
+                  }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveNotes}
                   disabled={isSaving || editedNotes.length > 500}
-                  className="rounded px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: '#4ade80', color: '#0f1c24' }}
+                  onMouseEnter={(e) => {
+                    if (!isSaving && editedNotes.length <= 500) {
+                      e.currentTarget.style.background = '#22c55e'
+                    }
+                  }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = '#4ade80' }}
                 >
                   {isSaving ? 'Saving...' : 'Save'}
                 </button>
@@ -170,13 +188,25 @@ export default function SavedRecommendationCard({
       {/* Actions */}
       <div className="flex gap-2">
         <button
-          className="flex-1 rounded-lg border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+          style={{ background: '#4ade80', color: '#0f1c24' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#22c55e' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#4ade80' }}
         >
           View Details
         </button>
         <button
           onClick={handleDelete}
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
+          style={{ borderColor: '#2a4551', color: '#94a3b8' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#1e3a48'
+            e.currentTarget.style.color = '#ef4444'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.color = '#94a3b8'
+          }}
         >
           Delete
         </button>
