@@ -210,16 +210,19 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
   const missingFields = isValid ? [] : getMissingFields()
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="rounded-lg border p-6 shadow-lg" style={{ background: '#1a2f3a', borderColor: '#2a4551' }}>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Extracted Event Details</h3>
-        <span className={`rounded-full border px-3 py-1 text-xs font-medium ${confidenceColor}`}>
+        <h3 className="text-lg font-semibold text-white">Extracted Event Details</h3>
+        <span className={`rounded-full px-3 py-1 text-xs font-medium ${confidenceColor}`} style={{
+          background: localData.confidence.toLowerCase() === 'high' ? '#4ade80' : localData.confidence.toLowerCase() === 'medium' ? '#facc15' : '#fb923c',
+          color: '#0f1c24'
+        }}>
           {localData.confidence} Confidence
         </span>
       </div>
 
       {localData.confidence.toLowerCase() === 'low' && (
-        <div className="mb-4 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">
+        <div className="mb-4 rounded-md p-3 text-sm" style={{ background: '#fb923c20', color: '#fb923c' }}>
           ⚠️ Low confidence extraction. Please review and edit details carefully.
         </div>
       )}
@@ -228,11 +231,12 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
         {/* Event Name */}
         <div>
           <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-gray-500">Event Name</label>
+            <label className="text-xs font-medium" style={{ color: '#94a3b8' }}>Event Name</label>
             {editingField !== 'event_name' && (
               <button
                 onClick={() => handleEdit('event_name', localData.event_name)}
-                className="text-blue-600 hover:text-blue-700"
+                style={{ color: '#4ade80' }}
+                className="hover:opacity-80"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
@@ -246,18 +250,19 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
                 type="text"
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
-                className="flex-1 rounded border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+                className="flex-1 rounded border px-2 py-1 text-sm focus:outline-none focus:ring-2 text-white"
+                style={{ background: '#1e3a48', borderColor: '#2a4551', '--tw-ring-color': '#4ade80' } as React.CSSProperties}
                 autoFocus
               />
-              <button onClick={() => handleSave('event_name')} className="text-green-600 hover:text-green-700">
+              <button onClick={() => handleSave('event_name')} style={{ color: '#4ade80' }} className="font-bold hover:opacity-80">
                 ✓
               </button>
-              <button onClick={handleCancel} className="text-red-600 hover:text-red-700">
+              <button onClick={handleCancel} style={{ color: '#ef4444' }} className="font-bold hover:opacity-80">
                 ✕
               </button>
             </div>
           ) : (
-            <p className="text-sm font-medium text-gray-900">{localData.event_name}</p>
+            <p className="text-sm font-medium text-white">{localData.event_name}</p>
           )}
         </div>
 
@@ -447,18 +452,28 @@ export default function EventConfirmation({ data, onGetRecommendations, onUpdate
       <button
         onClick={onGetRecommendations}
         disabled={!isValid}
-        className={`mt-6 w-full rounded-md px-4 py-3 text-base font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+        className={`mt-6 w-full rounded-lg px-4 py-3 text-base font-semibold transition-colors focus:outline-none ${
           isValid
-            ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-600 cursor-pointer'
-            : 'bg-gray-400 cursor-not-allowed opacity-60'
+            ? 'cursor-pointer'
+            : 'cursor-not-allowed opacity-60'
         }`}
+        style={{
+          background: isValid ? '#4ade80' : '#2a4551',
+          color: isValid ? '#0f1c24' : '#94a3b8'
+        }}
+        onMouseEnter={(e) => {
+          if (isValid) e.currentTarget.style.background = '#22c55e'
+        }}
+        onMouseLeave={(e) => {
+          if (isValid) e.currentTarget.style.background = '#4ade80'
+        }}
       >
         Get Recommendations →
       </button>
 
       {/* Story 3.9: Validation error message */}
       {!isValid && missingFields.length > 0 && (
-        <p className="mt-2 text-sm text-red-600 text-center" role="alert">
+        <p className="mt-2 text-sm text-center" role="alert" style={{ color: '#ef4444' }}>
           ⚠️ Complete all required fields: {missingFields.join(', ')}
         </p>
       )}
